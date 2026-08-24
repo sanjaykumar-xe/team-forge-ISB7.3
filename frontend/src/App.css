@@ -1,0 +1,246 @@
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 72px 24px 48px;
+}
+
+.masthead {
+  border-bottom: 1px solid var(--hairline);
+  padding-bottom: 28px;
+  margin-bottom: 36px;
+}
+
+.masthead-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+  margin: 0 0 14px;
+}
+
+.masthead-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 42px;
+  line-height: 1.1;
+  margin: 0 0 14px;
+  color: var(--text);
+}
+
+.masthead-sub {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+  max-width: 56ch;
+}
+
+.submission-form {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+textarea {
+  width: 100%;
+  background: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 14px;
+  resize: vertical;
+}
+
+textarea::placeholder {
+  color: #56728a;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+
+.char-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+button {
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 11px 24px;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: #ddb734;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  background: var(--hairline);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.error-banner {
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: rgba(193, 85, 61, 0.14);
+  border: 1px solid var(--clay);
+  color: #f3c9bd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.loading-note {
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.results {
+  margin-top: 40px;
+}
+
+.results-summary {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.results-summary strong {
+  color: var(--gold);
+}
+
+.divider {
+  color: var(--hairline);
+}
+
+.query-chip {
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.source-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.source-card {
+  display: flex;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.stamp {
+  flex-shrink: 0;
+  color: var(--gold);
+  opacity: 0.9;
+}
+
+.source-body {
+  min-width: 0;
+}
+
+.source-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.source-title {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  margin-bottom: 6px;
+}
+
+.source-title:hover {
+  color: var(--gold);
+}
+
+.source-snippet {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.source-url {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #56728a;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.footer-note {
+  margin-top: 56px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .masthead-title {
+    font-size: 32px;
+  }
+
+  .source-card {
+    flex-direction: column;
+  }
+}
