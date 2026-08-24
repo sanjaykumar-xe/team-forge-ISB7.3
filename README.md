@@ -1,75 +1,71 @@
-<<<<<<< HEAD
-# team-forge-ISB7.3
-AI-based startup idea validator with market analysis assistance, developed as part of the Team Forge project.
-=======
 # Team Forge — AI-Based Startup Idea Validator
 
-**Milestone 1 deliverable.** This gets the Web Search Agent, Data Retrieval
-Agent, and the idea-submission interface working end to end, so the team has
-a real pipeline to demo and deploy — not just a plan.
+AI-based startup idea validator with market analysis assistance, developed as part of the **Team Forge (ISB7.3)** project.
 
-## What's included
+---
 
-| Requirement (from Milestone 1) | Where it lives |
-|---|---|
-| Interface to submit a startup idea | `frontend/` (React + Vite) |
-| Web Search API integration | `backend/agents/web_search_agent.py` (DuckDuckGo via `ddgs`, free & keyless) |
-| Data Retrieval Agent | `backend/agents/data_retrieval_agent.py` |
-| System architecture (agents, roles, data flow) | see below |
+## 📌 Repository & Branching Structure
 
-**Note on the search provider:** the whiteboard plan named Tavily, but
-Tavily (and most other search APIs) now ask for a card even on the "free"
-tier. This uses `ddgs`, a free library that queries DuckDuckGo directly —
-no signup, no key, no card. It's fine for development and demoing; if the
-team later wants a paid provider for reliability, only
-`web_search_agent.py` needs to change, since `DataRetrievalAgent` and
-everything downstream only depends on the `{query, response}` shape it
-returns.
+- **`staging`**: Active development branch. All new feature code and integration work is pushed here. Connected to staging/preview deployments.
+- **`main`**: Production-ready, reviewed code only. No direct commits allowed. Updates to `main` are merged via Pull Requests from `staging`.
 
-## How it works
+---
+
+## 🚀 Current Architecture & Features
+
+| Component | Description | Location |
+| :--- | :--- | :--- |
+| **Startup Submission UI** | React + Vite interface to submit startup ideas and view validation sources | `frontend/` |
+| **FastAPI Backend** | REST API providing validation endpoints and orchestrating agent pipeline | `backend/main.py` |
+| **Web Search Agent** | Multi-angle search across market size, competitors, and target audience | `backend/agents/web_search_agent.py` |
+| **Data Retrieval Agent** | De-duplicates, normalizes, and scores search results into structured data | `backend/agents/data_retrieval_agent.py` |
+
+### Pipeline Flow
 
 ```
 User submits idea (frontend)
         │
         ▼
-POST /api/validate  (backend/main.py)
+POST /api/validate  (FastAPI backend)
         │
         ▼
 WebSearchAgent.search(idea)
-  - builds 3 search angles: market size, competitors, target customers
-  - queries DuckDuckGo (via ddgs) for each — free, no key required
+  - Generates targeted queries (market size, competitors, target audience)
+  - Queries search engine
         │
         ▼
 DataRetrievalAgent.structure(raw_batches)
-  - de-duplicates by URL
-  - normalizes into {title, url, snippet, query, score}
-  - sorts by relevance score
+  - De-duplicates by URL
+  - Normalizes into {title, url, snippet, query, score}
+  - Ranks by relevance
         │
         ▼
-JSON response → rendered as source cards in the UI
+JSON response → Rendered dynamically in frontend
 ```
 
-This structured source list is the contract that Milestone 2's agents
-(Market Opportunity, Competitor Discovery, SWOT/Risk) will build on — they
-take this same list as input instead of talking to the search provider
-directly.
+---
 
-## Running it locally
+## 💻 Running Locally
 
-### 1. Backend
+### 1. Backend Setup
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
 pip install -r requirements.txt
-cp .env.example .env            # no key needed, but keeps ALLOWED_ORIGINS configurable
+cp .env.example .env
 uvicorn main:app --reload --port 8000
 ```
 
-Check it's up: open `http://localhost:8000/api/health` — should return `{"status": "ok"}`.
+Verify backend health: `http://localhost:8000/api/health` → `{"status": "ok"}`.
 
-### 2. Frontend
+### 2. Frontend Setup
 
 ```bash
 cd frontend
@@ -78,26 +74,24 @@ cp .env.example .env
 npm run dev
 ```
 
-Open `http://localhost:5173`, submit an idea, and you should see live search
-results come back as source cards within a few seconds.
+Open `http://localhost:5173` in your browser.
 
-## Deploying (staging → preview, main → production)
+---
 
-- **Backend → Render**: New Web Service, root directory `backend`, build
-  command `pip install -r requirements.txt`, start command
-  `uvicorn main:app --host 0.0.0.0 --port $PORT`. Add `ALLOWED_ORIGINS`
-  (your Vercel URL) as an environment variable — no search API key needed.
-- **Frontend → Vercel**: New Project, root directory `frontend`, framework
-  preset Vite. Add `VITE_API_URL` pointing at your Render backend URL.
-- Connect Render/Vercel's preview deployments to the `staging` branch and
-  production deployments to `main`, per the team's branching strategy.
+## 🌐 Deployment Pipeline
 
-## Next milestones build on this
+### Backend (Render)
+- **Staging Web Service**:
+  - Branch: `staging`
+  - Root Directory: `backend`
+  - Build Command: `pip install -r requirements.txt`
+  - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+- **Production Web Service**:
+  - Branch: `main`
+  - Configuration identical to staging, connected to the `main` branch.
 
-- **Milestone 2**: Market Opportunity & Customer Segmentation Agent,
-  Competitor Discovery Agent — both consume `DataRetrievalAgent`'s output.
-- **Milestone 3**: SWOT/Risk Agent, MVP Feature Recommendation, Go-To-Market
-  Strategy.
-- **Milestone 4**: Startup Validation Report Generation Agent (combines all
-  agent outputs into one report) and the Conversational Startup Advisor.
->>>>>>> f0679d1 (feat(milestone-1): complete WebSearchAgent, DataRetrievalAgent pipeline and submission interface)
+### Frontend (Vercel)
+- **Framework Preset**: `Vite`
+- **Root Directory**: `frontend`
+- **Preview Environment**: `VITE_API_URL` pointing to Render staging backend.
+- **Production Environment**: `VITE_API_URL` pointing to Render production backend.
