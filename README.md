@@ -1,97 +1,126 @@
 # Team Forge — AI-Based Startup Idea Validator
 
-AI-based startup idea validator with market analysis assistance, developed as part of the **Team Forge (ISB7.3)** project.
+> Autonomous multi-agent market intelligence platform that evaluates and validates startup ideas in real time using live market signals.
+
+Developed as part of the **Team Forge (ISB7.3)** project.
 
 ---
 
-## 📌 Repository & Branching Structure
+## 📌 Project Highlights & Architecture
 
-- **`staging`**: Active development branch. All new feature code and integration work is pushed here. Connected to staging/preview deployments.
-- **`main`**: Production-ready, reviewed code only. No direct commits allowed. Updates to `main` are merged via Pull Requests from `staging`.
-
----
-
-## 🚀 Current Architecture & Features
-
-| Component | Description | Location |
-| :--- | :--- | :--- |
-| **Startup Submission UI** | React + Vite interface to submit startup ideas and view validation sources | `frontend/` |
-| **FastAPI Backend** | REST API providing validation endpoints and orchestrating agent pipeline | `backend/main.py` |
-| **Web Search Agent** | Multi-angle search across market size, competitors, and target audience | `backend/agents/web_search_agent.py` |
-| **Data Retrieval Agent** | De-duplicates, normalizes, and scores search results into structured data | `backend/agents/data_retrieval_agent.py` |
-
-### Pipeline Flow
+Team Forge decomposes raw startup concepts into multi-angle market research strategies and fetches real-time intelligence using an autonomous multi-agent pipeline:
 
 ```
-User submits idea (frontend)
-        │
-        ▼
-POST /api/validate  (FastAPI backend)
-        │
-        ▼
-WebSearchAgent.search(idea)
-  - Generates targeted queries (market size, competitors, target audience)
-  - Queries search engine
-        │
-        ▼
-DataRetrievalAgent.structure(raw_batches)
-  - De-duplicates by URL
-  - Normalizes into {title, url, snippet, query, score}
-  - Ranks by relevance
-        │
-        ▼
-JSON response → Rendered dynamically in frontend
+┌────────────────────────────────────────────────────────┐
+│                   React + Vite UI                      │
+│   (Idea Form, Match Badges, Live Sources Dashboard)    │
+└───────────────────────────┬────────────────────────────┘
+                            │ POST /api/validate
+                            ▼
+┌────────────────────────────────────────────────────────┐
+│                    FastAPI Backend                     │
+│               (/api/health, /api/validate)             │
+└─────────────┬────────────────────────────▲─────────────┘
+              │ 1. Search Query Angles     │ 4. Structured Sources
+              ▼                            │
+┌───────────────────────────┐  ┌─────────────────────────┐
+│     WebSearchAgent        │  │   DataRetrievalAgent    │
+│  - Market Size Trends     │─►│  - URL Deduplication    │
+│  - Competitor Discovery   │  │  - Relevance Scoring    │
+│  - Customer Demand        │  │  - Category Summary     │
+└───────────────────────────┘  └─────────────────────────┘
 ```
 
 ---
 
-## 💻 Running Locally
+## 📁 Repository Structure
+
+```
+team-forge/
+├── backend/                      # Python / FastAPI backend service
+│   ├── agents/                   # Autonomous market research agents
+│   │   ├── __init__.py           # Agent module exports
+│   │   ├── web_search_agent.py   # Multi-angle query search & engine fallback
+│   │   └── data_retrieval_agent.py # Normalization, deduplication, & scoring
+│   ├── config.py                 # Environment variables & CORS settings
+│   ├── main.py                   # API routes & middleware
+│   ├── requirements.txt          # Python dependencies
+│   └── README.md                 # Backend technical documentation
+│
+├── frontend/                     # React / Vite SPA frontend
+│   ├── src/
+│   │   ├── components/           # Reusable UI components
+│   │   │   ├── Header.jsx        # Masthead editorial banner
+│   │   │   ├── ResultsSummary.jsx# Search category chips & stats
+│   │   │   ├── SourceCard.jsx    # Source display card with external link
+│   │   │   └── Stamp.jsx         # Circular SVG match percentage badge
+│   │   ├── App.jsx               # Main state controller
+│   │   ├── App.css / index.css   # Styling & typography
+│   │   └── main.jsx              # React mounting root
+│   ├── vercel.json               # Vercel SPA routing configuration
+│   ├── vite.config.js            # Vite configuration
+│   └── README.md                 # Frontend technical documentation
+│
+├── render.yaml                   # Infrastructure as Code (Render Web Service)
+├── DEPLOYMENT.md                 # Step-by-step production deployment guide
+└── README.md                     # Project overview (this file)
+```
+
+---
+
+## 🚀 Quickstart: Running Locally
 
 ### 1. Backend Setup
 
 ```bash
 cd backend
-python -m venv venv
 
+# Create & activate virtual environment
+python -m venv venv
 # Windows:
 venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
+# Install dependencies & run
 pip install -r requirements.txt
-cp .env.example .env
 uvicorn main:app --reload --port 8000
 ```
-
-Verify backend health: `http://localhost:8000/api/health` → `{"status": "ok"}`.
+- **Health Check**: `http://127.0.0.1:8000/api/health`
+- **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
 
 ### 2. Frontend Setup
 
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
-cp .env.example .env
+
+# Start development server
 npm run dev
 ```
-
-Open `http://localhost:5173` in your browser.
+- **Frontend UI**: `http://localhost:5173`
 
 ---
 
-## 🌐 Deployment Pipeline
+## 🌐 Production Deployment
 
-### Backend (Render)
-- **Staging Web Service**:
-  - Branch: `staging`
-  - Root Directory: `backend`
-  - Build Command: `pip install -r requirements.txt`
-  - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- **Production Web Service**:
-  - Branch: `main`
-  - Configuration identical to staging, connected to the `main` branch.
+| Component | Platform | Build Command | Output / Start | Guide |
+| :--- | :--- | :--- | :--- | :--- |
+| **Backend** | **Render** | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | [DEPLOYMENT.md](DEPLOYMENT.md#1️⃣-part-1-deploy-backend-to-render) |
+| **Frontend** | **Vercel** | `npm run build` | `dist/` | [DEPLOYMENT.md](DEPLOYMENT.md#2️⃣-part-2-deploy-frontend-to-vercel) |
 
-### Frontend (Vercel)
-- **Framework Preset**: `Vite`
-- **Root Directory**: `frontend`
-- **Preview Environment**: `VITE_API_URL` pointing to Render staging backend.
-- **Production Environment**: `VITE_API_URL` pointing to Render production backend.
+For complete step-by-step deployment instructions with screenshots and troubleshooting, see [**DEPLOYMENT.md**](DEPLOYMENT.md).
+
+---
+
+## 📌 Branching Strategy
+
+- **`staging`**: Active development branch. All feature implementations and testing occur here.
+- **`main`**: Production release branch. Merged strictly via Pull Requests from `staging`.
+
+---
+
+## 📄 License
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

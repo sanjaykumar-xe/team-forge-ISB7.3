@@ -1,45 +1,14 @@
 import { useState } from "react";
 import "./App.css";
+import Header from "./components/Header";
+import SourceCard from "./components/SourceCard";
+import ResultsSummary from "./components/ResultsSummary";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://team-forge-backend-production.onrender.com";
 
-
-function Stamp({ score }) {
-  const pct = Math.round((score || 0) * 100);
-  return (
-    <div className="stamp" aria-hidden="true">
-      <svg viewBox="0 0 64 64" width="52" height="52">
-        <circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" strokeWidth="0.75" strokeDasharray="2 3" />
-        <text x="32" y="29" textAnchor="middle" fontSize="14" fontFamily="IBM Plex Mono" fill="currentColor">
-          {pct}
-        </text>
-        <text x="32" y="41" textAnchor="middle" fontSize="6" letterSpacing="1" fontFamily="IBM Plex Mono" fill="currentColor">
-          MATCH
-        </text>
-      </svg>
-    </div>
-  );
-}
-
-function SourceCard({ source, index }) {
-  return (
-    <li className="source-card">
-      <Stamp score={source.score} />
-      <div className="source-body">
-        <p className="source-eyebrow">{source.query}</p>
-        <a className="source-title" href={source.url} target="_blank" rel="noreferrer">
-          {source.title}
-        </a>
-        <p className="source-snippet">{source.snippet}</p>
-        <p className="source-url">{source.url}</p>
-      </div>
-    </li>
-  );
-}
-
 export default function App() {
+
   const [idea, setIdea] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [result, setResult] = useState(null);
@@ -80,15 +49,7 @@ export default function App() {
 
   return (
     <div className="page">
-      <header className="masthead">
-        <p className="masthead-label">TEAM FORGE — MILESTONE 01</p>
-        <h1 className="masthead-title">Startup Idea Validator</h1>
-        <p className="masthead-sub">
-          Submit a concept. The Web Search Agent and Data Retrieval Agent pull
-          live market sources so you can see what's already out there before
-          you build.
-        </p>
-      </header>
+      <Header />
 
       <main className="dossier">
         <form className="submission-form" onSubmit={handleSubmit}>
@@ -121,17 +82,8 @@ export default function App() {
 
         {status === "done" && result && (
           <section className="results">
-            <div className="results-summary">
-              <span>
-                <strong>{result.summary.total_sources}</strong> sources found
-              </span>
-              <span className="divider">·</span>
-              {Object.entries(result.summary.sources_per_query).map(([q, count]) => (
-                <span key={q} className="query-chip">
-                  {q} ({count})
-                </span>
-              ))}
-            </div>
+            <ResultsSummary summary={result.summary} />
+
 
             {result.sources.length === 0 ? (
               <p className="empty-state">

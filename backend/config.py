@@ -1,10 +1,17 @@
 import os
 from dotenv import load_dotenv
 
+# Load local environment variables from .env file
 load_dotenv()
 
-ALLOWED_ORIGINS = ["*"]
+# CORS configuration: Allow specific origins or fallback to wildcard
+raw_origins = os.getenv("ALLOWED_ORIGINS", "*")
+if raw_origins == "*":
+    ALLOWED_ORIGINS = ["*"]
+else:
+    ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",") if origin.strip()]
 
-# No API key needed for search — the Web Search Agent uses the free,
-# keyless `ddgs` (DuckDuckGo) library. If the team switches to a paid
-# provider later (Tavily, Serper, Brave, etc.), add its key loading here.
+# Server configuration
+PORT = int(os.getenv("PORT", 8000))
+HOST = os.getenv("HOST", "0.0.0.0")
+
