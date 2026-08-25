@@ -1,7 +1,9 @@
 import { useState } from "react";
 import "./App.css";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://team-forge-backend-production.onrender.com";
+
 
 function Stamp({ score }) {
   const pct = Math.round((score || 0) * 100);
