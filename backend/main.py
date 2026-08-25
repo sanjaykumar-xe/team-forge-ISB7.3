@@ -16,24 +16,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from config import ALLOWED_ORIGINS
-from agents.web_search_agent import WebSearchAgent
-from agents.data_retrieval_agent import DataRetrievalAgent
+from agents import WebSearchAgent, DataRetrievalAgent
 
-app = FastAPI(title="Startup Idea Validator API", version="0.1.0")
+app = FastAPI(
+    title="Team Forge — Startup Idea Validator API",
+    description="Backend API powering AI-driven startup validation with live market research agents.",
+    version="1.0.0",
+)
 
+# Enable CORS for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_origin_regex=r"https?://.*",
-    allow_credentials=True,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-
+# Initialize AI Pipeline Agents
 web_search_agent = WebSearchAgent()
 data_retrieval_agent = DataRetrievalAgent()
+
 
 
 class IdeaSubmission(BaseModel):
