@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 web_search_agent = WebSearchAgent()
 data_retrieval_agent = DataRetrievalAgent()
 
