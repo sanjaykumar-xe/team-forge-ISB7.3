@@ -5,7 +5,6 @@
 export default function Header() {
   return (
     <header className="masthead">
-      <p className="masthead-label">TEAM FORGE · MILESTONE 01</p>
       <h1 className="masthead-title">
         Does your idea <em className="accent-word">actually</em> hold up?
       </h1>
@@ -17,4 +16,5 @@ export default function Header() {
     </header>
   );
 }
+
 

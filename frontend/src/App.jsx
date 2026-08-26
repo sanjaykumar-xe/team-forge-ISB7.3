@@ -113,13 +113,8 @@ export default function App() {
           </section>
         )}
       </main>
-
-      <footer className="footer-note">
-        <span>MILESTONE 1 — WEB SEARCH API INTEGRATED</span>
-        <span className="footer-divider"></span>
-        <span>MILESTONE 2 ADDS MARKET OPPORTUNITY, COMPETITORS, AND SWOT</span>
-      </footer>
     </div>
   );
 }
+
 
