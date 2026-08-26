@@ -8,11 +8,12 @@ const API_URL =
   import.meta.env.VITE_API_URL || "https://team-forge-backend-production.onrender.com";
 
 export default function App() {
-
   const [idea, setIdea] = useState("");
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+
+
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -54,7 +55,7 @@ export default function App() {
       <main className="dossier">
         <form className="submission-form" onSubmit={handleSubmit}>
           <label htmlFor="idea" className="field-label">
-            Startup idea
+            DESCRIBE THE IDEA
           </label>
           <textarea
             id="idea"
@@ -66,7 +67,7 @@ export default function App() {
           <div className="form-row">
             <span className="char-count">{idea.length}/1000</span>
             <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Searching…" : "Validate idea"}
+              {status === "loading" ? "Surveying…" : "Validate idea →"}
             </button>
           </div>
         </form>
@@ -74,26 +75,38 @@ export default function App() {
         {status === "error" && <p className="error-banner">{errorMessage}</p>}
 
         {status === "loading" && (
-          <p className="loading-note">
-            Running search queries across current market data — this can take
-            a few seconds.
-          </p>
+          <div className="loading-container">
+            <p className="loading-eyebrow">SCOUTING CURRENT MARKET TERRITORY…</p>
+            <div className="skeleton-list">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton-card">
+                  <div className="skeleton-bar bar-tag" />
+                  <div className="skeleton-bar bar-title" />
+                  <div className="skeleton-bar bar-snippet-1" />
+                  <div className="skeleton-bar bar-snippet-2" />
+                  <div className="skeleton-footer">
+                    <div className="skeleton-bar bar-host" />
+                    <div className="skeleton-bar bar-score" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {status === "done" && result && (
           <section className="results">
-            <ResultsSummary summary={result.summary} />
-
+            <ResultsSummary summary={result.summary} sources={result.sources} />
 
             {result.sources.length === 0 ? (
               <p className="empty-state">
-                No sources came back for this idea. Try rephrasing it with a
-                more specific market or product category.
+                No sources came back for this idea. Try rephrasing with a more
+                specific product category, market segment, or customer workflow.
               </p>
             ) : (
               <ul className="source-list">
-                {result.sources.map((source, i) => (
-                  <SourceCard key={source.url} source={source} index={i} />
+                {result.sources.map((source) => (
+                  <SourceCard key={source.url} source={source} />
                 ))}
               </ul>
             )}
@@ -102,9 +115,11 @@ export default function App() {
       </main>
 
       <footer className="footer-note">
-        Milestone 1 — Web Search API integrated · Milestone 2 adds market
-        opportunity, competitor, and SWOT analysis.
+        <span>MILESTONE 1 — WEB SEARCH API INTEGRATED</span>
+        <span className="footer-divider"></span>
+        <span>MILESTONE 2 ADDS MARKET OPPORTUNITY, COMPETITORS, AND SWOT</span>
       </footer>
     </div>
   );
 }
+
