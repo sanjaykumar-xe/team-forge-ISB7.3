@@ -1,19 +1,19 @@
-# Team Forge — AI-Based Startup Idea Validator
+# Startup Idea Validator
 
-> Autonomous multi-agent market intelligence platform that evaluates and validates startup ideas in real time using live market signals.
+> An intelligent multi-agent platform for validating startup concepts against real-time market data.
 
 Developed as part of the **Team Forge (ISB7.3)** project.
 
 ---
 
-## 📌 Project Highlights & Architecture
+## 📌 System Architecture & Pipeline
 
-Team Forge decomposes raw startup concepts into multi-angle market research strategies and fetches real-time intelligence using an autonomous multi-agent pipeline:
+The system decomposes startup concepts into targeted market research strategies and fetches real-time intelligence using an agent pipeline:
 
 ```
 ┌────────────────────────────────────────────────────────┐
 │                   React + Vite UI                      │
-│   (Idea Form, Match Badges, Live Sources Dashboard)    │
+│     (Idea Form, Live Dashboard, Structured Sources)    │
 └───────────────────────────┬────────────────────────────┘
                             │ POST /api/validate
                             ▼
@@ -31,6 +31,8 @@ Team Forge decomposes raw startup concepts into multi-angle market research stra
 └───────────────────────────┘  └─────────────────────────┘
 ```
 
+For complete technical specifications, data contracts, and design diagrams, see [**ARCHITECTURE.md**](ARCHITECTURE.md).
+
 ---
 
 ## 📁 Repository Structure
@@ -38,9 +40,9 @@ Team Forge decomposes raw startup concepts into multi-angle market research stra
 ```
 team-forge/
 ├── backend/                      # Python / FastAPI backend service
-│   ├── agents/                   # Autonomous market research agents
+│   ├── agents/                   # Market research agents
 │   │   ├── __init__.py           # Agent module exports
-│   │   ├── web_search_agent.py   # Multi-angle query search & engine fallback
+│   │   ├── web_search_agent.py   # Multi-angle query search via DuckDuckGo
 │   │   └── data_retrieval_agent.py # Normalization, deduplication, & scoring
 │   ├── config.py                 # Environment variables & CORS settings
 │   ├── main.py                   # API routes & middleware
@@ -49,11 +51,10 @@ team-forge/
 │
 ├── frontend/                     # React / Vite SPA frontend
 │   ├── src/
-│   │   ├── components/           # Reusable UI components
-│   │   │   ├── Header.jsx        # Masthead editorial banner
-│   │   │   ├── ResultsSummary.jsx# Search category chips & stats
-│   │   │   ├── SourceCard.jsx    # Source display card with external link
-│   │   │   └── Stamp.jsx         # Circular SVG match percentage badge
+│   │   ├── components/           # UI components
+│   │   │   ├── Header.jsx        # Masthead headline & value proposition
+│   │   │   ├── ResultsSummary.jsx# Summary panel & category breakdown
+│   │   │   └── SourceCard.jsx    # Source display card with external link
 │   │   ├── App.jsx               # Main state controller
 │   │   ├── App.css / index.css   # Styling & typography
 │   │   └── main.jsx              # React mounting root
@@ -61,8 +62,9 @@ team-forge/
 │   ├── vite.config.js            # Vite configuration
 │   └── README.md                 # Frontend technical documentation
 │
+├── ARCHITECTURE.md               # Detailed system architecture document
+├── DEPLOYMENT.md                 # Production deployment guide
 ├── render.yaml                   # Infrastructure as Code (Render Web Service)
-├── DEPLOYMENT.md                 # Step-by-step production deployment guide
 └── README.md                     # Project overview (this file)
 ```
 
@@ -111,14 +113,14 @@ npm run dev
 | **Backend** | **Render** | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | [DEPLOYMENT.md](DEPLOYMENT.md#1️⃣-part-1-deploy-backend-to-render) |
 | **Frontend** | **Vercel** | `npm run build` | `dist/` | [DEPLOYMENT.md](DEPLOYMENT.md#2️⃣-part-2-deploy-frontend-to-vercel) |
 
-For complete step-by-step deployment instructions with screenshots and troubleshooting, see [**DEPLOYMENT.md**](DEPLOYMENT.md).
+For complete step-by-step deployment instructions, see [**DEPLOYMENT.md**](DEPLOYMENT.md).
 
 ---
 
 ## 📌 Branching Strategy
 
 - **`staging`**: Active development branch. All feature implementations and testing occur here.
-- **`main`**: Production release branch. Merged strictly via Pull Requests from `staging`.
+- **`main`**: Production release branch. Merged from `staging` via Pull Requests.
 
 ---
 

@@ -1,6 +1,6 @@
-# 🎨 Team Forge — Frontend Application
+# Frontend Application — Startup Idea Validator
 
-The frontend is a modern, responsive React + Vite application engineered for high clarity and rapid feedback during startup validation.
+The frontend is a responsive Single Page Application built with **React** and **Vite**, designed with an editorial aesthetic for startup research and validation.
 
 ---
 
@@ -10,17 +10,15 @@ The frontend is a modern, responsive React + Vite application engineered for hig
 frontend/
 ├── src/
 │   ├── components/
-│   │   ├── Header.jsx           # Editorial masthead and milestone indicator
-│   │   ├── ResultsSummary.jsx   # Coverage stats and search query breakdown chips
-│   │   ├── SourceCard.jsx       # Individual research source item
-│   │   └── Stamp.jsx            # SVG circular badge with percentage match score
-│   ├── App.jsx                  # Main state orchestrator (Form submission, loading, & errors)
-│   ├── App.css                  # Dossier/editorial layout styles
-│   ├── index.css                # Typography, CSS variables, & reset styles
+│   │   ├── Header.jsx           # Masthead headline & value proposition
+│   │   ├── ResultsSummary.jsx   # High-contrast dark summary panel & category stats
+│   │   └── SourceCard.jsx       # Individual research source item with hostname & relevance
+│   ├── App.jsx                  # Main state controller (idea input, skeleton loading, results)
+│   ├── App.css                  # Editorial layout, typography, & responsive styling
+│   ├── index.css                # Design tokens, color palette, & base reset
 │   └── main.jsx                 # React root DOM mounting
-├── public/                      # Static assets
-├── index.html                   # HTML template with Google Fonts (Fraunces, IBM Plex Mono, Inter)
-├── vercel.json                  # Vercel SPA routing rewrite rules
+├── index.html                   # HTML template with Google Fonts (Instrument Serif, Space Mono, Inter)
+├── vercel.json                  # Vercel SPA rewrite rules
 └── vite.config.js               # Vite configuration
 ```
 
@@ -28,10 +26,11 @@ frontend/
 
 ## ⚡ Key Features
 
-- **Match Score Stamp**: Interactive circular SVG stamp that renders dynamically calculated relevance scores.
-- **Query Angle Breakdown**: Visual categorization chips indicating which market angle (market size, competitors, customer demand) generated each source.
-- **Graceful Error Handling & Fallbacks**: Live feedback during long multi-query network requests, validation banners, and empty states.
-- **Clean Configuration**: Uses Vite environment variables (`import.meta.env.VITE_API_URL`) to seamlessly toggle between local development and production.
+- **Editorial Design System**: Clean typography pairing (Instrument Serif, Space Mono, Inter) on a warm neutral canvas.
+- **Dynamic Research Summary**: High-contrast summary panel displaying total sources surfaced with per-angle breakdowns.
+- **Structured Source Cards**: Attribution tags, clean domain hostnames, and relevance indicators for each search result.
+- **Skeleton Pulse Loading**: Visual feedback while multi-angle search queries execute on the backend.
+- **Environment Configuration**: Uses Vite environment variables (`import.meta.env.VITE_API_URL`) to seamlessly switch between local development and production.
 
 ---
 
@@ -44,14 +43,11 @@ cd frontend
 # 2. Install dependencies
 npm install
 
-# 3. Create .env file
-# (VITE_API_URL=http://localhost:8000)
-
-# 4. Start local development server
+# 3. Start development server
 npm run dev
 ```
 
-App runs on `http://localhost:5173` (or `http://127.0.0.1:5173`).
+The application will be available at `http://localhost:5173`.
 
 ---
 
@@ -60,4 +56,5 @@ App runs on `http://localhost:5173` (or `http://127.0.0.1:5173`).
 ```bash
 npm run build
 ```
-Generates production-optimized static files in `dist/` ready for Vercel deployment.
+
+Generates production-optimized static assets in the `dist/` directory.
