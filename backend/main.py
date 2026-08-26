@@ -1,14 +1,8 @@
 """
-Team Forge — AI-Based Startup Idea Validator
-Milestone 1 backend: idea submission -> Web Search Agent -> Data Retrieval Agent.
-
-Web Search Agent uses the free, keyless `ddgs` (DuckDuckGo) library — no
-API key or billing setup required to run this.
-
-Later milestones plug in downstream agents (Market Opportunity, Competitor
-Discovery, SWOT/Risk, MVP Recommendation, Go-To-Market, Report Generation,
-Conversational Advisor) after the `structured_sources` step below — the
-shape produced by DataRetrievalAgent is the stable contract they'll consume.
+Startup Idea Validator — Backend API
+------------------------------------
+FastAPI service exposing idea validation endpoints.
+Orchestrates the WebSearchAgent and DataRetrievalAgent pipeline.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -19,12 +13,12 @@ from config import ALLOWED_ORIGINS
 from agents import WebSearchAgent, DataRetrievalAgent
 
 app = FastAPI(
-    title="Team Forge — Startup Idea Validator API",
-    description="Backend API powering AI-driven startup validation with live market research agents.",
+    title="Startup Idea Validator API",
+    description="Backend service powering market research and startup idea validation.",
     version="1.0.0",
 )
 
-# Enable CORS for frontend integration
+# Configure Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -33,17 +27,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize AI Pipeline Agents
+# Instantiate agents
 web_search_agent = WebSearchAgent()
 data_retrieval_agent = DataRetrievalAgent()
 
 
-
 class IdeaSubmission(BaseModel):
-    idea: str = Field(..., min_length=10, max_length=1000)
+    """Schema for incoming idea submission requests."""
+    idea: str = Field(..., min_length=10, max_length=1000, description="Startup description to validate.")
 
 
 class SourceRecord(BaseModel):
+    """Schema for individual structured source findings."""
     title: str
     url: str
     snippet: str
@@ -52,6 +47,7 @@ class SourceRecord(BaseModel):
 
 
 class ValidationResponse(BaseModel):
+    """Schema for the full validation response returned to the client."""
     idea: str
     sources: list[SourceRecord]
     summary: dict
@@ -59,25 +55,22 @@ class ValidationResponse(BaseModel):
 
 @app.get("/api/health")
 def health_check():
+    """Health check endpoint to verify backend service status."""
     return {"status": "ok"}
 
 
 @app.post("/api/validate", response_model=ValidationResponse)
 def validate_idea(submission: IdeaSubmission):
     """
-    Milestone 1 pipeline:
-      1. Web Search Agent expands the idea into search queries and fetches
-         live results from DuckDuckGo (free, no API key required).
-      2. Data Retrieval Agent cleans, de-duplicates, and structures those
-         results into a consistent source list.
-
-    The response here is deliberately just structured source data —
-    analysis (market opportunity, competitors, SWOT, etc.) is Milestone 2+.
+    Main validation pipeline:
+      1. WebSearchAgent generates multi-angle queries and searches live web data.
+      2. DataRetrievalAgent cleans, de-duplicates, and structures the findings.
+      3. Returns structured source records and coverage metrics.
     """
     try:
         raw_batches = web_search_agent.search(submission.idea)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Search agent failure: {str(exc)}")
 
     structured_sources = data_retrieval_agent.structure(raw_batches)
     summary = data_retrieval_agent.summarize_counts(structured_sources)

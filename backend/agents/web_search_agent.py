@@ -1,20 +1,8 @@
 """
 Web Search Agent
 -----------------
-Responsible for turning a startup idea into a set of targeted search
-queries and retrieving live market data for each one.
-
-Search provider: DuckDuckGo via the `ddgs` package — no API key, no
-signup, no card, no cost. This is a free community-run library that
-scrapes DuckDuckGo's public search results, so it's meant for a project
-like this, not high-volume production traffic. If the team later gets a
-paid key (Tavily, Serper, Brave, etc.), only this file needs to change —
-everything downstream depends on the `{query, response}` shape returned
-by `search()`, not on which provider produced it.
-
-This agent's only job is *fetching* raw results. Cleaning and structuring
-those results into a consistent shape is the Data Retrieval Agent's job
-(see agents/data_retrieval_agent.py).
+Takes a startup idea, expands it into targeted market research queries,
+and retrieves live search results using DuckDuckGo.
 """
 
 import urllib.request
@@ -33,12 +21,14 @@ except ImportError:
 
 
 class WebSearchAgent:
+    """Agent responsible for multi-angle market research and live web search."""
+
     def build_queries(self, idea: str) -> list[str]:
-        """Expand one startup idea into 3 targeted market research angles."""
+        """Expands the raw startup idea into three targeted research angles."""
         clean_idea = re.sub(r'^(a|an|the)\s+', '', idea.strip(), flags=re.IGNORECASE)
         words = clean_idea.split()
         short_idea = " ".join(words[:8]) if len(words) > 8 else clean_idea
-        
+
         return [
             f"{short_idea} market size and industry trends",
             f"{short_idea} competitors and alternatives",
@@ -46,7 +36,7 @@ class WebSearchAgent:
         ]
 
     def _search_ddg(self, query: str, max_results: int = 5) -> list[dict]:
-        """Query DuckDuckGo via DDGS or DDG Lite."""
+        """Queries DuckDuckGo via the ddgs library, with a lite HTML fallback."""
         results = []
         if DDGS is not None:
             try:
@@ -101,7 +91,7 @@ class WebSearchAgent:
         return results
 
     def _search_google_news(self, query: str, max_results: int = 4) -> list[dict]:
-        """Free keyless Google News Market Intelligence RSS feed."""
+        """Fetches market news coverage via RSS for fresh signals."""
         url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl=en-US&gl=US&ceid=US:en"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         try:
@@ -131,7 +121,7 @@ class WebSearchAgent:
             return []
 
     def _search_wikipedia(self, query: str, max_results: int = 3) -> list[dict]:
-        """Free keyless Wikipedia Knowledge search for industry & concept definitions."""
+        """Queries Wikipedia API for industry context and terminology."""
         url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(query)}&utf8=&format=json"
         req = urllib.request.Request(url, headers={"User-Agent": "TeamForgeStartupValidator/1.0"})
         try:
@@ -155,24 +145,21 @@ class WebSearchAgent:
 
     def search(self, idea: str, max_results_per_query: int = 5) -> list[dict]:
         """
-        Run all queries for this idea and return raw results per query,
-        in the same `{query, response: {results: [...]}}` shape the rest
-        of the pipeline expects (matches what a paid provider like Tavily
-        returns, so DataRetrievalAgent doesn't need to know which one ran).
+        Executes search queries for the idea across three research angles.
+        Returns a list with structure: `[{"query": query, "response": {"results": [...]}}]`
         """
         raw_batches = []
         queries = self.build_queries(idea)
 
         for query in queries:
-            # Step 1: Query DDG
+            # 1. Primary search: DuckDuckGo
             results = self._search_ddg(query, max_results=max_results_per_query)
 
-            # Step 2: If DDG is sparse, supplement with Google Market News RSS
+            # 2. Fallbacks if search is sparse
             if len(results) < 3:
                 news_results = self._search_google_news(query, max_results=3)
                 results.extend(news_results)
 
-            # Step 3: If still sparse, supplement with Wikipedia industry context
             if len(results) < 3:
                 wiki_results = self._search_wikipedia(query, max_results=2)
                 results.extend(wiki_results)
@@ -180,5 +167,3 @@ class WebSearchAgent:
             raw_batches.append({"query": query, "response": {"results": results}})
 
         return raw_batches
-
-
