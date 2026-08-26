@@ -6,7 +6,7 @@ Developed as part of the **Team Forge (ISB7.3)** project.
 
 ---
 
-## 📌 System Architecture & Pipeline
+## System Architecture & Pipeline
 
 The system decomposes startup concepts into targeted market research strategies and fetches real-time intelligence using an agent pipeline:
 
@@ -70,7 +70,7 @@ team-forge/
 
 ---
 
-## 🚀 Quickstart: Running Locally
+## Quickstart: Running Locally
 
 ### 1. Backend Setup
 
@@ -106,7 +106,7 @@ npm run dev
 
 ---
 
-## 🌐 Production Deployment
+## Production Deployment
 
 | Component | Platform | Build Command | Output / Start | Guide |
 | :--- | :--- | :--- | :--- | :--- |
@@ -117,7 +117,7 @@ For complete step-by-step deployment instructions, see [**DEPLOYMENT.md**](DEPLO
 
 ---
 
-## 📌 Branching Strategy
+## Branching Strategy
 
 - **`staging`**: Active development branch. All feature implementations and testing occur here.
 - **`main`**: Production release branch. Merged from `staging` via Pull Requests.
