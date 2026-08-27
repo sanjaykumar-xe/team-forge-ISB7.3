@@ -1,11 +1,19 @@
 import { useState } from "react";
 import "./App.css";
 import Header from "./components/Header";
-import SourceCard from "./components/SourceCard";
 import ResultsSummary from "./components/ResultsSummary";
+import CategorySection from "./components/CategorySection";
+import ValidationVerdict from "./components/ValidationVerdict";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
+const CATEGORIES = [
+  { key: "Competitors", title: "COMPETITORS" },
+  { key: "Industry News", title: "INDUSTRY NEWS" },
+  { key: "Customer Demand", title: "CUSTOMER DEMAND" },
+  { key: "Market Size & Trends", title: "MARKET SIZE & TRENDS" },
+];
 
 export default function App() {
   const [idea, setIdea] = useState("");
@@ -16,18 +24,10 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-
-
-
-
-
-
-
-
   async function handleSubmit(e) {
     e.preventDefault();
-    if (idea.trim().length < 10) {
-      setErrorMessage("Describe the idea in a bit more detail (10+ characters).");
+    if (idea.trim().length < 20) {
+      setErrorMessage("Please describe your startup idea in more detail (at least 20 characters) so we can extract accurate market signals.");
       setStatus("error");
       return;
     }
@@ -74,6 +74,19 @@ export default function App() {
     }
   }
 
+  // Group sources by category for rendering
+  const sourcesByCategory = result?.summary?.sources_by_category || {};
+  if (result?.sources && Object.keys(sourcesByCategory).length === 0) {
+    for (const cat of CATEGORIES) {
+      sourcesByCategory[cat.key] = [];
+    }
+    for (const s of result.sources) {
+      const catKey = s.category || "Industry News";
+      if (!sourcesByCategory[catKey]) sourcesByCategory[catKey] = [];
+      sourcesByCategory[catKey].push(s);
+    }
+  }
+
   return (
     <div className="page">
       <Header />
@@ -90,10 +103,9 @@ export default function App() {
               onChange={(e) => setIdea(e.target.value)}
               placeholder="e.g. A subscription box that delivers pre-portioned spices for weeknight recipes, sourced directly from small farms."
               rows={4}
-              maxLength={1000}
             />
             <div className="form-meta-row">
-              <span className="char-count">{idea.length}/1000</span>
+              <span className="char-count">{idea.length} {idea.length === 1 ? "character" : "characters"}</span>
             </div>
           </div>
 
@@ -107,8 +119,7 @@ export default function App() {
                 id="productName"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. SpiceBox, TransitPulse"
-                maxLength={100}
+                placeholder="e.g. SpiceBox, StudyPilot"
               />
             </div>
 
@@ -122,17 +133,19 @@ export default function App() {
                 list="industry-options"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. Food & Beverage, Transportation"
-                maxLength={100}
+                placeholder="e.g. EdTech / AI, Transportation"
               />
+              <p className="field-hint">
+                Adding a specific category like &quot;MusicTech&quot; or &quot;EdTech&quot; significantly improves search accuracy.
+              </p>
               <datalist id="industry-options">
+                <option value="EdTech / AI" />
                 <option value="Food & Beverage" />
                 <option value="Transportation & Mobility" />
                 <option value="Healthcare & HealthTech" />
                 <option value="Fintech & Financial Services" />
                 <option value="Artificial Intelligence & SaaS" />
                 <option value="E-Commerce & Retail" />
-                <option value="Education & EdTech" />
                 <option value="CleanTech & Sustainability" />
                 <option value="Real Estate & PropTech" />
                 <option value="Logistics & Supply Chain" />
@@ -151,26 +164,24 @@ export default function App() {
                 list="audience-options"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. Busy home cooks, Daily commuters, Freelance designers"
-                maxLength={150}
+                placeholder="e.g. School and college students, Busy home cooks"
               />
               <datalist id="audience-options">
+                <option value="School and college students" />
                 <option value="Home cooks & busy families" />
                 <option value="Urban commuters & transit riders" />
                 <option value="Small business owners & founders" />
                 <option value="Software developers & engineering teams" />
                 <option value="Remote workers & freelancers" />
-                <option value="Students & university educators" />
                 <option value="Healthcare professionals & clinics" />
                 <option value="E-commerce shoppers & consumers" />
               </datalist>
             </div>
           </div>
 
-
           <div className="form-action-row">
             <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Surveying…" : "Validate idea →"}
+              {status === "loading" ? "Analyzing & Validating…" : "Validate idea →"}
             </button>
           </div>
         </form>
@@ -179,7 +190,7 @@ export default function App() {
 
         {status === "loading" && (
           <div className="loading-container">
-            <p className="loading-eyebrow">SCOUTING CURRENT MARKET TERRITORY…</p>
+            <p className="loading-eyebrow">SYNTHESIZING MARKET INTELLIGENCE & EVALUATING IDEA VIABILITY…</p>
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -199,6 +210,16 @@ export default function App() {
 
         {status === "done" && result && (
           <section className="results">
+            {/* 1. Startup Validation Verdict & Strategic Analysis */}
+            {result.validation && (
+              <ValidationVerdict validation={result.validation} />
+            )}
+
+            {/* 2. Sources Summary Bar */}
+            <div className="evidence-header-divider">
+              <span className="evidence-divider-label">SUPPORTING MARKET EVIDENCE & SIGNALS</span>
+            </div>
+
             <ResultsSummary summary={result.summary} sources={result.sources} />
 
             {result.sources.length === 0 ? (
@@ -207,11 +228,19 @@ export default function App() {
                   "No sources came back for this idea. Try rephrasing with a more specific product category, market segment, or customer workflow."}
               </p>
             ) : (
-              <ul className="source-list">
-                {result.sources.map((source) => (
-                  <SourceCard key={source.url} source={source} />
-                ))}
-              </ul>
+              <div className="categorized-results-container">
+                {CATEGORIES.map((cat) => {
+                  const sources = sourcesByCategory[cat.key] || [];
+                  return (
+                    <CategorySection
+                      key={cat.key}
+                      title={cat.title}
+                      sources={sources}
+                      initialLimit={3}
+                    />
+                  );
+                })}
+              </div>
             )}
           </section>
         )}

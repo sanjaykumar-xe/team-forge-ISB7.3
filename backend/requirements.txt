@@ -6,3 +6,4 @@ pydantic==2.9.2
 lxml>=5.0.0
 wordfreq>=3.1.0
 langdetect>=1.0.9
+spacy>=3.7.0

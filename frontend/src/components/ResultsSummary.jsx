@@ -1,75 +1,43 @@
-/**
- * Format raw query string into a clean editorial label.
- */
-function getShortCategoryLabel(query = "") {
-  const q = query.toLowerCase();
-  if (q.includes("market size") || q.includes("industry")) {
-    return "Market Size & Trends";
-  }
-  if (q.includes("competitor") || q.includes("alternative")) {
-    return "Competitors & Alternatives";
-  }
-  if (q.includes("customer") || q.includes("demand") || q.includes("target")) {
-    return "Target Customers & Demand";
-  }
-  return "Market Intelligence";
-}
+const CATEGORY_ORDER = [
+  "Competitors",
+  "Industry News",
+  "Customer Demand",
+  "Market Size & Trends",
+];
 
 /**
  * ResultsSummary Component
- * High-contrast near-black panel showing total sources surfaced and category breakdowns.
+ * High-contrast near-black panel showing total sources surfaced and the 4 category counts.
  */
 export default function ResultsSummary({ summary, sources = [] }) {
   if (!summary) return null;
 
-  // Calculate average relevance per query angle
-  const statsByQuery = {};
-  for (const s of sources) {
-    const q = s.query || "general";
-    if (!statsByQuery[q]) {
-      statsByQuery[q] = { count: 0, totalScore: 0 };
-    }
-    statsByQuery[q].count += 1;
-    statsByQuery[q].totalScore += s.score || 0;
-  }
-
-  const queryEntries = Object.entries(summary.sources_per_query || {}).map(
-    ([query, count]) => {
-      const stats = statsByQuery[query];
-      const avgScore = stats && stats.count > 0 ? Math.round((stats.totalScore / stats.count) * 100) : null;
-      return {
-        query,
-        count,
-        label: getShortCategoryLabel(query),
-        avgScore,
-      };
-    }
-  );
+  const total = summary.total_sources ?? sources.length;
+  const categories = summary.sources_per_category || summary.sources_per_query || {};
 
   return (
     <div className="results-summary-panel">
       <div className="summary-main-stat">
-        <span className="summary-number">{summary.total_sources}</span>
+        <span className="summary-number">{total}</span>
         <div className="summary-label-group">
           <span className="summary-heading">Sources Surfaced</span>
-          <span className="summary-caption">Live market intelligence across 3 research angles</span>
+          <span className="summary-caption">Live market intelligence across 4 strategic categories</span>
         </div>
       </div>
 
       <div className="summary-breakdown-grid">
-        {queryEntries.map((item) => (
-          <div key={item.query} className="summary-category-item">
-            <span className="summary-cat-label">{item.label}</span>
-            <div className="summary-cat-metrics">
-              <span className="summary-cat-count">{item.count} sources</span>
-              {item.avgScore !== null && (
-                <span className="summary-cat-score">~{item.avgScore}% avg rel</span>
-              )}
+        {CATEGORY_ORDER.map((cat) => {
+          const count = categories[cat] || 0;
+          return (
+            <div key={cat} className="summary-category-item">
+              <span className="summary-cat-label">{cat}</span>
+              <div className="summary-cat-metrics">
+                <span className="summary-cat-count">{count} {count === 1 ? "source" : "sources"}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
-
