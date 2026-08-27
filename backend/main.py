@@ -33,8 +33,11 @@ data_retrieval_agent = DataRetrievalAgent()
 
 
 class IdeaSubmission(BaseModel):
-    """Schema for incoming idea submission requests."""
+    """Schema for incoming idea submission requests with optional structured fields."""
     idea: str = Field(..., min_length=10, max_length=1000, description="Startup description to validate.")
+    product_name: str | None = Field(default=None, max_length=100, description="Optional product or startup name.")
+    industry: str | None = Field(default=None, max_length=100, description="Optional industry or category.")
+    target_audience: str | None = Field(default=None, max_length=150, description="Optional target audience.")
 
 
 class SourceRecord(BaseModel):
@@ -63,15 +66,35 @@ def health_check():
 def validate_idea(submission: IdeaSubmission):
     """
     Main validation pipeline:
-      1. WebSearchAgent generates multi-angle queries and searches live web data.
-      2. DataRetrievalAgent cleans, de-duplicates, and structures the findings.
-      3. Returns structured source records and coverage metrics.
+      1. Validates English coherence to prevent gibberish from triggering fallbacks.
+      2. WebSearchAgent generates multi-angle queries and searches live web data.
+      3. DataRetrievalAgent language-filters, cleans, de-duplicates, and structures the findings.
+      4. Returns structured source records and coverage metrics.
     """
+    # 1. Nonsense/Gibberish check (Issue 4)
+    if not web_search_agent.is_valid_idea(submission.idea):
+        return ValidationResponse(
+            idea=submission.idea,
+            sources=[],
+            summary={
+                "total_sources": 0,
+                "sources_per_query": {},
+                "message": "This doesn't look like a real idea description — try describing it in plain English."
+            }
+        )
+
+    # 2. Search execution with query disambiguation (Issue 3 & 5)
     try:
-        raw_batches = web_search_agent.search(submission.idea)
+        raw_batches = web_search_agent.search(
+            idea=submission.idea,
+            product_name=submission.product_name,
+            industry=submission.industry,
+            target_audience=submission.target_audience,
+        )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Search agent failure: {str(exc)}")
 
+    # 3. Data structuring & language filtering (Issue 6)
     structured_sources = data_retrieval_agent.structure(raw_batches)
     summary = data_retrieval_agent.summarize_counts(structured_sources)
 

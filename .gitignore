@@ -5,7 +5,6 @@ backend/__pycache__/
 backend/**/__pycache__/
 *.pyc
 
-
 # Node
 frontend/node_modules/
 frontend/dist/
@@ -14,6 +13,13 @@ frontend/dist/
 .env
 backend/.env
 frontend/.env
+
+# Local team notes / scratch docs
+PROJECT_EXPLANATION.md
+*.jpg
+*.png
+backend/*_payload.json
+backend/*_results.json
 
 # OS/editor
 .DS_Store
