@@ -3,6 +3,7 @@
  */
 function getCleanHostname(rawUrl) {
   try {
+    if (!rawUrl) return "WEB SOURCE";
     const url = new URL(rawUrl);
     return url.hostname.replace(/^www\./i, "").toUpperCase();
   } catch {
@@ -11,18 +12,23 @@ function getCleanHostname(rawUrl) {
 }
 
 /**
- * Determine a concise category label and tag style class based on query text.
+ * Determine a concise category label and tag style class.
  */
-function getCategoryMeta(query = "") {
-  const q = query.toLowerCase();
-  if (q.includes("market size") || q.includes("industry")) {
-    return { label: "MARKET SIZE & TRENDS", className: "tag-blue" };
+function getCategoryMeta(categoryName = "", query = "") {
+  const cat = (categoryName || "").toLowerCase();
+  const q = (query || "").toLowerCase();
+
+  if (cat.includes("competitor") || q.includes("competitor") || q.includes("alternative")) {
+    return { label: "COMPETITORS", className: "tag-green" };
   }
-  if (q.includes("competitor") || q.includes("alternative")) {
-    return { label: "COMPETITORS & ALTERNATIVES", className: "tag-green" };
+  if (cat.includes("news") || q.includes("news") || q.includes("trend")) {
+    return { label: "INDUSTRY NEWS", className: "tag-blue" };
   }
-  if (q.includes("customer") || q.includes("demand") || q.includes("target")) {
-    return { label: "TARGET DEMAND", className: "tag-rose" };
+  if (cat.includes("demand") || cat.includes("customer") || q.includes("customer") || q.includes("demand")) {
+    return { label: "CUSTOMER DEMAND", className: "tag-rose" };
+  }
+  if (cat.includes("size") || cat.includes("market") || q.includes("size") || q.includes("growth")) {
+    return { label: "MARKET SIZE & TRENDS", className: "tag-amber" };
   }
   return { label: "MARKET INTELLIGENCE", className: "tag-default" };
 }
@@ -32,9 +38,16 @@ function getCategoryMeta(query = "") {
  * Sharp rectangular editorial card displaying research evidence, clean hostname, and relevance.
  */
 export default function SourceCard({ source }) {
+  if (!source) return null;
+
+  const rawScore = Number(source.score);
+  const relevancePct = isNaN(rawScore)
+    ? 0
+    : Math.min(100, Math.max(0, Math.round(rawScore * 100)));
+
   const hostname = getCleanHostname(source.url);
-  const relevancePct = Math.round((source.score || 0) * 100);
-  const category = getCategoryMeta(source.query);
+  const category = getCategoryMeta(source.category, source.query);
+  const isValidUrl = source.url && (source.url.startsWith("http://") || source.url.startsWith("https://"));
 
   return (
     <li className="source-card">
@@ -44,16 +57,22 @@ export default function SourceCard({ source }) {
         </span>
       </div>
 
-      <a
-        className="source-title"
-        href={source.url}
-        target="_blank"
-        rel="noreferrer noopener"
-      >
-        {source.title}
-      </a>
+      {isValidUrl ? (
+        <a
+          className="source-title"
+          href={source.url}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          {source.title || "Untitled source"}
+        </a>
+      ) : (
+        <span className="source-title">
+          {source.title || "Untitled source"}
+        </span>
+      )}
 
-      <p className="source-snippet">{source.snippet}</p>
+      <p className="source-snippet">{source.snippet || "No preview snippet available."}</p>
 
       <div className="source-footer">
         <span className="source-hostname">{hostname}</span>
@@ -62,4 +81,3 @@ export default function SourceCard({ source }) {
     </li>
   );
 }
-
