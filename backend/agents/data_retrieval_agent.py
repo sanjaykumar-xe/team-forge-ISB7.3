@@ -9,7 +9,6 @@ into structured, de-duplicated source records categorized across:
   - Market Size & Trends
 """
 
-import re
 from urllib.parse import urlparse
 from langdetect import detect, DetectorFactory
 from langdetect.lang_detect_exception import LangDetectException
@@ -43,11 +42,20 @@ BLOCKED_DOMAINS = [
     "macmillandictionary.com",
     "lexico.com",
     "thefreedictionary.com",
+    "myaccount.microsoft.com",
+    "support.microsoft.com",
+    "support.google.com",
+    "forums.digitalspy.com",
+    "math.stackexchange.com",
+    "stackexchange.com",
+    "answers.yahoo.com",
+    "quora.com",
+    "medicinesfaq.com",   # pharma drug-reference site; collides with product names
 ]
 
 
 class DataRetrievalAgent:
-    """Agent responsible for language filtering, deduplicating, domain filtering, keyword overlap validation, and categorizing search records."""
+    """Agent responsible for language filtering, deduplicating, domain filtering, and categorizing search records."""
 
     def _is_english(self, text: str) -> bool:
         """
@@ -81,30 +89,14 @@ class DataRetrievalAgent:
         except Exception:
             return False
 
-    def _has_keyword_overlap(self, title: str, snippet: str, core_keywords: set[str] | list[str] | None) -> bool:
-        """
-        Verifies that at least one extracted core keyword appears in the title or snippet.
-        Discards unrelated content like automotive news or unrelated industry articles.
-        """
-        if not core_keywords:
-            return True
-
-        combined = f"{title} {snippet}".lower()
-        tokens = set(re.findall(r'[a-zA-Z0-9]+', combined))
-
-        for kw in core_keywords:
-            kw_clean = kw.lower().strip()
-            if not kw_clean:
-                continue
-            if kw_clean in tokens or kw_clean in combined:
-                return True
-        return False
-
-    def structure(self, raw_batches: list[dict], core_keywords: set[str] | list[str] | None = None) -> list[dict]:
+    def structure(self, raw_batches: list[dict]) -> list[dict]:
         """
         Takes raw batch outputs from the WebSearchAgent, filters blocked domains,
-        applies keyword overlap checks, filters non-English content,
-        removes duplicate URLs, and returns structured source records.
+        filters non-English content, removes duplicate URLs, and returns structured
+        source records.
+
+        Note: core_keywords / keyword-overlap filtering removed — the LLM judge
+        in WebSearchAgent now handles relevance.
         """
         seen_urls = set()
         structured = []
@@ -119,11 +111,16 @@ class DataRetrievalAgent:
                 url = item.get("url", "").strip()
                 snippet = item.get("content", "").strip() or item.get("snippet", "").strip()
                 score = float(item.get("score", 0.0) or 0.0)
+                # Respect LLM-assigned category if present on item
+                item_category = item.get("category", category)
+                if item_category not in VALID_CATEGORIES:
+                    item_category = category
+                item_query = item.get("_query", query)
 
                 if not url or url in seen_urls:
                     continue
 
-                # Filter out blocked domains
+                # Filter out blocked domains (belt-and-suspenders — also done pre-LLM)
                 if self._is_blocked_domain(url):
                     continue
 
@@ -136,10 +133,6 @@ class DataRetrievalAgent:
                 ]):
                     continue
 
-                # Keyword overlap check: ensure result relates to the idea domain
-                if not self._has_keyword_overlap(title, snippet, core_keywords):
-                    continue
-
                 # English language filter
                 combined_content = f"{title}. {snippet}"
                 if not self._is_english(combined_content):
@@ -150,8 +143,8 @@ class DataRetrievalAgent:
                     "title": title,
                     "url": url,
                     "snippet": snippet,
-                    "query": query,
-                    "category": category,
+                    "query": item_query,
+                    "category": item_category,
                     "score": score,
                 })
 
