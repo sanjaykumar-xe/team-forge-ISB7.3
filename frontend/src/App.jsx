@@ -3,8 +3,7 @@ import "./App.css";
 import Header from "./components/Header";
 import ResultsSummary from "./components/ResultsSummary";
 import CategorySection from "./components/CategorySection";
-import ValidationVerdict from "./components/ValidationVerdict";
-
+import ExtractedMetadata from "./components/ExtractedMetadata";
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -103,6 +102,7 @@ export default function App() {
               onChange={(e) => setIdea(e.target.value)}
               placeholder="e.g. A subscription box that delivers pre-portioned spices for weeknight recipes, sourced directly from small farms."
               rows={4}
+              maxLength={1000}
             />
             <div className="form-meta-row">
               <span className="char-count">{idea.length} {idea.length === 1 ? "character" : "characters"}</span>
@@ -190,7 +190,7 @@ export default function App() {
 
         {status === "loading" && (
           <div className="loading-container">
-            <p className="loading-eyebrow">SYNTHESIZING MARKET INTELLIGENCE & EVALUATING IDEA VIABILITY…</p>
+            <p className="loading-eyebrow">SYNTHESIZING MARKET INTELLIGENCE…</p>
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -210,12 +210,10 @@ export default function App() {
 
         {status === "done" && result && (
           <section className="results">
-            {/* 1. Startup Validation Verdict & Strategic Analysis */}
-            {result.validation && (
-              <ValidationVerdict validation={result.validation} />
-            )}
+            {/* Extracted LLM Understanding */}
+            {result.extracted_data && <ExtractedMetadata data={result.extracted_data} />}
 
-            {/* 2. Sources Summary Bar */}
+            {/* 1. Sources Summary Bar */}
             <div className="evidence-header-divider">
               <span className="evidence-divider-label">SUPPORTING MARKET EVIDENCE & SIGNALS</span>
             </div>

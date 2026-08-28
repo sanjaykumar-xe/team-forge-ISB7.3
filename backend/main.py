@@ -2,7 +2,7 @@
 Startup Idea Validator — Backend API
 ------------------------------------
 FastAPI service exposing idea validation endpoints.
-Orchestrates the WebSearchAgent, DataRetrievalAgent, and ValidationAgent pipeline.
+Orchestrates the IdeaExtractionAgent, WebSearchAgent, and DataRetrievalAgent pipeline.
 """
 
 from fastapi import FastAPI, HTTPException
@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from config import ALLOWED_ORIGINS
-from agents import WebSearchAgent, DataRetrievalAgent, ValidationAgent
+from agents import IdeaExtractionAgent, WebSearchAgent, DataRetrievalAgent
 
 app = FastAPI(
     title="Startup Idea Validator API",
@@ -28,9 +28,9 @@ app.add_middleware(
 )
 
 # Instantiate agents
+idea_extraction_agent = IdeaExtractionAgent()
 web_search_agent = WebSearchAgent()
 data_retrieval_agent = DataRetrievalAgent()
-validation_agent = ValidationAgent()
 
 
 class IdeaSubmission(BaseModel):
@@ -54,9 +54,9 @@ class SourceRecord(BaseModel):
 class ValidationResponse(BaseModel):
     """Schema for the full validation response returned to the client."""
     idea: str
+    extracted_data: dict | None = Field(default=None, description="Structured extraction output from LLM.")
     sources: list[SourceRecord]
     summary: dict
-    validation: dict
 
 
 @app.get("/api/health")
@@ -69,16 +69,17 @@ def health_check():
 def validate_idea(submission: IdeaSubmission):
     """
     Main validation pipeline:
-      1. Validates English coherence to prevent gibberish from triggering fallbacks.
-      2. WebSearchAgent generates category-specific queries and searches live web data.
-      3. DataRetrievalAgent language-filters, cleans, categorizes, and structures findings.
-      4. ValidationAgent synthesizes the evidence into an idea viability verdict, score, & strategic insights.
-      5. Returns full validation report backed by categorized source evidence.
+      1. Validates English coherence to prevent gibberish from triggering search.
+      2. IdeaExtractionAgent extracts structured product, industry, and keyword metadata.
+      3. WebSearchAgent executes targeted Tavily searches across 4 market categories.
+      4. DataRetrievalAgent filters blocked domains, language-checks, deduplicates, and structures sources.
+      5. Returns categorized source evidence alongside extracted idea metadata.
     """
     # 1. Nonsense/Gibberish check
     if not web_search_agent.is_valid_idea(submission.idea):
         return ValidationResponse(
             idea=submission.idea,
+            extracted_data=None,
             sources=[],
             summary={
                 "total_sources": 0,
@@ -90,52 +91,40 @@ def validate_idea(submission: IdeaSubmission):
                 },
                 "sources_by_category": {},
                 "message": "This doesn't look like a real idea description — try describing it in plain English."
-            },
-            validation={
-                "overall_score": 0,
-                "verdict_badge": "INVALID INPUT",
-                "verdict_badge_class": "verdict-risk",
-                "verdict_title": "Please provide a descriptive startup idea in English",
-                "executive_summary": "We couldn't evaluate this submission because the input text did not contain recognizable English words or a coherent product proposition.",
-                "dimensions": {},
-                "strengths": [],
-                "risks": ["Input lacks clear product definition"],
-                "recommendations": ["Describe the core customer problem and proposed solution in 1-2 complete sentences."]
             }
         )
 
-    # 2. Search execution across 4 market categories
+    # 2. Extract structured metadata
     try:
-        raw_batches = web_search_agent.search(
+        extracted = idea_extraction_agent.extract(
             idea=submission.idea,
             product_name=submission.product_name,
             industry=submission.industry,
             target_audience=submission.target_audience,
         )
     except Exception as exc:
+        print(f"[main.py] IdeaExtractionAgent failed: {exc}")
+        extracted = {
+            "product_name": submission.product_name or "Startup",
+            "industry": submission.industry or "Software",
+            "target_audience": submission.target_audience or "Consumers",
+            "core_problem": submission.idea,
+            "keywords": submission.idea.split()[:4],
+        }
+
+    # 3. Search execution across 4 market categories via Tavily
+    try:
+        raw_batches = web_search_agent.search(structured_idea=extracted)
+    except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Search agent failure: {str(exc)}")
 
-    # 3. Data structuring, language filtering & category grouping
-    meaningful_keywords = web_search_agent.get_meaningful_keywords(
-        idea=submission.idea,
-        industry=submission.industry,
-        product_name=submission.product_name,
-    )
-    structured_sources = data_retrieval_agent.structure(raw_batches, core_keywords=meaningful_keywords)
+    # 4. Data structuring, language filtering & category grouping
+    structured_sources = data_retrieval_agent.structure(raw_batches)
     summary = data_retrieval_agent.summarize_counts(structured_sources)
-
-    # 4. Validation Synthesis Engine
-    validation_report = validation_agent.evaluate(
-        idea=submission.idea,
-        industry=submission.industry,
-        product_name=submission.product_name,
-        target_audience=submission.target_audience,
-        sources_by_category=summary.get("sources_by_category", {}),
-    )
 
     return ValidationResponse(
         idea=submission.idea,
+        extracted_data=extracted,
         sources=structured_sources,
         summary=summary,
-        validation=validation_report,
     )
