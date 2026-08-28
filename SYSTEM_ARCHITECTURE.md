@@ -17,6 +17,8 @@ Founders and product teams frequently struggle with subjective bias and tedious 
 
 ## 2. End-to-End System Architecture
 
+![System Architecture Diagram](docs/system_architecture_diagram.jpg)
+
 ### 2.1 Multi-Tier Topology & Component Diagram
 
 ```mermaid
