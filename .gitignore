@@ -19,7 +19,6 @@ backend/.env
 frontend/.env
 
 # Local team notes / scratch docs / test results
-PROJECT_EXPLANATION.md
 *.jpg
 *.png
 backend/*_payload.json
