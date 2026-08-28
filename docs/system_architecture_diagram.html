@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Startup Idea Validator — System Architecture Diagram</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --bg: #0F1117;
+      --card-bg: #1A1D27;
+      --border: #2E3346;
+      --text-main: #E2E8F0;
+      --text-muted: #94A3B8;
+      --accent-amber: #F59E0B;
+      --accent-blue: #38BDF8;
+      --accent-green: #34D399;
+      --accent-purple: #A78BFA;
+    }
+    body {
+      margin: 0;
+      padding: 32px;
+      background: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .header {
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      font-family: monospace;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 4px 10px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid var(--accent-amber);
+      margin-bottom: 12px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .diagram-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 32px;
+      margin-bottom: 32px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      overflow-x: auto;
+    }
+    .diagram-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0 0 20px;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13.5px;
+      color: var(--text-muted);
+    }
+    .legend-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="badge">Milestone 1 — System Architecture</span>
+      <h1>Autonomous Startup Idea Research Engine</h1>
+      <p>Multi-agent orchestration, structured domain extraction, parallel search synthesis, and verification flow.</p>
+    </div>
+
+    <!-- Tiered Architecture Diagram -->
+    <div class="diagram-card">
+      <div class="diagram-title">📦 Component Architecture & Multi-Tier Topology</div>
+      <div class="mermaid">
+flowchart TB
+    subgraph ClientTier["🌐 Client Tier (Presentation)"]
+        UI["React 18 SPA (Vite)<br/>• IdeaSubmission Form<br/>• ExtractedMetadata Dossier<br/>• CategorySection Grid"]
+    end
+
+    subgraph APITier["⚡ API Gateway & Routing (FastAPI)"]
+        Router["FastAPI Application Router (/api/validate)"]
+        GibberishCheck{"English Coherence &<br/>Gibberish Validator<br/>(wordfreq >= 0.45)"}
+    end
+
+    subgraph AgentTier["🧠 Multi-Agent Orchestration Tier"]
+        IEA["IdeaExtractionAgent<br/>• Domain Semantics Parser<br/>• Concept Normalizer<br/>• Contextual Keywords"]
+        
+        subgraph FailoverStack["Groq Model Failover Stack"]
+            M1["Primary: qwen/qwen3.8-27b"]
+            M2["Backup 1: allam-2-7b"]
+            M3["Backup 2: groq/compound-mini"]
+            M4["Deterministic Regex Fallback"]
+        end
+
+        WSA["WebSearchAgent<br/>• 4-Vector Query Builder<br/>• ThreadPoolExecutor(max_workers=4)<br/>• Native Relevance Scoring"]
+        DRA["DataRetrievalAgent<br/>• Blocklist Domain Filter<br/>• langdetect Seeded Verifier<br/>• Canonical URL Deduplication"]
+    end
+
+    subgraph SearchTier["🔍 Parallel 4-Category Search Vectors"]
+        C1["Vector 1: Competitors<br/>(topic='general', depth='advanced')"]
+        C2["Vector 2: Industry News<br/>(topic='news', depth='advanced')"]
+        C3["Vector 3: Customer Demand<br/>(topic='general', depth='advanced')"]
+        C4["Vector 4: Market Size & Trends<br/>(topic='general', depth='advanced')"]
+    end
+
+    subgraph CloudTier["☁️ External Cloud Services"]
+        GroqCloud["Groq Cloud Inference API<br/>(Ultra-Low Latency LPU)"]
+        TavilyAPI["Tavily Search API<br/>(AI-Native Clean Web Index)"]
+    end
+
+    %% Connections
+    UI -- "POST /api/validate (JSON)" --> Router
+    Router --> GibberishCheck
+    GibberishCheck -- "Valid Idea Text" --> IEA
+    GibberishCheck -- "Nonsense String" --> UI
+
+    IEA --> M1
+    M1 -.->|429 / Quota Error| M2
+    M2 -.->|429 / Quota Error| M3
+    M3 -.->|Exception| M4
+    M1 & M2 & M3 <--> GroqCloud
+
+    IEA -- "Structured Metadata<br/>{product, industry, keywords}" --> WSA
+    WSA --> C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 <--> TavilyAPI
+    
+    C1 & C2 & C3 & C4 -- "Raw Search Batches" --> DRA
+    DRA -- "Sanitized & Deduplicated Sources" --> Router
+    Router -- "ValidationResponse (HTTP 200)" --> UI
+
+    classDef clientStyle fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#F8FAFC;
+    classDef apiStyle fill:#1E293B,stroke:#A78BFA,stroke-width:2px,color:#F8FAFC;
+    classDef agentStyle fill:#1E293B,stroke:#F59E0B,stroke-width:2px,color:#F8FAFC;
+    classDef searchStyle fill:#1E293B,stroke:#34D399,stroke-width:2px,color:#F8FAFC;
+    classDef cloudStyle fill:#0F172A,stroke:#64748B,stroke-width:1.5px,stroke-dasharray: 4 4,color:#CBD5E1;
+
+    class UI clientStyle;
+    class Router,GibberishCheck apiStyle;
+    class IEA,WSA,DRA,M1,M2,M3,M4 agentStyle;
+    class C1,C2,C3,C4 searchStyle;
+    class GroqCloud,TavilyAPI cloudStyle;
+      </div>
+
+      <div class="legend-grid">
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #38BDF8;"></div>
+          <span><strong>Client Presentation:</strong> React 18, Vite SPA</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #A78BFA;"></div>
+          <span><strong>API Gateway:</strong> FastAPI Controller & Defense</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #F59E0B;"></div>
+          <span><strong>Intelligence Agents:</strong> LLM Extraction & Failover</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background: #34D399;"></div>
+          <span><strong>Search & Retrieval:</strong> Parallel ThreadPool & Cleaning</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sequence Flow Diagram -->
+    <div class="diagram-card">
+      <div class="diagram-title">🔄 End-to-End Sequence & Data Flow</div>
+      <div class="mermaid">
+sequenceDiagram
+    autonumber
+    actor User as User / Browser
+    participant App as React Frontend (App.jsx)
+    participant API as FastAPI Backend (main.py)
+    participant IEA as IdeaExtractionAgent
+    participant Groq as Groq Cloud LLM
+    participant WSA as WebSearchAgent
+    participant Tavily as Tavily Search API
+    participant DRA as DataRetrievalAgent
+
+    User->>App: Submits startup idea text
+    App->>API: POST /api/validate { idea, product_name? }
+    
+    API->>API: is_valid_idea() coherence check
+    
+    API->>IEA: extract(idea, product_name)
+    IEA->>Groq: ChatCompletion (qwen/qwen3.8-27b)
+    Groq-->>IEA: Structured JSON { product_name, industry, keywords, core_problem }
+    IEA-->>API: Extracted domain metadata
+
+    API->>WSA: search(structured_idea)
+    par Concurrent Category Searches (max_workers=4)
+        WSA->>Tavily: Search Competitors (advanced depth)
+        WSA->>Tavily: Search Industry News (topic="news")
+        WSA->>Tavily: Search Customer Demand (advanced depth)
+        WSA->>Tavily: Search Market Size (advanced depth)
+    end
+    Tavily-->>WSA: 4 Result batches with native scores
+    WSA-->>API: Raw category batches
+
+    API->>DRA: structure(raw_batches)
+    DRA->>DRA: Filter BLOCKED_DOMAINS
+    DRA->>DRA: Validate English (langdetect)
+    DRA->>DRA: Canonical URL deduplication
+    DRA->>DRA: Sort by score descending & compute metrics
+    DRA-->>API: Structured sources & summary counts
+
+    API-->>App: ValidationResponse { extracted_data, sources, summary }
+    App->>User: Renders AI Dossier card + Animated count + 4 Category grids
+      </div>
+    </div>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'dark',
+      securityLevel: 'loose',
+      flowchart: { curve: 'basis', htmlLabels: true },
+      themeVariables: {
+        darkMode: true,
+        background: '#1A1D27',
+        primaryColor: '#1E293B',
+        primaryTextColor: '#F8FAFC',
+        primaryBorderColor: '#38BDF8',
+        lineColor: '#64748B',
+        secondaryColor: '#1E293B',
+        tertiaryColor: '#0F172A'
+      }
+    });
+  </script>
+</body>
+</html>

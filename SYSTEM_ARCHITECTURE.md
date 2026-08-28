@@ -17,7 +17,116 @@ Founders and product teams frequently struggle with subjective bias and tedious 
 
 ## 2. End-to-End System Architecture
 
+### 2.1 Multi-Tier Topology & Component Diagram
+
+```mermaid
+flowchart TB
+    subgraph ClientTier["🌐 Client Presentation Tier (React 18 + Vite)"]
+        UI["IdeaSubmission Form & Search Results UI"]
+        Dossier["ExtractedMetadata Dossier Card"]
+        Summary["ResultsSummary Stat Panel (Count-Up)"]
+        Grid["CategorySection (4 Grid Columns)"]
+        UI --> Dossier & Summary & Grid
+    end
+
+    subgraph APITier["⚡ API Gateway & Routing (FastAPI)"]
+        Router["FastAPI Application Router (/api/validate)"]
+        GibberishCheck{"English Coherence &<br/>Gibberish Validator<br/>(wordfreq >= 0.45)"}
+    end
+
+    subgraph AgentTier["🧠 Multi-Agent Orchestration Tier"]
+        IEA["IdeaExtractionAgent<br/>• Domain Semantics Parser<br/>• Concept Normalizer<br/>• Contextual Keywords"]
+        
+        subgraph FailoverStack["Groq Model Failover Stack"]
+            M1["Primary: qwen/qwen3.8-27b"]
+            M2["Backup 1: allam-2-7b"]
+            M3["Backup 2: groq/compound-mini"]
+            M4["Deterministic Regex Fallback"]
+        end
+
+        WSA["WebSearchAgent<br/>• 4-Vector Query Builder<br/>• ThreadPoolExecutor(max_workers=4)<br/>• Native Relevance Scoring"]
+        DRA["DataRetrievalAgent<br/>• Blocklist Domain Filter<br/>• langdetect Seeded Verifier<br/>• Canonical URL Deduplication"]
+    end
+
+    subgraph SearchTier["🔍 Parallel 4-Category Search Vectors"]
+        C1["Vector 1: Competitors<br/>(topic='general', depth='advanced')"]
+        C2["Vector 2: Industry News<br/>(topic='news', depth='advanced')"]
+        C3["Vector 3: Customer Demand<br/>(topic='general', depth='advanced')"]
+        C4["Vector 4: Market Size & Trends<br/>(topic='general', depth='advanced')"]
+    end
+
+    subgraph CloudTier["☁️ External Cloud Services"]
+        GroqCloud["Groq Cloud Inference API<br/>(Ultra-Low Latency LPU)"]
+        TavilyAPI["Tavily Search API<br/>(AI-Native Clean Web Index)"]
+    end
+
+    %% Connections
+    UI -- "POST /api/validate (JSON)" --> Router
+    Router --> GibberishCheck
+    GibberishCheck -- "Valid Idea Text" --> IEA
+    GibberishCheck -- "Nonsense String" --> UI
+
+    IEA --> M1
+    M1 -.->|429 / Quota Error| M2
+    M2 -.->|429 / Quota Error| M3
+    M3 -.->|Exception| M4
+    M1 & M2 & M3 <--> GroqCloud
+
+    IEA -- "Structured Metadata<br/>{product, industry, keywords}" --> WSA
+    WSA --> C1 & C2 & C3 & C4
+    C1 & C2 & C3 & C4 <--> TavilyAPI
+    
+    C1 & C2 & C3 & C4 -- "Raw Search Batches" --> DRA
+    DRA -- "Sanitized & Deduplicated Sources" --> Router
+    Router -- "ValidationResponse (HTTP 200)" --> UI
 ```
+
+### 2.2 Sequence & Data Flow Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User / Browser
+    participant App as React Frontend (App.jsx)
+    participant API as FastAPI Backend (main.py)
+    participant IEA as IdeaExtractionAgent
+    participant Groq as Groq Cloud LLM
+    participant WSA as WebSearchAgent
+    participant Tavily as Tavily Search API
+    participant DRA as DataRetrievalAgent
+
+    User->>App: Submits startup idea text
+    App->>API: POST /api/validate { idea, product_name? }
+    
+    API->>API: is_valid_idea() coherence check
+    
+    API->>IEA: extract(idea, product_name)
+    IEA->>Groq: ChatCompletion (qwen/qwen3.8-27b)
+    Groq-->>IEA: Structured JSON { product_name, industry, keywords, core_problem }
+    IEA-->>API: Extracted domain metadata
+
+    API->>WSA: search(structured_idea)
+    par Concurrent Category Searches (max_workers=4)
+        WSA->>Tavily: Search Competitors (advanced depth)
+        WSA->>Tavily: Search Industry News (topic="news")
+        WSA->>Tavily: Search Customer Demand (advanced depth)
+        WSA->>Tavily: Search Market Size (advanced depth)
+    end
+    Tavily-->>WSA: 4 Result batches with native scores
+    WSA-->>API: Raw category batches
+
+    API->>DRA: structure(raw_batches)
+    DRA->>DRA: Filter BLOCKED_DOMAINS
+    DRA->>DRA: Validate English (langdetect)
+    DRA->>DRA: Canonical URL deduplication
+    DRA->>DRA: Sort by score descending & compute metrics
+    DRA-->>API: Structured sources & summary counts
+
+    API-->>App: ValidationResponse { extracted_data, sources, summary }
+    App->>User: Renders AI Dossier card + Animated count + 4 Category grids
+```
+
+### 2.3 Detailed ASCII Flow Matrix
                                  ┌─────────────────────────────────────────┐
                                  │          Client Browser (SPA)           │
                                  │     React 18 + Vite (Vanilla CSS)       │
