@@ -110,7 +110,7 @@ The application is built on a decoupled, production-ready client-server architec
 ## 3. Multi-Agent Pipeline Deep-Dive
 
 ### 3.1 `IdeaExtractionAgent` (Groq LLM)
-- **Source File**: [`backend/agents/idea_extraction_agent.py`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/agents/idea_extraction_agent.py)
+- **Source File**: [`backend/agents/idea_extraction_agent.py`](backend/agents/idea_extraction_agent.py)
 - **Problem Solved**: Unstructured natural language inputs frequently include ambiguous phrasing, filler words (*"I want to build an app that..."*), and polysemous terms. For example, in *"a marketplace that lets users find and book local fitness classes"*, simple token splitters grab *"book"*, polluting results with physical book reviews and bookstores. The LLM understands that *"book"* is an action verb in the fitness domain and extracts `["fitness classes", "local booking", "wellness marketplace"]`.
 - **Multi-Model Failover Strategy**:
   1. `qwen/qwen3.8-27b` (Primary: high semantic comprehension, strict JSON compliance).
@@ -119,7 +119,7 @@ The application is built on a decoupled, production-ready client-server architec
   4. `_fallback_extraction` (Deterministic heuristic regex parser if all external network calls fail).
 
 ### 3.2 `WebSearchAgent` (Tavily Search API)
-- **Source File**: [`backend/agents/web_search_agent.py`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/agents/web_search_agent.py)
+- **Source File**: [`backend/agents/web_search_agent.py`](backend/agents/web_search_agent.py)
 - **Problem Solved**: General search scrapers (e.g. DuckDuckGo, Bing scraping) suffer from IP throttling, CAPTCHAs, and lack of relevance scoring. The Web Search Agent connects to the Tavily AI-native search engine.
 - **Concurrency**: Dispatches 4 parallel threads via `ThreadPoolExecutor(max_workers=4)`.
 - **Query Construction**:
@@ -129,7 +129,7 @@ The application is built on a decoupled, production-ready client-server architec
   - *Market Size*: `{keywords} [{industry}] market size growth forecast`
 
 ### 3.3 `DataRetrievalAgent` (Sanitization & Deduplication)
-- **Source File**: [`backend/agents/data_retrieval_agent.py`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/agents/data_retrieval_agent.py)
+- **Source File**: [`backend/agents/data_retrieval_agent.py`](backend/agents/data_retrieval_agent.py)
 - **Filters & Verification**:
   - **`BLOCKED_DOMAINS`**: Strips encyclopedias, dictionaries, and generic forums (`wiktionary.org`, `wikipedia.org`, `dictionary.com`, `yelp.com`, `quora.com`, `medicinesfaq.com`).
   - **Language Filtering**: Evaluates combined title and snippet text with `langdetect` seeded with `DetectorFactory.seed = 0` to discard non-English search noise.
@@ -140,7 +140,7 @@ The application is built on a decoupled, production-ready client-server architec
 
 ## 4. Frontend Architecture & User Interface
 
-The frontend is located in [`frontend/src/`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/frontend/src/) and built with React 18 and Vite:
+The frontend is located in [`frontend/src/`](frontend/src/) and built with React 18 and Vite:
 
 ### 📁 Component Hierarchy & Structure
 ```
@@ -159,11 +159,11 @@ frontend/src/
 ```
 
 ### 🎨 Key Frontend Features
-1. **Snippet Sanitizer & Sentence Truncation ([`SourceCard.jsx`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/frontend/src/components/SourceCard.jsx)):**
+1. **Snippet Sanitizer & Sentence Truncation ([`SourceCard.jsx`](frontend/src/components/SourceCard.jsx)):**
    - Strips markdown hashes (`###`), pipe-table lines (`| | |`), and bracket citations (`[...]`).
    - Truncates text at sentence boundaries (`.`, `!`, `?`) within ~180–220 characters.
    - Provides an inline `"Read more ↓"` / `"Read less ↑"` toggle for longer excerpts.
-2. **Equal-Height Grid & Pinned Footers ([`App.css`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/frontend/src/App.css)):**
+2. **Equal-Height Grid & Pinned Footers ([`App.css`](frontend/src/App.css)):**
    - `.category-grid` enforces `grid-auto-rows: 1fr` and `align-items: stretch`.
    - `.source-footer` uses `margin-top: auto` to anchor hostname tags and relevance percentages to the bottom of each card.
 3. **Micro-Interactions & Accessibility:**
@@ -175,7 +175,7 @@ frontend/src/
 
 ## 5. Backend Architecture & API Endpoints
 
-The backend is located in [`backend/`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/) and powered by FastAPI and Uvicorn:
+The backend is located in [`backend/`](backend/) and powered by FastAPI and Uvicorn:
 
 ### Endpoints
 - **`GET /api/health`**: Simple health check returning `{"status": "ok"}`.
@@ -260,7 +260,7 @@ VITE_API_URL=http://127.0.0.1:8000
 
 ## 8. Testing, Benchmarking & Evaluation
 
-The repository includes an evaluation benchmark suite in [`backend/scripts/run_eval.py`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/scripts/run_eval.py).
+The repository includes an evaluation benchmark suite in [`backend/scripts/run_eval.py`](backend/scripts/run_eval.py).
 
 ### How to Run the 10-Idea Evaluation Suite:
 ```bash
@@ -277,4 +277,4 @@ This tests 10 diverse startup concepts across B2B SaaS, DevSecOps, EdTech, Pet C
 | **Backend** | **Render** (Web Service) | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | `GROQ_API_KEY`, `TAVILY_API_KEY`, `ALLOWED_ORIGINS` |
 | **Frontend** | **Vercel** (Static SPA) | `npm run build` | Serves `dist/` | `VITE_API_URL` (points to Render backend URL) |
 
-For complete step-by-step deployment instructions, see [**`DEPLOYMENT.md`**](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/DEPLOYMENT.md).
+For complete step-by-step deployment instructions, see [**`DEPLOYMENT.md`**](DEPLOYMENT.md).

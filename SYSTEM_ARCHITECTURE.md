@@ -350,7 +350,7 @@ Status: `200 OK`
 
 ## 7. Evaluation & Regression Harness
 
-The repository includes a standalone automated evaluation suite located in [`backend/scripts/run_eval.py`](file:///c:/Users/HAREESH%20K%20M/OneDrive/Desktop/team-forge/backend/scripts/run_eval.py) that tests 10 diverse startup concepts across software, hardware, B2B SaaS, and consumer verticals:
+The repository includes a standalone automated evaluation suite located in [`backend/scripts/run_eval.py`](backend/scripts/run_eval.py) that tests 10 diverse startup concepts across software, hardware, B2B SaaS, and consumer verticals:
 
 1. **GuardrailCI** (DevSecOps CI/CD vulnerability scanner)
 2. **CareerCraft AI** (EdTech college career coach)
