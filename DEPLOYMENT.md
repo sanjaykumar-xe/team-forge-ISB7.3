@@ -8,7 +8,7 @@ This document provides complete, step-by-step instructions for deploying the **B
 
 | Tier | Platform | Build Command | Start / Output | Env Variables |
 | :--- | :--- | :--- | :--- | :--- |
-| **Backend** | **Render** (Web Service) | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | `ALLOWED_ORIGINS` *(optional)* |
+| **Backend** | **Render** (Web Service) | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | `GROQ_API_KEY`, `TAVILY_API_KEY`, `ALLOWED_ORIGINS` |
 | **Frontend** | **Vercel** (Static / SPA) | `npm run build` | `dist/` (Output Directory) | `VITE_API_URL` *(Render URL)* |
 
 ---
