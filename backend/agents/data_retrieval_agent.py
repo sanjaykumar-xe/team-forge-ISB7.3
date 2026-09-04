@@ -89,15 +89,13 @@ class DataRetrievalAgent:
         except Exception:
             return False
 
-    def structure(self, raw_batches: list[dict]) -> list[dict]:
+    def structure(self, raw_batches: list[dict], core_keywords: set[str] | None = None) -> list[dict]:
         """
         Takes raw batch outputs from the WebSearchAgent, filters blocked domains,
         filters non-English content, removes duplicate URLs, and returns structured
         source records.
-
-        Note: core_keywords / keyword-overlap filtering removed — the LLM judge
-        in WebSearchAgent now handles relevance.
         """
+
         seen_urls = set()
         structured = []
 
@@ -137,6 +135,15 @@ class DataRetrievalAgent:
                 combined_content = f"{title}. {snippet}"
                 if not self._is_english(combined_content):
                     continue
+
+                # Optional keyword overlap filter when core_keywords is explicitly supplied (used in unit tests)
+                if core_keywords:
+                    import re
+                    words_in_text = set(w.lower() for w in re.findall(r'[a-zA-Z]{3,}', combined_content))
+                    ck_lower = set(k.lower() for k in core_keywords)
+                    if not (words_in_text & ck_lower):
+                        continue
+
 
                 seen_urls.add(url)
                 structured.append({

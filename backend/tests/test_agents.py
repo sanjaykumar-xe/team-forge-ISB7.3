@@ -156,12 +156,13 @@ def test_graceful_fallback():
 
 if __name__ == "__main__":
     test_stop_word_stripping()
-    print("✓ test_stop_word_stripping passed")
+    print("[PASS] test_stop_word_stripping")
     test_dictionary_blocklist()
-    print("✓ test_dictionary_blocklist passed")
+    print("[PASS] test_dictionary_blocklist")
     test_keyword_overlap_filtering()
-    print("✓ test_keyword_overlap_filtering passed")
+    print("[PASS] test_keyword_overlap_filtering")
     test_graceful_fallback()
-    print("✓ test_graceful_fallback passed")
+    print("[PASS] test_graceful_fallback")
     print("\nAll agent test assertions passed successfully!")
+
 

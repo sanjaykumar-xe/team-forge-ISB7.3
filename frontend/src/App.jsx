@@ -1,11 +1,15 @@
 import { useState } from "react";
 import "./App.css";
 import Header from "./components/Header";
+import ExtractedMetadata from "./components/ExtractedMetadata";
 import ResultsSummary from "./components/ResultsSummary";
 import CategorySection from "./components/CategorySection";
-import ExtractedMetadata from "./components/ExtractedMetadata";
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import MarketOpportunity from "./components/MarketOpportunity";
+import CustomerSegments from "./components/CustomerSegments";
+import CompetitorAnalysis from "./components/CompetitorAnalysis";
+import WhiteSpaceAnalysis from "./components/WhiteSpaceAnalysis";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const CATEGORIES = [
   { key: "Competitors", title: "COMPETITORS" },
@@ -25,8 +29,10 @@ export default function App() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (idea.trim().length < 20) {
-      setErrorMessage("Please describe your startup idea in more detail (at least 20 characters) so we can extract accurate market signals.");
+    if (idea.trim().length < 15) {
+      setErrorMessage(
+        "Please describe your startup idea in a bit more detail (at least 15 characters) so we can extract accurate domain context and market signals."
+      );
       setStatus("error");
       return;
     }
@@ -68,7 +74,7 @@ export default function App() {
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setErrorMessage(err.message || "Something went wrong. Try again.");
+      setErrorMessage(err.message || "Something went wrong during market analysis. Please try again.");
       setStatus("error");
     }
   }
@@ -91,21 +97,23 @@ export default function App() {
       <Header />
 
       <main className="dossier">
+        {/* Natural Language Submission Form — Zero Upper Character Limit */}
         <form className="submission-form" onSubmit={handleSubmit}>
           <div className="form-field main-idea-field">
             <label htmlFor="idea" className="field-label">
-              DESCRIBE THE IDEA <span className="label-required">*</span>
+              DESCRIBE THE STARTUP IDEA <span className="label-required">*</span>
             </label>
             <textarea
               id="idea"
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
-              placeholder="e.g. A subscription box that delivers pre-portioned spices for weeknight recipes, sourced directly from small farms."
-              rows={4}
-              maxLength={1000}
+              placeholder="Describe your startup concept in detail. You can include product workflows, target customers, data sources, or specific business mechanisms (no length limits)."
+              rows={5}
             />
             <div className="form-meta-row">
-              <span className="char-count">{idea.length} {idea.length === 1 ? "character" : "characters"}</span>
+              <span className="char-count">
+                {idea.length.toLocaleString()} {idea.length === 1 ? "character" : "characters"} (No Limit)
+              </span>
             </div>
           </div>
 
@@ -119,13 +127,13 @@ export default function App() {
                 id="productName"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. SpiceBox, StudyPilot"
+                placeholder="e.g. StudyPilot, FarmOptima, ClinicGuard"
               />
             </div>
 
             <div className="form-field">
               <label htmlFor="industry" className="field-label">
-                INDUSTRY OR CATEGORY <span className="label-optional">(OPTIONAL)</span>
+                INDUSTRY OR VERTICAL <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
                 type="text"
@@ -133,64 +141,55 @@ export default function App() {
                 list="industry-options"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. EdTech / AI, Transportation"
+                placeholder="e.g. HealthTech, AgriTech, FinTech / Education"
               />
-              <p className="field-hint">
-                Adding a specific category like &quot;MusicTech&quot; or &quot;EdTech&quot; significantly improves search accuracy.
-              </p>
               <datalist id="industry-options">
-                <option value="EdTech / AI" />
-                <option value="Food & Beverage" />
-                <option value="Transportation & Mobility" />
                 <option value="Healthcare & HealthTech" />
+                <option value="Agriculture & AgriTech" />
                 <option value="Fintech & Financial Services" />
-                <option value="Artificial Intelligence & SaaS" />
-                <option value="E-Commerce & Retail" />
+                <option value="EdTech & Education" />
+                <option value="DevSecOps & Developer Tools" />
                 <option value="CleanTech & Sustainability" />
-                <option value="Real Estate & PropTech" />
                 <option value="Logistics & Supply Chain" />
-                <option value="Developer Tools & DevOps" />
-                <option value="Media & Entertainment" />
+                <option value="Artificial Intelligence & SaaS" />
               </datalist>
             </div>
 
             <div className="form-field form-field-full">
               <label htmlFor="targetAudience" className="field-label">
-                TARGET AUDIENCE <span className="label-optional">(OPTIONAL)</span>
+                TARGET CUSTOMER PROFILE <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
                 type="text"
                 id="targetAudience"
-                list="audience-options"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. School and college students, Busy home cooks"
+                placeholder="e.g. Small and mid-sized clinics, Smallholder farmers, University students"
               />
-              <datalist id="audience-options">
-                <option value="School and college students" />
-                <option value="Home cooks & busy families" />
-                <option value="Urban commuters & transit riders" />
-                <option value="Small business owners & founders" />
-                <option value="Software developers & engineering teams" />
-                <option value="Remote workers & freelancers" />
-                <option value="Healthcare professionals & clinics" />
-                <option value="E-commerce shoppers & consumers" />
-              </datalist>
             </div>
           </div>
 
           <div className="form-action-row">
             <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Analyzing & Validating…" : "Validate idea →"}
+              {status === "loading" ? "Orchestrating Multi-Agent Pipeline…" : "Validate startup idea →"}
             </button>
           </div>
         </form>
 
         {status === "error" && <p className="error-banner">{errorMessage}</p>}
 
+        {/* Skeleton Loading State */}
         {status === "loading" && (
           <div className="loading-container">
-            <p className="loading-eyebrow">SYNTHESIZING MARKET INTELLIGENCE…</p>
+            <div className="loading-status-badge">
+              <span className="pulsing-dot" />
+              <span className="loading-eyebrow">
+                EXECUTING 5-AGENT CREWAI VALIDATION PIPELINE…
+              </span>
+            </div>
+            <p className="loading-subcaption">
+              Extracting domain parameters &bull; Querying 4 research vectors &bull; Sizing market &bull; Mapping competitors &bull; Triangulating white space
+            </p>
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -208,14 +207,37 @@ export default function App() {
           </div>
         )}
 
+        {/* Results Presentation */}
         {status === "done" && result && (
           <section className="results">
-            {/* Extracted LLM Understanding */}
+            {/* 1. AI Domain Extraction Dossier */}
             {result.extracted_data && <ExtractedMetadata data={result.extracted_data} />}
 
-            {/* 1. Sources Summary Bar */}
+            {/* 2. CORE NOVELTY: Evidence-Backed Market White-Space Engine */}
+            {result.white_space_analysis && (
+              <WhiteSpaceAnalysis data={result.white_space_analysis} />
+            )}
+
+            {/* 3. Market Opportunity & Sizing */}
+            {result.market_analysis && (
+              <MarketOpportunity data={result.market_analysis} />
+            )}
+
+            {/* 4. Target Customer Segmentation */}
+            {result.market_analysis?.customer_segments && (
+              <CustomerSegments segments={result.market_analysis.customer_segments} />
+            )}
+
+            {/* 5. Competitor Discovery & Comparison Matrix */}
+            {result.competitor_analysis && (
+              <CompetitorAnalysis data={result.competitor_analysis} />
+            )}
+
+            {/* 6. Supporting Market Evidence & Source Records */}
             <div className="evidence-header-divider">
-              <span className="evidence-divider-label">SUPPORTING MARKET EVIDENCE & SIGNALS</span>
+              <span className="evidence-divider-label">
+                § SUPPORTING RESEARCH EVIDENCE & EMPIRICAL SOURCES
+              </span>
             </div>
 
             <ResultsSummary summary={result.summary} sources={result.sources} />
@@ -223,7 +245,7 @@ export default function App() {
             {result.sources.length === 0 ? (
               <p className="empty-state">
                 {result.summary?.message ||
-                  "No sources came back for this idea. Try rephrasing with a more specific product category, market segment, or customer workflow."}
+                  "No search sources returned. Try refining domain keywords or category terms."}
               </p>
             ) : (
               <div className="categorized-results-container">

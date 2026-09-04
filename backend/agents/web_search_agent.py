@@ -49,6 +49,24 @@ class WebSearchAgent:
         ratio = valid_count / len(words)
         return valid_count >= 2 and ratio >= 0.45
 
+    def extract_core_keywords(self, idea: str) -> str:
+        """Extracts high-signal domain keywords from natural language text, stripping conversational stop words."""
+        cleaned = re.sub(
+            r'^(i want to (build|create|make|launch|develop|start)\s+|'
+            r'(a|an )?[a-z]+ (app|platform|tool|service|system|web app|website|marketplace|saas|startup|product|solution) (that|which|to|for|helping)\s+|'
+            r'(a|an) (startup|product|solution) (that|to|for)\s+)',
+            '', idea.strip(), flags=re.IGNORECASE
+        )
+        words = [w for w in re.findall(r'[a-zA-Z0-9]+', cleaned) if len(w) > 2]
+        generic = {
+            "app", "platform", "tool", "service", "system", "that", "helps", "help", "with", "for",
+            "and", "the", "you", "your", "our", "their", "user", "users", "people", "built", "designed",
+            "want", "create", "suggests", "suggest", "based"
+        }
+        filtered = [w.lower() for w in words if w.lower() not in generic]
+        return " ".join(filtered[:5]) or " ".join(words[:4])
+
+
     def build_queries(self, structured_idea: dict) -> dict[str, str]:
         """
         Constructs tailored search queries for each of the 4 research categories
