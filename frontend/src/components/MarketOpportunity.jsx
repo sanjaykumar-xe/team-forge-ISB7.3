@@ -2,8 +2,8 @@ import React from "react";
 
 /**
  * MarketOpportunity Component
- * Displays quantitative & qualitative market opportunity sizing, CAGR growth trends,
- * and market attractiveness scorecard with traceable source citations.
+ * Displays quantitative TAM/SAM/CAGR market sizing, growth dynamics,
+ * and strategic market attractiveness scorecard.
  */
 export default function MarketOpportunity({ data }) {
   if (!data) return null;
@@ -20,12 +20,12 @@ export default function MarketOpportunity({ data }) {
   const confidencePct = Math.round((confidence || 0.85) * 100);
 
   return (
-    <div className="market-opportunity-section">
+    <div id="section-market" className="market-opportunity-section">
       {/* Header */}
       <div className="section-masthead">
         <div className="section-eyebrow-row">
-          <span className="section-badge badge-amber">§ MARKET OPPORTUNITY & SIZING</span>
-          <span className="section-confidence">Confidence: {confidencePct}%</span>
+          <span className="section-badge badge-amber">§ MARKET SIZING & POTENTIAL</span>
+          <span className="section-confidence">[CONFIDENCE SCORE: {confidencePct}%]</span>
         </div>
         <h3 className="section-headline">Market Potential & Economic Dynamics</h3>
         {summary && <p className="section-summary-text">{summary}</p>}
@@ -34,48 +34,53 @@ export default function MarketOpportunity({ data }) {
       {/* Market Sizing Cards */}
       {market_size.length > 0 && (
         <div className="market-size-grid">
-          {market_size.map((item, idx) => (
-            <div key={idx} className="market-size-card">
-              <div className="market-size-header">
-                <span className="market-type-pill">{item.market_type || "Market Size"}</span>
-                {item.forecast_year && (
-                  <span className="forecast-pill">Target {item.forecast_year}</span>
+          {market_size.map((item, idx) => {
+            const isLongText = (item.figure || "").length > 18;
+            return (
+              <div key={idx} className="market-size-card">
+                <div className="market-size-header">
+                  <span className="market-type-pill">{item.market_type || "Market Size"}</span>
+                  {item.forecast_year && (
+                    <span className="forecast-pill">Forecast {item.forecast_year}</span>
+                  )}
+                </div>
+
+                <div className={`market-size-figure ${isLongText ? "figure-long-text" : ""}`}>
+                  {item.figure}
+                </div>
+
+                {item.cagr && (
+                  <div className="market-cagr-row">
+                    <span className="cagr-label">GROWTH RATE (CAGR)</span>
+                    <span className="cagr-value">{item.cagr}</span>
+                  </div>
+                )}
+
+                {item.evidence_snippet && (
+                  <p className="market-evidence-quote">
+                    &ldquo;{item.evidence_snippet}&rdquo;
+                  </p>
+                )}
+
+                {item.source_url && (
+                  <div className="market-source-footer">
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="market-source-link"
+                    >
+                      View Cited Source &rarr;
+                    </a>
+                  </div>
+                )}
+
+                {item.notes && !item.source_url && (
+                  <div className="market-notes-footer">{item.notes}</div>
                 )}
               </div>
-
-              <div className="market-size-figure">{item.figure}</div>
-
-              {item.cagr && (
-                <div className="market-cagr-row">
-                  <span className="cagr-label">GROWTH RATE (CAGR)</span>
-                  <span className="cagr-value">{item.cagr}</span>
-                </div>
-              )}
-
-              {item.evidence_snippet && (
-                <p className="market-evidence-quote">
-                  &ldquo;{item.evidence_snippet}&rdquo;
-                </p>
-              )}
-
-              {item.source_url && (
-                <div className="market-source-footer">
-                  <a
-                    href={item.source_url}
-                    target="_blank"
-                    rel="noreferrer noopener"
-                    className="market-source-link"
-                  >
-                    View Cited Source &rarr;
-                  </a>
-                </div>
-              )}
-
-              {item.notes && !item.source_url && (
-                <div className="market-notes-footer">{item.notes}</div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

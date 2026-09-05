@@ -2,8 +2,8 @@ import React from "react";
 
 /**
  * CompetitorAnalysis Component
- * Displays direct, indirect, and emerging competitor profiles, pricing transparency,
- * customer complaints, multidimensional comparison matrix, and market gap vectors.
+ * Displays direct, indirect, and emerging competitor profiles, pricing models,
+ * user complaints, multidimensional comparison matrix, and market gap vectors.
  */
 export default function CompetitorAnalysis({ data }) {
   if (!data) return null;
@@ -13,7 +13,6 @@ export default function CompetitorAnalysis({ data }) {
     comparison_matrix = [],
     market_gaps = [],
     pricing_insights = [],
-    business_models = [],
   } = data;
 
   const getClassificationBadge = (cls = "") => {
@@ -21,15 +20,15 @@ export default function CompetitorAnalysis({ data }) {
     if (lower === "direct") return { label: "DIRECT RIVAL", className: "tag-rose" };
     if (lower === "indirect") return { label: "INDIRECT ALTERNATIVE", className: "tag-blue" };
     if (lower === "emerging") return { label: "EMERGING ENTRANT", className: "tag-green" };
-    return { label: cls.toUpperCase() || "COMPETITOR", className: "tag-default" };
+    return { label: (cls || "COMPETITOR").toUpperCase(), className: "tag-default" };
   };
 
   return (
-    <div className="competitor-analysis-section">
+    <div id="section-competitors" className="competitor-analysis-section">
       <div className="section-masthead">
         <div className="section-eyebrow-row">
           <span className="section-badge badge-green">§ COMPETITIVE LANDSCAPE & MATRIX</span>
-          <span className="section-count">{competitors.length} Competitors Surfaced</span>
+          <span className="section-count">[{competitors.length} COMPETITORS MAPPED]</span>
         </div>
         <h3 className="section-headline">Direct Rivals, Substitute Alternatives & Market Gaps</h3>
       </div>
@@ -104,7 +103,7 @@ export default function CompetitorAnalysis({ data }) {
 
       {/* Multidimensional Comparison Matrix */}
       {comparison_matrix.length > 0 && (
-        <div className="comparison-matrix-container">
+        <div id="section-matrix" className="comparison-matrix-container">
           <div className="matrix-header-bar">
             <h4 className="matrix-title">Strategic Feature & Capability Comparison Matrix</h4>
             <span className="matrix-caption">Startup Approach vs Incumbent Solutions</span>
@@ -117,7 +116,9 @@ export default function CompetitorAnalysis({ data }) {
                   <th className="th-dimension">CAPABILITY / DIMENSION</th>
                   <th className="th-startup">PROPOSED STARTUP APPROACH</th>
                   {competitors.slice(0, 3).map((c, i) => (
-                    <th key={i} className="th-competitor">{c.name.toUpperCase()}</th>
+                    <th key={i} className="th-competitor" title={c.name}>
+                      <span className="th-competitor-name">{c.name.toUpperCase()}</span>
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -126,7 +127,7 @@ export default function CompetitorAnalysis({ data }) {
                   <tr key={rIdx}>
                     <td className="td-dimension">{row.feature_or_dimension}</td>
                     <td className="td-startup">
-                      <span className="startup-highlight-badge">INNOVATION</span>
+                      <span className="startup-highlight-badge">DIFFERENTIATOR</span>
                       {row.startup_approach}
                     </td>
                     {competitors.slice(0, 3).map((c, cIdx) => (

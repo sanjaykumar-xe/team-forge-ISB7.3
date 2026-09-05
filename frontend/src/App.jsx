@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import Header from "./components/Header";
 import ExtractedMetadata from "./components/ExtractedMetadata";
@@ -18,6 +18,13 @@ const CATEGORIES = [
   { key: "Market Size & Trends", title: "MARKET SIZE & TRENDS" },
 ];
 
+const RESEARCH_STAGES = [
+  { id: 1, label: "Extracting idea parameters & domain keywords" },
+  { id: 2, label: "Executing multi-vector live web research" },
+  { id: 3, label: "Synthesizing customer demand & market sizing" },
+  { id: 4, label: "Triangulating defensible market white-space" },
+];
+
 export default function App() {
   const [idea, setIdea] = useState("");
   const [productName, setProductName] = useState("");
@@ -26,6 +33,29 @@ export default function App() {
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeStage, setActiveStage] = useState(1);
+
+  // Animate research stages during loading state
+  useEffect(() => {
+    if (status !== "loading") {
+      setActiveStage(1);
+      return;
+    }
+
+    const stageInterval = setInterval(() => {
+      setActiveStage((prev) => (prev < RESEARCH_STAGES.length ? prev + 1 : prev));
+    }, 2800);
+
+    return () => clearInterval(stageInterval);
+  }, [status]);
+
+  function handleClearForm() {
+    setIdea("");
+    setProductName("");
+    setIndustry("");
+    setTargetAudience("");
+    setErrorMessage("");
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -74,7 +104,7 @@ export default function App() {
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setErrorMessage(err.message || "Something went wrong during market analysis. Please try again.");
+      setErrorMessage(err.message || "Something went wrong during market analysis. Please check your backend connection and try again.");
       setStatus("error");
     }
   }
@@ -92,27 +122,32 @@ export default function App() {
     }
   }
 
+  const competitorCount = result?.competitor_analysis?.competitors?.length || 0;
+  const segmentCount = result?.market_analysis?.customer_segments?.length || 0;
+  const opportunityCount = result?.white_space_analysis?.opportunities?.length || 0;
+  const hasFormContent = Boolean(idea || productName || industry || targetAudience);
+
   return (
     <div className="page">
       <Header />
 
       <main className="dossier">
-        {/* Natural Language Submission Form — Zero Upper Character Limit */}
+        {/* Research Input Form */}
         <form className="submission-form" onSubmit={handleSubmit}>
           <div className="form-field main-idea-field">
             <label htmlFor="idea" className="field-label">
-              DESCRIBE THE STARTUP IDEA <span className="label-required">*</span>
+              DESCRIBE THE STARTUP CONCEPT <span className="label-required">*</span>
             </label>
             <textarea
               id="idea"
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
-              placeholder="Describe your startup concept in detail. You can include product workflows, target customers, data sources, or specific business mechanisms (no length limits)."
+              placeholder="Describe your startup concept, target customer pain, core workflow, monetization mechanism, or key assumptions in detail."
               rows={5}
             />
             <div className="form-meta-row">
               <span className="char-count">
-                {idea.length.toLocaleString()} {idea.length === 1 ? "character" : "characters"} (No Limit)
+                {idea.length.toLocaleString()} {idea.length === 1 ? "character" : "characters"}
               </span>
             </div>
           </div>
@@ -141,7 +176,7 @@ export default function App() {
                 list="industry-options"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. HealthTech, AgriTech, FinTech / Education"
+                placeholder="e.g. HealthTech, AgriTech, FinTech, DevTools"
               />
               <datalist id="industry-options">
                 <option value="Healthcare & HealthTech" />
@@ -151,7 +186,7 @@ export default function App() {
                 <option value="DevSecOps & Developer Tools" />
                 <option value="CleanTech & Sustainability" />
                 <option value="Logistics & Supply Chain" />
-                <option value="Artificial Intelligence & SaaS" />
+                <option value="Enterprise SaaS & Automation" />
               </datalist>
             </div>
 
@@ -164,32 +199,64 @@ export default function App() {
                 id="targetAudience"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. Small and mid-sized clinics, Smallholder farmers, University students"
+                placeholder="e.g. Small and mid-sized clinics, Independent agronomists, University researchers"
               />
             </div>
           </div>
 
           <div className="form-action-row">
+            {hasFormContent && (
+              <button
+                type="button"
+                className="btn-clear-form"
+                onClick={handleClearForm}
+                disabled={status === "loading"}
+              >
+                Clear
+              </button>
+            )}
             <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Orchestrating Multi-Agent Pipeline…" : "Validate startup idea →"}
+              {status === "loading" ? "Analyzing market signals…" : "Validate startup idea →"}
             </button>
           </div>
         </form>
 
-        {status === "error" && <p className="error-banner">{errorMessage}</p>}
+        {status === "error" && (
+          <div className="error-banner" role="alert">
+            <span className="error-prefix">VALIDATION NOTICE:</span> {errorMessage}
+          </div>
+        )}
 
-        {/* Skeleton Loading State */}
+        {/* Structured Research Loading State */}
         {status === "loading" && (
           <div className="loading-container">
             <div className="loading-status-badge">
               <span className="pulsing-dot" />
               <span className="loading-eyebrow">
-                EXECUTING 5-AGENT CREWAI VALIDATION PIPELINE…
+                VALIDATING STARTUP CONCEPT ACROSS MARKET VECTORS…
               </span>
             </div>
-            <p className="loading-subcaption">
-              Extracting domain parameters &bull; Querying 4 research vectors &bull; Sizing market &bull; Mapping competitors &bull; Triangulating white space
-            </p>
+
+            {/* Research Progress Stages */}
+            <div className="research-stepper">
+              {RESEARCH_STAGES.map((stg) => {
+                const isDone = activeStage > stg.id;
+                const isActive = activeStage === stg.id;
+                return (
+                  <div
+                    key={stg.id}
+                    className={`stepper-item ${isDone ? "step-done" : ""} ${isActive ? "step-active" : ""}`}
+                  >
+                    <span className="step-indicator">
+                      {isDone ? "✓" : `0${stg.id}`}
+                    </span>
+                    <span className="step-text">{stg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Shimmering Skeleton Cards */}
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -207,18 +274,41 @@ export default function App() {
           </div>
         )}
 
-        {/* Results Presentation */}
+        {/* Results Presentation Dashboard */}
         {status === "done" && result && (
           <section className="results">
-            {/* 1. AI Domain Extraction Dossier */}
+            {/* Quick-Jump Section Navigation Bar */}
+            <nav className="quick-jump-nav" aria-label="Report sections">
+              <span className="quick-jump-label">§ JUMP TO:</span>
+              <div className="quick-jump-links">
+                <a href="#section-overview" className="jump-link">Overview</a>
+                <a href="#section-context" className="jump-link">Idea Context</a>
+                <a href="#section-whitespace" className="jump-link highlight-jump">White-Space Map</a>
+                <a href="#section-market" className="jump-link">Market Sizing</a>
+                <a href="#section-personas" className="jump-link">Personas</a>
+                <a href="#section-competitors" className="jump-link">Competitors</a>
+                <a href="#section-sources" className="jump-link">Sources</a>
+              </div>
+            </nav>
+
+            {/* Top-Level Executive Summary & Real Metrics */}
+            <ResultsSummary
+              summary={result.summary}
+              sources={result.sources}
+              competitorCount={competitorCount}
+              segmentCount={segmentCount}
+              opportunityCount={opportunityCount}
+            />
+
+            {/* 1. Extracted Domain Context */}
             {result.extracted_data && <ExtractedMetadata data={result.extracted_data} />}
 
-            {/* 2. CORE NOVELTY: Evidence-Backed Market White-Space Engine */}
+            {/* 2. Visual Centerpiece: Evidence-Backed Market White-Space Map */}
             {result.white_space_analysis && (
               <WhiteSpaceAnalysis data={result.white_space_analysis} />
             )}
 
-            {/* 3. Market Opportunity & Sizing */}
+            {/* 3. Market Opportunity Sizing & Attractiveness */}
             {result.market_analysis && (
               <MarketOpportunity data={result.market_analysis} />
             )}
@@ -228,19 +318,17 @@ export default function App() {
               <CustomerSegments segments={result.market_analysis.customer_segments} />
             )}
 
-            {/* 5. Competitor Discovery & Comparison Matrix */}
+            {/* 5. Competitor Discovery & Capability Matrix */}
             {result.competitor_analysis && (
               <CompetitorAnalysis data={result.competitor_analysis} />
             )}
 
-            {/* 6. Supporting Market Evidence & Source Records */}
-            <div className="evidence-header-divider">
+            {/* 6. Supporting Research Sources */}
+            <div id="section-sources" className="evidence-header-divider">
               <span className="evidence-divider-label">
-                § SUPPORTING RESEARCH EVIDENCE & EMPIRICAL SOURCES
+                § SUPPORTING RESEARCH EVIDENCE & SOURCE CITATIONS
               </span>
             </div>
-
-            <ResultsSummary summary={result.summary} sources={result.sources} />
 
             {result.sources.length === 0 ? (
               <p className="empty-state">

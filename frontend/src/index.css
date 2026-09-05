@@ -1,58 +1,115 @@
 :root {
+  /* Warm Canvas & Paper Palette */
   --bg-canvas: #EBE3CC;
   --surface-card: #F3EDE0;
-  --border-line: #D4CAAF;
-  --border-subtle: #DFD8C4;
-  
-  --ink-primary: #17150F;
-  --ink-muted: #555042;
-  --ink-subtle: #5E5848;
+  --surface-card-hover: #F8F4EC;
+  --surface-elevated: #FAF6EF;
+  --border-line: #C5BBA2;
+  --border-subtle: #D8CFB8;
+  --border-strong: #A89E84;
 
+  /* Ink Hierarchy - High Contrast Legibility */
+  --ink-primary: #12100B;
+  --ink-secondary: #242017;
+  --ink-muted: #3D382B;
+  --ink-subtle: #4E4738;
+  --ink-faint: #6A6250;
+
+  /* Amber Accent System */
   --accent-amber: #D99B26;
   --accent-amber-hover: #C48A1E;
-  
-  --panel-dark-bg: #17150F;
-  --panel-dark-text: #EBE3CC;
-  --panel-dark-muted: #9E998B;
+  --accent-amber-subtle: rgba(217, 155, 38, 0.14);
+  --accent-amber-border: rgba(217, 155, 38, 0.45);
 
-  --tag-blue-bg: #D7E3E8;
-  --tag-blue-text: #203B48;
-  --tag-green-bg: #DAE5D8;
-  --tag-green-text: #26432A;
-  --tag-rose-bg: #EBDCD7;
-  --tag-rose-text: #4F2F29;
+  /* Charcoal Ink Dossier Theme - Ultra High Contrast */
+  --panel-dark-bg: #1B1712;
+  --panel-dark-surface: #241F18;
+  --panel-dark-surface-elevated: #2E271F;
+  --panel-dark-border: #443B2E;
+  --panel-dark-border-subtle: rgba(235, 227, 204, 0.18);
+  --panel-dark-text: #FFFDF8;
+  --panel-dark-text-secondary: #EAE3D2;
+  --panel-dark-muted: #C8C1B0;
+  --panel-dark-subtle: #A39B88;
 
-  --error-bg: #F6E3DF;
-  --error-border: #D17F73;
-  --error-text: #6A251C;
+  /* Strategic Classification Tags */
+  --tag-blue-bg: #CFDFE5;
+  --tag-blue-text: #0E2A36;
+  --tag-blue-border: #9CB7C2;
 
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "Space Mono", "SF Mono", monospace;
+  --tag-green-bg: #D0E0CE;
+  --tag-green-text: #133317;
+  --tag-green-border: #A3C4A0;
+
+  --tag-rose-bg: #E8D5CE;
+  --tag-rose-text: #3D1C17;
+  --tag-rose-border: #CBA59B;
+
+  --tag-amber-bg: #FCECBD;
+  --tag-amber-text: #5C3D00;
+  --tag-amber-border: #DEC072;
+
+  /* System States */
+  --error-bg: #F8E3DF;
+  --error-border: #C8695C;
+  --error-text: #5A1910;
+
+  /* Typography */
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Space Mono", "SF Mono", "Roboto Mono", Consolas, monospace;
+
+  /* Elevation Shadows */
+  --shadow-subtle: 0 1px 3px rgba(23, 21, 15, 0.06);
+  --shadow-card: 0 2px 8px rgba(23, 21, 15, 0.08);
+  --shadow-card-hover: 0 6px 18px rgba(23, 21, 15, 0.12);
+  --shadow-panel-dark: 0 8px 28px rgba(10, 8, 5, 0.28);
 }
 
 * {
   box-sizing: border-box;
 }
 
-html,
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   padding: 0;
-}
-
-body {
   background-color: var(--bg-canvas);
   color: var(--ink-primary);
   font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
+::selection {
+  background-color: #E2C98D;
+  color: #12100B;
+}
+
+/* Accessible focus outlines */
 *:focus-visible {
   outline: 2px solid var(--ink-primary);
   outline-offset: 2px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -65,4 +122,3 @@ body {
     scroll-behavior: auto !important;
   }
 }
-

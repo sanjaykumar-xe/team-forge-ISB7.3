@@ -9,13 +9,13 @@ export default function CustomerSegments({ segments = [] }) {
   if (!segments || segments.length === 0) return null;
 
   return (
-    <div className="customer-segments-section">
+    <div id="section-personas" className="customer-segments-section">
       <div className="section-masthead">
         <div className="section-eyebrow-row">
           <span className="section-badge badge-blue">§ TARGET CUSTOMER SEGMENTATION</span>
-          <span className="section-count">{segments.length} Segments Identified</span>
+          <span className="section-count">[{segments.length} {segments.length === 1 ? "SEGMENT" : "SEGMENTS"} PROFILED]</span>
         </div>
-        <h3 className="section-headline">Granular Persona Breakdown & Buying Behavior</h3>
+        <h3 className="section-headline">Granular Persona Breakdown & Buying Dynamics</h3>
       </div>
 
       <div className="segments-grid">
@@ -31,11 +31,11 @@ export default function CustomerSegments({ segments = [] }) {
             <div className="segment-roles-bar">
               <div className="role-col">
                 <span className="role-label">END USERS</span>
-                <span className="role-value">{seg.end_users}</span>
+                <span className="role-value">{seg.end_users || "Operational Users"}</span>
               </div>
               <div className="role-col">
                 <span className="role-label">DECISION MAKERS</span>
-                <span className="role-value">{seg.decision_makers}</span>
+                <span className="role-value">{seg.decision_makers || "Budget Owners"}</span>
               </div>
             </div>
 
@@ -51,7 +51,7 @@ export default function CustomerSegments({ segments = [] }) {
               </div>
             )}
 
-            {/* Primary Needs & Motivations */}
+            {/* Primary Needs & Requirements */}
             {Array.isArray(seg.primary_needs) && seg.primary_needs.length > 0 && (
               <div className="segment-block">
                 <span className="segment-subhead">CORE REQUIREMENTS</span>
@@ -66,7 +66,7 @@ export default function CustomerSegments({ segments = [] }) {
             {/* Buying Behavior */}
             {seg.buying_behavior && (
               <div className="segment-block buying-block">
-                <span className="segment-subhead">BUYING BEHAVIOR & ADOPTION</span>
+                <span className="segment-subhead">BUYING BEHAVIOR & ADOPTION CYCLE</span>
                 <p className="segment-buying-text">{seg.buying_behavior}</p>
               </div>
             )}
@@ -74,7 +74,7 @@ export default function CustomerSegments({ segments = [] }) {
             {/* Terminology Tags */}
             {Array.isArray(seg.industry_terminology) && seg.industry_terminology.length > 0 && (
               <div className="segment-terms-row">
-                <span className="terms-label">DOMAIN JARGON:</span>
+                <span className="terms-label">DOMAIN VOCABULARY:</span>
                 <div className="terms-chip-container">
                   {seg.industry_terminology.map((term, i) => (
                     <span key={i} className="term-chip">

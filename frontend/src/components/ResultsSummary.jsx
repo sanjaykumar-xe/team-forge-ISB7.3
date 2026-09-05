@@ -9,9 +9,15 @@ const CATEGORY_ORDER = [
 
 /**
  * ResultsSummary Component
- * Editorial warm ink panel showing total sources surfaced with count-up animation and category breakdown.
+ * Editorial warm ink panel displaying real executive metrics and high-contrast category distribution.
  */
-export default function ResultsSummary({ summary, sources = [] }) {
+export default function ResultsSummary({
+  summary,
+  sources = [],
+  competitorCount = 0,
+  segmentCount = 0,
+  opportunityCount = 0,
+}) {
   if (!summary) return null;
 
   const targetTotal = summary.total_sources ?? sources.length;
@@ -19,19 +25,17 @@ export default function ResultsSummary({ summary, sources = [] }) {
   const categories = summary.sources_per_category || summary.sources_per_query || {};
 
   useEffect(() => {
-    // Skip animation if user prefers reduced motion
     if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setDisplayCount(targetTotal);
       return;
     }
 
     let startTimestamp = null;
-    const duration = 550; // ms
+    const duration = 500; // ms
 
     function step(timestamp) {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      // ease-out cubic curve
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(eased * targetTotal);
       setDisplayCount(current);
@@ -45,18 +49,52 @@ export default function ResultsSummary({ summary, sources = [] }) {
   }, [targetTotal]);
 
   return (
-    <div className="results-summary-panel">
-      <div className="summary-main-stat">
-        <span className="summary-number">{displayCount}</span>
-        <div className="summary-label-group">
-          <span className="summary-heading">Sources Surfaced</span>
-          <span className="summary-caption">Live market intelligence across 4 strategic categories</span>
+    <div id="section-overview" className="results-summary-panel">
+      {/* Top High-Level Metrics Bar */}
+      <div className="summary-top-metrics">
+        <div className="summary-stat-block highlight-stat">
+          <span className="summary-stat-num">{displayCount}</span>
+          <div className="summary-stat-meta">
+            <span className="summary-stat-title">Empirical Sources</span>
+            <span className="summary-stat-sub">Across 4 research vectors</span>
+          </div>
         </div>
+
+        {competitorCount > 0 && (
+          <div className="summary-stat-block">
+            <span className="summary-stat-num">{competitorCount}</span>
+            <div className="summary-stat-meta">
+              <span className="summary-stat-title">Competitors</span>
+              <span className="summary-stat-sub">Direct & substitutes</span>
+            </div>
+          </div>
+        )}
+
+        {opportunityCount > 0 && (
+          <div className="summary-stat-block">
+            <span className="summary-stat-num">{opportunityCount}</span>
+            <div className="summary-stat-meta">
+              <span className="summary-stat-title">White-Space Gaps</span>
+              <span className="summary-stat-sub">High-conviction fits</span>
+            </div>
+          </div>
+        )}
+
+        {segmentCount > 0 && (
+          <div className="summary-stat-block">
+            <span className="summary-stat-num">{segmentCount}</span>
+            <div className="summary-stat-meta">
+              <span className="summary-stat-title">User Personas</span>
+              <span className="summary-stat-sub">Granular buying profiles</span>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* High-Contrast Category Breakdown Strip */}
       <div className="summary-breakdown-grid">
         {CATEGORY_ORDER.map((cat) => {
-          const count = categories[cat] || 0;
+          const count = categories[cat] || (sources.filter((s) => s.category === cat).length) || 0;
           return (
             <div key={cat} className="summary-category-item">
               <span className="summary-cat-label">{cat}</span>

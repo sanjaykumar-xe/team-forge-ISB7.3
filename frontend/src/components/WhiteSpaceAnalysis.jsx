@@ -2,9 +2,8 @@ import React from "react";
 
 /**
  * WhiteSpaceAnalysis Component
- * Centerpiece feature: "Evidence-Backed Market White-Space Engine"
- * Visualizes the 4-stage empirical triangulation:
- *   CUSTOMER PAIN -> COMPETITOR WEAKNESS -> MARKET GAP -> STARTUP OPPORTUNITY
+ * Centerpiece: "Evidence-Backed Market White-Space Map"
+ * Triangulates: Customer Pain → Competitor Void → Market Gap → Startup Advantage
  */
 export default function WhiteSpaceAnalysis({ data }) {
   if (!data || !Array.isArray(data.opportunities) || data.opportunities.length === 0) {
@@ -14,48 +13,48 @@ export default function WhiteSpaceAnalysis({ data }) {
   const { opportunities } = data;
 
   return (
-    <div className="whitespace-engine-section">
-      {/* Editorial Novelty Masthead */}
+    <div id="section-whitespace" className="whitespace-engine-section">
+      {/* Editorial Header */}
       <div className="section-masthead whitespace-masthead">
         <div className="section-eyebrow-row">
-          <span className="section-badge badge-novelty">§ CORE NOVELTY ENGINE</span>
-          <span className="novelty-tag">3-LAYER EMPIRICAL TRIANGULATION</span>
+          <span className="section-badge badge-amber">§ MARKET WHITE-SPACE</span>
+          <span className="section-meta-tag">[EMPIRICAL TRIANGULATION MAP]</span>
         </div>
         <h3 className="section-headline whitespace-headline">
           Evidence-Backed Market White-Space Map
         </h3>
         <p className="section-summary-text">
-          Discovered opportunity gaps synthesized by cross-referencing verified customer pain points,
-          competitor omissions, and your startup&apos;s core capabilities.
+          High-conviction market gaps triangulated by cross-referencing verified customer pain points,
+          competitor omissions, and defensible startup capabilities.
         </p>
 
         {/* Visual Strategy Flow Diagram */}
         <div className="whitespace-pipeline-flow">
           <div className="flow-step">
-            <span className="flow-num">1</span>
+            <span className="flow-num">01</span>
             <span className="flow-label">CUSTOMER PAIN</span>
-            <span className="flow-desc">Empirical Demand</span>
+            <span className="flow-desc">Verified Demand</span>
           </div>
           <div className="flow-arrow">&rarr;</div>
 
           <div className="flow-step">
-            <span className="flow-num">2</span>
+            <span className="flow-num">02</span>
             <span className="flow-label">COMPETITOR VOID</span>
             <span className="flow-desc">Incumbent Omissions</span>
           </div>
           <div className="flow-arrow">&rarr;</div>
 
           <div className="flow-step">
-            <span className="flow-num">3</span>
+            <span className="flow-num">03</span>
             <span className="flow-label">MARKET GAP</span>
             <span className="flow-desc">Unaddressed Need</span>
           </div>
           <div className="flow-arrow">&rarr;</div>
 
           <div className="flow-step highlight-step">
-            <span className="flow-num">4</span>
+            <span className="flow-num">04</span>
             <span className="flow-label">STARTUP ADVANTAGE</span>
-            <span className="flow-desc">Defensible Fit</span>
+            <span className="flow-desc">Defensible Solution</span>
           </div>
         </div>
       </div>
@@ -63,7 +62,7 @@ export default function WhiteSpaceAnalysis({ data }) {
       {/* Opportunity Cards List */}
       <div className="whitespace-cards-list">
         {opportunities.map((opp, idx) => {
-          const confidencePct = Math.round((opp.confidence || 0.88) * 100);
+          const confidencePct = Math.round((opp.confidence || 0.85) * 100);
           const strengthLower = (opp.evidence_strength || "high").toLowerCase();
 
           return (
@@ -83,12 +82,14 @@ export default function WhiteSpaceAnalysis({ data }) {
               </div>
 
               {/* Target Segment Tag */}
-              <div className="opp-segment-banner">
-                <span className="segment-banner-label">UNDERSERVED TARGET SEGMENT:</span>
-                <span className="segment-banner-name">{opp.segment}</span>
-              </div>
+              {opp.segment && (
+                <div className="opp-segment-banner">
+                  <span className="segment-banner-label">TARGET SEGMENT:</span>
+                  <span className="segment-banner-name">{opp.segment}</span>
+                </div>
+              )}
 
-              {/* 4-Vector Evidence Flow Chain */}
+              {/* 4-Vector Evidence Flow Grid */}
               <div className="opp-flow-chain-grid">
                 {/* 1. Customer Pain */}
                 <div className="flow-chain-node node-pain">
@@ -109,7 +110,7 @@ export default function WhiteSpaceAnalysis({ data }) {
                   )}
                 </div>
 
-                {/* 2. Competitor Coverage & Weakness */}
+                {/* 2. Competitor Omissions */}
                 <div className="flow-chain-node node-competitor">
                   <div className="node-header">
                     <span className="node-step-tag">VECTOR 2</span>
@@ -155,33 +156,35 @@ export default function WhiteSpaceAnalysis({ data }) {
               )}
 
               {/* Card Footer: Evidence Traceability & Risk */}
-              <div className="whitespace-card-footer">
-                {opp.potential_risk && (
-                  <div className="risk-callout">
-                    <span className="risk-label">KEY RISK:</span>
-                    <span className="risk-text">{opp.potential_risk}</span>
-                  </div>
-                )}
-
-                {Array.isArray(opp.evidence) && opp.evidence.length > 0 && (
-                  <div className="citations-row">
-                    <span className="citations-label">SUPPORTING SOURCES:</span>
-                    <div className="citations-links">
-                      {opp.evidence.map((url, uIdx) => (
-                        <a
-                          key={uIdx}
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer noopener"
-                          className="citation-chip-link"
-                        >
-                          Source [{uIdx + 1}] &rarr;
-                        </a>
-                      ))}
+              {(opp.potential_risk || (Array.isArray(opp.evidence) && opp.evidence.length > 0)) && (
+                <div className="whitespace-card-footer">
+                  {opp.potential_risk && (
+                    <div className="risk-callout">
+                      <span className="risk-label">KEY RISK FACTOR:</span>
+                      <span className="risk-text">{opp.potential_risk}</span>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+
+                  {Array.isArray(opp.evidence) && opp.evidence.length > 0 && (
+                    <div className="citations-row">
+                      <span className="citations-label">SUPPORTING SOURCES:</span>
+                      <div className="citations-links">
+                        {opp.evidence.map((url, uIdx) => (
+                          <a
+                            key={uIdx}
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            className="citation-chip-link"
+                          >
+                            Source [{uIdx + 1}] &rarr;
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
