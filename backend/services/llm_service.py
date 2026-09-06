@@ -92,6 +92,10 @@ def execute_groq_completion(
     Executes a chat completion across model pool with automatic failover and rate limit backoff.
     Returns (response_text, model_name).
     """
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not configured in environment.")
+
     client = get_groq_client()
     target_models = models or GROQ_MODELS
     last_exc = None
@@ -104,6 +108,7 @@ def execute_groq_completion(
                     messages=messages,
                     max_tokens=max_tokens,
                     temperature=temperature,
+                    timeout=8.0,
                 )
                 content = resp.choices[0].message.content or ""
                 return content, model

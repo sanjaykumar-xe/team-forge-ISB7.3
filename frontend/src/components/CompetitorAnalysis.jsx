@@ -34,72 +34,80 @@ export default function CompetitorAnalysis({ data }) {
       </div>
 
       {/* Competitor Profile Cards */}
-      <div className="competitors-grid">
-        {competitors.map((comp, idx) => {
-          const badge = getClassificationBadge(comp.classification);
-          return (
-            <div key={idx} className="competitor-card">
-              <div className="competitor-card-top">
-                <span className={`source-tag ${badge.className}`}>{badge.label}</span>
-                <h4 className="competitor-name">{comp.name}</h4>
-                <p className="competitor-offering">{comp.core_offering}</p>
-              </div>
+      {competitors.length === 0 ? (
+        <div className="empty-category-notice">
+          <p className="insufficient-data-text">
+            No verified direct competitors were identified in current search sources for this concept. Primary research or category-specific benchmarking is recommended.
+          </p>
+        </div>
+      ) : (
+        <div className="competitors-grid">
+          {competitors.map((comp, idx) => {
+            const badge = getClassificationBadge(comp.classification);
+            return (
+              <div key={idx} className="competitor-card">
+                <div className="competitor-card-top">
+                  <span className={`source-tag ${badge.className}`}>{badge.label}</span>
+                  <h4 className="competitor-name">{comp.name}</h4>
+                  <p className="competitor-offering">{comp.core_offering}</p>
+                </div>
 
-              <div className="competitor-meta-grid">
-                <div className="meta-item">
-                  <span className="meta-label">TARGET AUDIENCE</span>
-                  <span className="meta-val">{comp.target_customer || "General Market"}</span>
+                <div className="competitor-meta-grid">
+                  <div className="meta-item">
+                    <span className="meta-label">TARGET AUDIENCE</span>
+                    <span className="meta-val">{comp.target_customer || "General Market"}</span>
+                  </div>
+                  <div className="meta-item">
+                    <span className="meta-label">PRICING STRUCTURE</span>
+                    <span className="meta-val">{comp.pricing || "Not disclosed in sources"}</span>
+                  </div>
+                  <div className="meta-item full-span">
+                    <span className="meta-label">BUSINESS MODEL</span>
+                    <span className="meta-val">{comp.business_model || "Not disclosed"}</span>
+                  </div>
                 </div>
-                <div className="meta-item">
-                  <span className="meta-label">PRICING STRUCTURE</span>
-                  <span className="meta-val">{comp.pricing || "Not disclosed in sources"}</span>
-                </div>
-                <div className="meta-item full-span">
-                  <span className="meta-label">BUSINESS MODEL</span>
-                  <span className="meta-val">{comp.business_model || "Not disclosed"}</span>
-                </div>
-              </div>
 
-              {/* Strengths & Weaknesses */}
-              <div className="competitor-pro-con-grid">
-                {Array.isArray(comp.strengths) && comp.strengths.length > 0 && (
-                  <div className="pro-con-block">
-                    <span className="pro-label">KEY STRENGTHS</span>
-                    <ul className="pro-con-list">
-                      {comp.strengths.map((s, i) => (
-                        <li key={i}>{s}</li>
+                {/* Strengths & Weaknesses */}
+                <div className="competitor-pro-con-grid">
+                  {Array.isArray(comp.strengths) && comp.strengths.length > 0 && (
+                    <div className="pro-con-block">
+                      <span className="pro-label">KEY STRENGTHS</span>
+                      <ul className="pro-con-list">
+                        {comp.strengths.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {Array.isArray(comp.weaknesses) && comp.weaknesses.length > 0 && (
+                    <div className="pro-con-block">
+                      <span className="con-label">WEAKNESSES & OMISSIONS</span>
+                      <ul className="pro-con-list con-list">
+                        {comp.weaknesses.map((w, i) => (
+                          <li key={i}>{w}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Customer Complaints */}
+                {Array.isArray(comp.customer_complaints) && comp.customer_complaints.length > 0 && (
+                  <div className="complaints-block">
+                    <span className="complaints-label">DOCUMENTED USER FRUSTRATIONS</span>
+                    <ul className="complaints-list">
+                      {comp.customer_complaints.map((c, i) => (
+                        <li key={i}>&ldquo;{c}&rdquo;</li>
                       ))}
                     </ul>
                   </div>
                 )}
-
-                {Array.isArray(comp.weaknesses) && comp.weaknesses.length > 0 && (
-                  <div className="pro-con-block">
-                    <span className="con-label">WEAKNESSES & OMISSIONS</span>
-                    <ul className="pro-con-list con-list">
-                      {comp.weaknesses.map((w, i) => (
-                        <li key={i}>{w}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-
-              {/* Customer Complaints */}
-              {Array.isArray(comp.customer_complaints) && comp.customer_complaints.length > 0 && (
-                <div className="complaints-block">
-                  <span className="complaints-label">DOCUMENTED USER FRUSTRATIONS</span>
-                  <ul className="complaints-list">
-                    {comp.customer_complaints.map((c, i) => (
-                      <li key={i}>&ldquo;{c}&rdquo;</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Multidimensional Comparison Matrix */}
       {comparison_matrix.length > 0 && (

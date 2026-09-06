@@ -17,7 +17,8 @@ export default function MarketOpportunity({ data }) {
     confidence,
   } = data;
 
-  const confidencePct = Math.round((confidence || 0.85) * 100);
+  const hasConfidence = typeof confidence === "number" && !isNaN(confidence);
+  const confidencePct = hasConfidence ? Math.round(confidence * 100) : null;
 
   return (
     <div id="section-market" className="market-opportunity-section">
@@ -25,14 +26,22 @@ export default function MarketOpportunity({ data }) {
       <div className="section-masthead">
         <div className="section-eyebrow-row">
           <span className="section-badge badge-amber">§ MARKET SIZING & POTENTIAL</span>
-          <span className="section-confidence">[CONFIDENCE SCORE: {confidencePct}%]</span>
+          <span className="section-confidence">
+            {hasConfidence ? `[CONFIDENCE SCORE: ${confidencePct}%]` : "[CONFIDENCE: PRELIMINARY DATA]"}
+          </span>
         </div>
         <h3 className="section-headline">Market Potential & Economic Dynamics</h3>
         {summary && <p className="section-summary-text">{summary}</p>}
       </div>
 
       {/* Market Sizing Cards */}
-      {market_size.length > 0 && (
+      {market_size.length === 0 ? (
+        <div className="empty-category-notice" style={{ marginBottom: "1.5rem" }}>
+          <p className="insufficient-data-text">
+            Insufficient empirical market sizing data was returned for this niche concept. Macro industry reports or bespoke market research are recommended.
+          </p>
+        </div>
+      ) : (
         <div className="market-size-grid">
           {market_size.map((item, idx) => {
             const isLongText = (item.figure || "").length > 18;

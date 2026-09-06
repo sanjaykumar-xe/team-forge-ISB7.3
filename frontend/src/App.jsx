@@ -67,6 +67,12 @@ export default function App() {
       return;
     }
 
+    // Strip accidental prompt label prefixes if user pasted structured template text
+    let cleanIdea = idea.trim().replace(/^(?:describe the startup concept|startup concept|idea|concept)\s*:\s*/i, "");
+    let cleanProductName = productName.trim().replace(/^(?:startup\s*\/?\s*product name|product name|name)\s*:\s*/i, "");
+    let cleanIndustry = industry.trim().replace(/^(?:industry or vertical|industry|vertical)\s*:\s*/i, "");
+    let cleanTargetAudience = targetAudience.trim().replace(/^(?:target customer profile|target audience|target customer)\s*:\s*/i, "");
+
     setStatus("loading");
     setErrorMessage("");
     setResult(null);
@@ -76,10 +82,10 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea,
-          product_name: productName.trim() || undefined,
-          industry: industry.trim() || undefined,
-          target_audience: targetAudience.trim() || undefined,
+          idea: cleanIdea,
+          product_name: cleanProductName || undefined,
+          industry: cleanIndustry || undefined,
+          target_audience: cleanTargetAudience || undefined,
         }),
       });
 

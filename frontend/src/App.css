@@ -1769,6 +1769,20 @@ button[type="submit"]:disabled {
   margin: 0;
 }
 
+.empty-category-notice {
+  background: var(--bg-canvas);
+  border: 1px dashed var(--border-line);
+  padding: 18px 22px;
+}
+
+.insufficient-data-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
 .categorized-results-container {
   display: flex;
   flex-direction: column;

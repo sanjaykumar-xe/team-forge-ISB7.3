@@ -38,6 +38,10 @@ def _groq_call_with_model_fallback(messages: list[dict], max_tokens: int = 512, 
     Attempts to call Groq using primary model with automatic fallback to secondary models
     and exponential backoff on 429 rate limits. Returns (response_text, model_used).
     """
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not configured in environment.")
+
     client = get_groq_client()
     last_exc = None
 
@@ -49,6 +53,7 @@ def _groq_call_with_model_fallback(messages: list[dict], max_tokens: int = 512, 
                     messages=messages,
                     max_tokens=max_tokens,
                     temperature=temperature,
+                    timeout=8.0,
                 )
                 return resp.choices[0].message.content, model
             except Exception as exc:
@@ -71,6 +76,24 @@ Extract structured information from a startup idea for market research purposes.
 class IdeaExtractionAgent:
     """Agent responsible for understanding and structuring a startup idea."""
 
+    def _clean_input_text(self, text: str) -> str:
+        """Strips accidental form labels, placeholder artifacts, and prompt prefixes."""
+        if not text:
+            return ""
+        # Strip common form labels and prompt prefixes
+        cleaned = re.sub(
+            r'^(describe(\s+the)?\s+(startup\s+)?(concept|idea)|startup(\s+/\s+product)?\s+name|industry(\s+or\s+vertical)?|target\s+customer(\s+profile)?|core\s+problem(\s+statement)?):\s*',
+            '', text.strip(), flags=re.IGNORECASE
+        )
+        # Strip common conversational starters
+        cleaned = re.sub(
+            r'^(i want to (build|create|make|launch|develop|start)\s+|'
+            r'(a|an )?[a-z]+ (app|platform|tool|service|system|web app|website|marketplace|saas|startup|product|solution) (that|which|to|for|helping)\s+|'
+            r'(a|an) (startup|product|solution) (that|to|for)\s+)',
+            '', cleaned.strip(), flags=re.IGNORECASE
+        )
+        return cleaned.strip()
+
     def _fallback_extraction(
         self,
         idea: str,
@@ -80,31 +103,33 @@ class IdeaExtractionAgent:
         reason: str = "Unknown error",
     ) -> dict:
         """Deterministic fallback if Groq is unavailable or parsing fails."""
-        # Strip common conversational starters
-        cleaned = re.sub(
-            r'^(i want to (build|create|make|launch|develop|start)\s+|'
-            r'(a|an )?[a-z]+ (app|platform|tool|service|system|web app|website|marketplace|saas|startup|product|solution) (that|which|to|for|helping)\s+|'
-            r'(a|an) (startup|product|solution) (that|to|for)\s+)',
-            '', idea.strip(), flags=re.IGNORECASE
-        )
+        cleaned = self._clean_input_text(idea)
         words = [w for w in re.findall(r'[a-zA-Z0-9]+', cleaned) if len(w) > 2]
         generic = {
             "app", "platform", "tool", "service", "system", "that", "helps", "help", "with", "for",
-            "and", "the", "you", "your", "our", "their", "user", "users", "people", "built", "designed"
+            "and", "the", "you", "your", "our", "their", "user", "users", "people", "built", "designed",
+            "describe", "startup", "concept", "idea", "product", "name", "industry", "vertical",
+            "target", "customer", "profile", "solution", "making", "makes", "based", "using", "uses",
+            "delivers", "deliver", "delivering", "provides", "provide", "providing", "offers", "offering"
         }
         filtered_words = [w.lower() for w in words if w.lower() not in generic]
-        inferred_keywords = filtered_words[:4] or [w.lower() for w in words[:4]]
+        inferred_keywords = filtered_words[:6] or [w.lower() for w in words[:6]]
 
-        inferred_name = product_name.strip() if product_name and product_name.strip() else (" ".join(inferred_keywords[:2]).title() or "Startup")
-        inferred_industry = industry.strip() if industry and industry.strip() else "Technology / Software"
-        inferred_audience = target_audience.strip() if target_audience and target_audience.strip() else "General Consumers / Businesses"
+        pname_clean = self._clean_input_text(product_name) if product_name else ""
+        inferred_name = pname_clean if pname_clean else (" ".join(inferred_keywords[:2]).title() or "Startup")
+        
+        ind_clean = self._clean_input_text(industry) if industry else ""
+        inferred_industry = ind_clean if ind_clean else "Technology / Software"
+        
+        aud_clean = self._clean_input_text(target_audience) if target_audience else ""
+        inferred_audience = aud_clean if aud_clean else "General Consumers / Businesses"
 
         print(f"  [IdeaExtractionAgent] Fallback triggered: YES | Reason: {reason}")
         return {
             "product_name": inferred_name,
             "industry": inferred_industry,
             "target_audience": inferred_audience,
-            "core_problem": f"Solving user challenges regarding: {idea.strip()}",
+            "core_problem": cleaned or idea.strip(),
             "keywords": inferred_keywords,
         }
 
@@ -125,13 +150,18 @@ class IdeaExtractionAgent:
             "keywords": list[str]
         }
         """
-        user_parts = [f"Idea: {idea}"]
-        if product_name and product_name.strip():
-            user_parts.append(f"Explicit Product Name: {product_name.strip()}")
-        if industry and industry.strip():
-            user_parts.append(f"Explicit Industry: {industry.strip()}")
-        if target_audience and target_audience.strip():
-            user_parts.append(f"Explicit Target Audience: {target_audience.strip()}")
+        clean_idea = self._clean_input_text(idea)
+        clean_pname = self._clean_input_text(product_name) if product_name else None
+        clean_ind = self._clean_input_text(industry) if industry else None
+        clean_aud = self._clean_input_text(target_audience) if target_audience else None
+
+        user_parts = [f"Idea: {clean_idea}"]
+        if clean_pname:
+            user_parts.append(f"Explicit Product Name: {clean_pname}")
+        if clean_ind:
+            user_parts.append(f"Explicit Industry: {clean_ind}")
+        if clean_aud:
+            user_parts.append(f"Explicit Target Audience: {clean_aud}")
         user_msg = "\n".join(user_parts)
 
         try:

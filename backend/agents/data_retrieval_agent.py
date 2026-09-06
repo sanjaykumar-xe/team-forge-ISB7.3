@@ -153,6 +153,7 @@ class DataRetrievalAgent:
                     "query": item_query,
                     "category": item_category,
                     "score": score,
+                    "provider": item.get("provider", "tavily"),
                 })
 
         # Sort descending by relevance score

@@ -86,49 +86,52 @@ class WhiteSpaceEngine:
         target_audience = structured_idea.get("target_audience") or "Target Customers"
         core_problem = structured_idea.get("core_problem") or idea
 
-        # Find relevant URLs
         demand_urls = [s.get("url") for s in sources if s.get("category") == "Customer Demand" and s.get("url")]
         comp_urls = [s.get("url") for s in sources if s.get("category") == "Competitors" and s.get("url")]
-        all_urls = [s.get("url") for s in sources if s.get("url")][:3]
+
+        has_demand_evidence = bool(demand_urls)
+        has_comp_evidence = bool(comp_urls)
 
         opp_1 = WhiteSpaceOpportunity(
             opportunity_name=f"Automated Intelligence for Underserved {target_audience}",
             segment=target_audience,
             pain_point=core_problem,
             demand_evidence=[
-                f"Market research indicates {target_audience.lower()} face persistent friction with {core_problem[:60]}.",
-                "Legacy alternatives require manual intervention and lack predictive intelligence.",
+                f"Market research indicates {target_audience.lower()} face persistent friction with {core_problem[:60]}."
+                if has_demand_evidence else "Hypothesized operational friction requiring primary user validation.",
             ],
             competitor_coverage=[
-                "Incumbents focus primarily on large enterprise accounts with complex configurations.",
-                "Existing tools offer static reporting rather than proactive, automated recommendations.",
+                "Incumbents focus primarily on enterprise accounts with complex manual configurations."
+                if has_comp_evidence else "Competitor capabilities unverified in current search index.",
             ],
-            gap="Absence of a specialized, lightweight intelligent system specifically built for mid-market and small operators.",
-            startup_fit=f"{product_name} directly solves this by combining domain-tailored workflows with automated intelligence.",
-            differentiation_hypothesis="By delivering immediate time-to-value with zero configuration overhead, the product captures the underserved mid-market before enterprise incumbents adapt.",
-            evidence_strength="High" if demand_urls else "Medium",
-            confidence=0.88,
-            potential_risk="Incumbent platforms adding lightweight feature modules.",
-            evidence=demand_urls[:2] or all_urls[:2],
+            gap=f"Lightweight specialized intelligence tailored for {industry.lower()}.",
+            startup_fit=f"{product_name} addresses this by combining domain workflows with automated prediction.",
+            differentiation_hypothesis="Immediate time-to-value with low configuration friction.",
+            evidence_strength="Medium" if has_demand_evidence else "Low",
+            confidence=None,
+            potential_risk="Incumbent platforms expanding into lightweight entry-tier offerings.",
+            evidence=demand_urls[:2] if demand_urls else [],
         )
 
         opp_2 = WhiteSpaceOpportunity(
-            opportunity_name="Frictionless Integration & Actionable Decision Support",
-            segment=f"Emerging Operators in {industry}",
-            pain_point="Fragmented data sources and delay between insight discovery and operational action.",
+            opportunity_name="Actionable Decision Support & Workflow Automation",
+            segment=f"Operators in {industry}",
+            pain_point="Lag between data insight generation and operational execution.",
             demand_evidence=[
-                "Users report frustration with tools that display metrics without suggesting concrete next steps.",
+                "Need for actionable intervention rather than static visual dashboards."
+                if has_demand_evidence else "Preliminary gap hypothesis based on category patterns.",
             ],
             competitor_coverage=[
-                "Current competitors provide dashboard visualization but leave decision-making and execution entirely to manual user effort.",
+                "Current solutions provide visualization without direct execution automation."
+                if has_comp_evidence else "Direct competitor coverage unverified in current search sources.",
             ],
-            gap="Actionable intervention layer that translates predictive signals into one-click automated executions.",
-            startup_fit="The startup's closed-loop workflow directly connects predictive analytics to automated intervention channels.",
-            differentiation_hypothesis="Founders and operators buy outcomes, not dashboards. Closing the loop from insight to execution creates high switching barriers.",
-            evidence_strength="Medium",
-            confidence=0.82,
-            potential_risk="Integration dependency on third-party APIs.",
-            evidence=comp_urls[:2] or all_urls[:2],
+            gap="Closed-loop execution layer translating insights into direct interventions.",
+            startup_fit="Direct connection between data intelligence and operational triggers.",
+            differentiation_hypothesis="Outcome-driven automation creates higher user retention than passive dashboards.",
+            evidence_strength="Medium" if has_comp_evidence else "Low",
+            confidence=None,
+            potential_risk="Workflow and integration dependencies.",
+            evidence=comp_urls[:2] if comp_urls else [],
         )
 
         return WhiteSpaceAnalysisResult(opportunities=[opp_1, opp_2])

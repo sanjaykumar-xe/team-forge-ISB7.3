@@ -31,6 +31,7 @@ class SourceRecord(BaseModel):
     query: str
     category: str
     score: float
+    provider: Optional[str] = "tavily"
 
 
 class MarketSizeEstimate(BaseModel):
@@ -78,7 +79,7 @@ class MarketAnalysisResult(BaseModel):
     buying_behavior: List[str] = Field(default_factory=list)
     market_risks: List[str] = Field(default_factory=list)
     attractiveness: Optional[MarketAttractiveness] = None
-    confidence: float = Field(default=0.85, ge=0.0, le=1.0)
+    confidence: Optional[float] = Field(default=None, description="Calibrated confidence score if verified by LLM analysis")
 
 
 class CompetitorRecord(BaseModel):
@@ -122,8 +123,8 @@ class WhiteSpaceOpportunity(BaseModel):
     gap: str = Field(..., description="Clear structural gap left open in the market")
     startup_fit: str = Field(..., description="Why the startup concept is structurally suited to conquer this gap")
     differentiation_hypothesis: str = Field(..., description="Strategic hypothesis for sustainable differentiation")
-    evidence_strength: str = Field(default="High", description="Evidence backing tier: High, Medium, or Low")
-    confidence: float = Field(default=0.88, ge=0.0, le=1.0)
+    evidence_strength: str = Field(default="Low", description="Evidence backing tier: High, Medium, or Low")
+    confidence: Optional[float] = Field(default=None, description="Conviction score (null if preliminary/unverified)")
     potential_risk: Optional[str] = Field(default=None, description="Key execution or market hazard to monitor")
     evidence: List[str] = Field(default_factory=list, description="Traceable source URLs and citations")
 
