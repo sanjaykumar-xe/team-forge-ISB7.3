@@ -120,37 +120,57 @@ class ValidationCrewOrchestrator:
             }
         _log("[1] Idea Extraction completed")
 
-        # [2] Web Search Agent (Tavily 4-Category Search)
-        _log("\n[2] Web Search started")
-        try:
-            raw_batches = self.web_searcher.search(
-                structured_idea=extracted_data,
-                max_results_per_category=6,
-            )
-        except Exception as exc:
-            _log(f"  [2] Web Search error: {exc}")
-            raw_batches = []
-        _log("[2] Web Search completed")
+        # [2] Autonomous Market Research Agent (CrewAI Agent with tool calling & crew.kickoff())
+        _log("\n[2] CrewAI Market Research Agent started (Autonomous Tool-Calling via crew.kickoff())")
+        from .tools import MarketResearchToolKit
+        from crewai import Crew, Process
 
-        # [3] Data Retrieval Agent (Sanitization, Filtering, Deduplication)
-        _log("\n[3] Data Retrieval started")
+        toolkit = MarketResearchToolKit(
+            search_agent=self.web_searcher,
+            retrieval_agent=self.data_retriever,
+        )
+        search_tools = toolkit.create_tools()
+
+        def _step_callback(step: Any):
+            if hasattr(step, "tool") and hasattr(step, "tool_input"):
+                _log(f"  [MarketResearchAgent Tool Call] {step.tool}({step.tool_input})")
+            elif hasattr(step, "output"):
+                _log(f"  [MarketResearchAgent Step] {str(step.output)[:120]}...")
+
+        research_agent = ValidationAgentFactory.create_market_research_agent(
+            tools=search_tools,
+            step_callback=_step_callback,
+        )
+
+        research_task = ValidationTaskFactory.create_market_research_task(
+            agent=research_agent,
+            idea=idea_text,
+            structured_idea=extracted_data,
+        )
+
+        crew = Crew(
+            agents=[research_agent],
+            tasks=[research_task],
+            process=Process.sequential,
+            verbose=True,
+        )
+
         try:
-            structured_sources_raw = self.data_retriever.structure(raw_batches)
-            summary = self.data_retriever.summarize_counts(structured_sources_raw)
+            crew_result = crew.kickoff()
+            _log(f"[2] CrewAI Market Research completed. Result: {str(crew_result)[:150]}...")
         except Exception as exc:
-            _log(f"  [3] Data Retrieval error: {exc}")
-            structured_sources_raw = []
-            summary = {
-                "total_sources": 0,
-                "sources_per_category": {
-                    "Competitors": 0,
-                    "Industry News": 0,
-                    "Customer Demand": 0,
-                    "Market Size & Trends": 0,
-                },
-                "sources_by_category": {},
-            }
-        _log("[3] Data Retrieval completed")
+            _log(f"  [2] CrewAI kickoff error: {exc}. Using direct search fallback.")
+            if not toolkit.collected_batches:
+                fallback_batches = self.web_searcher.search(extracted_data, max_results_per_category=6)
+                toolkit.collected_batches.extend(fallback_batches)
+
+        # [3] Data Retrieval Agent (DETERMINISTIC NON-LLM STEP)
+        _log("\n[3] Data Retrieval (Deterministic Sanitization, Filtering, Deduplication)")
+        structured_sources_raw = toolkit.get_structured_sources()
+        summary = toolkit.get_sources_summary()
+        summary["tool_call_trace"] = toolkit.tool_call_trace
+        _log(f"[3] Data Retrieval completed: {len(structured_sources_raw)} sanitized sources across categories.")
+        _log(f"    Tool-call trace: {toolkit.tool_call_trace}")
 
         # Convert sources to typed SourceRecord objects
         typed_sources: List[SourceRecord] = []
@@ -197,6 +217,24 @@ class ValidationCrewOrchestrator:
                 reason=str(exc),
             )
         _log("[5] Competitor Analysis completed")
+
+        # Explicit budget-limit annotation to distinguish capped runs from naturally concluded searches
+        if toolkit.budget_limit_reached:
+            _log("  [Orchestrator Notice] Flagging downstream results as budget-limited.")
+            if market_analysis:
+                # Bounded confidence: an incomplete/budget-limited search cannot claim high confidence
+                if market_analysis.confidence and market_analysis.confidence > 0.60:
+                    market_analysis.confidence = 0.60
+                if hasattr(market_analysis, "growth_trends") and isinstance(market_analysis.growth_trends, list):
+                    market_analysis.growth_trends.insert(
+                        0,
+                        f"[Budget Limited Note]: Search space was bounded by the maximum query limit ({toolkit.max_total_calls} calls). Evidence is preliminary."
+                    )
+            if competitor_analysis and hasattr(competitor_analysis, "market_gaps") and isinstance(competitor_analysis.market_gaps, list):
+                competitor_analysis.market_gaps.insert(
+                    0,
+                    f"Search budget exhausted ({toolkit.max_total_calls} queries). Additional competitors or alternative solutions may exist beyond this bounded discovery set."
+                )
 
         # [6] Evidence-Backed Market White-Space Engine
         _log("\n[WhiteSpaceEngine] Correlating customer pain, competitor coverage, and startup capabilities...")

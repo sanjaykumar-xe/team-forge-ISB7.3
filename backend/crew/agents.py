@@ -1,15 +1,14 @@
 """
 Team Forge — CrewAI Agent Definitions
 -------------------------------------
-Defines specialized autonomous agents participating in the startup idea validation workflow:
-  1. Idea Extractor Agent
-  2. Web Search Researcher Agent
-  3. Data Verification Agent
-  4. Market Opportunity & Segmentation Agent
-  5. Competitor Discovery & Strategy Agent
+Defines specialized CrewAI agents participating in startup validation:
+  1. Market Research Agent (Autonomous tool-calling agent with selective search tools)
+  2. Concept & Strategy Specialists
 """
 
-from typing import Optional, Any, List
+import os
+from typing import Optional, Any, List, Callable
+from crewai import Agent, LLM
 
 
 def get_crewai_classes():
@@ -21,79 +20,53 @@ def get_crewai_classes():
         return None, None
 
 
+def get_default_llm() -> Any:
+    """Configures high-performance Groq LLM through OpenAI-compatible endpoint."""
+    api_key = os.environ.get("GROQ_API_KEY", "").strip()
+    return LLM(
+        model="openai/openai/gpt-oss-120b",
+        base_url="https://api.groq.com/openai/v1",
+        api_key=api_key,
+        max_tokens=1500,
+        temperature=0.1,
+    )
+
+
 class ValidationAgentFactory:
     """Factory for creating configured CrewAI validation agents."""
 
     @staticmethod
-    def create_idea_extractor(llm: Optional[Any] = None) -> Any:
-        Agent, _ = get_crewai_classes()
-        if Agent is None:
-            return None
+    def create_market_research_agent(
+        tools: List[Any],
+        step_callback: Optional[Callable[[Any], None]] = None,
+        llm: Optional[Any] = None,
+    ) -> Agent:
+        """
+        Creates the autonomous Market Research Agent equipped with the 4 discrete search tools:
+          - search_competitors
+          - search_industry_news
+          - search_customer_demand
+          - search_market_size
+        """
         return Agent(
-            role="Startup Concept & Domain Intelligence Specialist",
-            goal="Extract unambiguous product parameters, industry vertical, audience profile, core problem, and high-signal research keywords from raw startup descriptions.",
-            backstory="A seasoned product architect with deep domain intuition for deconstructing early-stage business models into structured research vectors.",
-            verbose=False,
+            role="Market Research Agent",
+            goal=(
+                "Gather targeted market intelligence by thoughtfully selecting and executing "
+                "only the search tools relevant to the startup's specific domain and customer model."
+            ),
+            backstory=(
+                "You are an elite competitive intelligence researcher operating under a strict budget of 4-6 queries. "
+                "Not every idea requires all 4 categories — only call tools that will produce genuinely useful evidence for this "
+                "specific idea. For example, if an idea is pure B2B enterprise infrastructure or deep-tech "
+                "with no retail consumers, skip customer demand reviews. If an idea is an uncommercialized "
+                "micro-artisan craft, skip institutional market size reports. "
+                "CRITICAL: Never re-issue near-identical queries or re-query for the same brand/terms. "
+                "Once you receive search results, analyze them immediately and synthesize your final output without endless searching."
+            ),
+            tools=tools,
+            llm=llm or get_default_llm(),
+            verbose=True,
+            step_callback=step_callback,
             allow_delegation=False,
-            llm=llm,
-        )
-
-    @staticmethod
-    def create_web_searcher(tools: Optional[List[Any]] = None, llm: Optional[Any] = None) -> Any:
-        Agent, _ = get_crewai_classes()
-        if Agent is None:
-            return None
-        return Agent(
-            role="AI Market Intelligence Researcher",
-            goal="Execute parallel web intelligence queries across 4 strategic categories (Competitors, Industry News, Customer Demand, and Market Size & Trends).",
-            backstory="An AI-native research analyst skilled at constructing targeted queries to surface fresh market dynamics and real-world signals.",
-            verbose=False,
-            allow_delegation=False,
-            tools=tools or [],
-            llm=llm,
-        )
-
-    @staticmethod
-    def create_data_verifier(tools: Optional[List[Any]] = None, llm: Optional[Any] = None) -> Any:
-        Agent, _ = get_crewai_classes()
-        if Agent is None:
-            return None
-        return Agent(
-            role="Evidence Verification & Data Sanitization Specialist",
-            goal="Filter domain blocklists, verify English coherence, deduplicate canonical URLs, and rank sources by native relevance.",
-            backstory="A meticulous data integrity analyst dedicated to eliminating encyclopedic noise, forum scrapers, and duplicate evidence.",
-            verbose=False,
-            allow_delegation=False,
-            tools=tools or [],
-            llm=llm,
-        )
-
-    @staticmethod
-    def create_market_analyst(tools: Optional[List[Any]] = None, llm: Optional[Any] = None) -> Any:
-        Agent, _ = get_crewai_classes()
-        if Agent is None:
-            return None
-        return Agent(
-            role="Market Opportunity & Customer Segmentation Analyst",
-            goal="Evaluate empirical market size valuations, CAGR trajectories, customer personas, end users vs decision makers, and market attractiveness without hallucinating numbers.",
-            backstory="A senior venture capital researcher specializing in market sizing, customer persona breakdown, and attractiveness evaluation grounded in empirical sources.",
-            verbose=False,
-            allow_delegation=False,
-            tools=tools or [],
-            llm=llm,
-        )
-
-    @staticmethod
-    def create_competitor_analyst(tools: Optional[List[Any]] = None, llm: Optional[Any] = None) -> Any:
-        Agent, _ = get_crewai_classes()
-        if Agent is None:
-            return None
-        return Agent(
-            role="Competitive Intelligence & Strategy Specialist",
-            goal="Discover direct, indirect, and emerging rivals, generate feature comparison matrices, and identify structural market gaps.",
-            backstory="A competitive strategy consultant specializing in positioning dynamics, competitor feature matrices, and pricing gap identification.",
-            verbose=False,
-            allow_delegation=False,
-            tools=tools or [],
-            llm=llm,
+            max_iter=8,
         )

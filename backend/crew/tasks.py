@@ -1,97 +1,60 @@
 """
 Team Forge — CrewAI Task Definitions
 ------------------------------------
-Defines structured tasks executed sequentially by the CrewAI validation pipeline.
-Each task defines clear objectives, inputs, and expected structured output formats.
+Defines structured tasks executed by the CrewAI validation pipeline.
 """
 
-from typing import Optional, List, Any
-
-
-def get_crewai_task_class():
-    try:
-        from crewai import Task
-        return Task
-    except ImportError:
-        return None
+from typing import Optional, List, Any, Dict
+from crewai import Task
 
 
 class ValidationTaskFactory:
-    """Factory for creating structured validation tasks with explicit handoffs."""
+    """Factory for creating structured validation tasks."""
 
     @staticmethod
-    def create_idea_extraction_task(
+    def create_market_research_task(
         agent: Any,
         idea: str,
-        product_name: Optional[str] = None,
-        industry: Optional[str] = None,
-        target_audience: Optional[str] = None,
-    ) -> Any:
-        Task = get_crewai_task_class()
-        if Task is None:
-            return None
-        return Task(
-            description=f"Deconstruct the startup idea into structured parameters (product name, vertical, audience, core problem, and 3-5 high-signal keywords).\nIdea: {idea}\nProduct Name: {product_name or 'N/A'}\nIndustry: {industry or 'N/A'}\nTarget Audience: {target_audience or 'N/A'}",
-            expected_output="Structured JSON containing product_name, industry, target_audience, core_problem, and keywords list.",
-            agent=agent,
-        )
+        structured_idea: Dict[str, Any],
+    ) -> Task:
+        """
+        Creates the autonomous market research task where the agent assesses the idea
+        and selectively calls relevant search tools.
+        """
+        product_name = structured_idea.get("product_name") or "Startup"
+        industry = structured_idea.get("industry") or "General"
+        audience = structured_idea.get("target_audience") or "Target Customers"
+        core_problem = structured_idea.get("core_problem") or idea
+        keywords = ", ".join(structured_idea.get("keywords") or [])
 
-    @staticmethod
-    def create_web_search_task(
-        agent: Any,
-        context_tasks: Optional[List[Any]] = None,
-    ) -> Any:
-        Task = get_crewai_task_class()
-        if Task is None:
-            return None
-        return Task(
-            description="Query the Tavily Search API across 4 strategic categories (Competitors, Industry News, Customer Demand, Market Size & Trends) using structured domain parameters.",
-            expected_output="Raw batch results categorized across the 4 research vectors.",
-            agent=agent,
-            context=context_tasks or [],
-        )
+        description = f"""\
+Evaluate the following startup concept and collect targeted market evidence using your search tools:
 
-    @staticmethod
-    def create_data_retrieval_task(
-        agent: Any,
-        context_tasks: Optional[List[Any]] = None,
-    ) -> Any:
-        Task = get_crewai_task_class()
-        if Task is None:
-            return None
-        return Task(
-            description="Sanitize raw search results: enforce domain blocklists, verify English language coherence, deduplicate canonical URLs, and rank sources by native relevance.",
-            expected_output="List of sanitized SourceRecords with summary breakdown metrics.",
-            agent=agent,
-            context=context_tasks or [],
-        )
+STARTUP CONCEPT:
+Pitch: {idea}
+Product Name: {product_name}
+Industry / Vertical: {industry}
+Target Audience: {audience}
+Core Problem: {core_problem}
+Domain Keywords: {keywords}
 
-    @staticmethod
-    def create_market_analysis_task(
-        agent: Any,
-        context_tasks: Optional[List[Any]] = None,
-    ) -> Any:
-        Task = get_crewai_task_class()
-        if Task is None:
-            return None
-        return Task(
-            description="Synthesize verified search evidence to evaluate Market Opportunity (TAM/SAM estimates, CAGR, adoption drivers) and generate granular Customer Personas with acute pain points and buying behaviors.",
-            expected_output="Structured MarketAnalysisResult with cited market sizing, customer segments, and market attractiveness scorecard.",
-            agent=agent,
-            context=context_tasks or [],
-        )
+TASK INSTRUCTIONS:
+1. Review the concept's market structure, business model, and customer type.
+2. Selectively execute ONLY the tools that yield real, actionable evidence for this specific concept:
+   - Use 'search_competitors' if commercial competitors, alternatives, or legacy substitutes exist.
+   - Use 'search_industry_news' if the vertical has active industry trends, regulations, or recent venture activity.
+   - Use 'search_customer_demand' ONLY if the product serves end-consumers or retail users who write reviews. SKIP this tool if the idea is pure enterprise B2B infrastructure, industrial manufacturing, or deep-tech hardware where retail consumers do not exist.
+   - Use 'search_market_size' if commercial market sizing reports (TAM/SAM, CAGR) exist for this industry. SKIP this tool for personal micro-hobbies or non-commercial crafts lacking institutional analyst coverage.
+3. Formulate high-signal queries using domain nouns and problem terms (avoid generic buzzwords or unlaunched brand names).
 
-    @staticmethod
-    def create_competitor_analysis_task(
-        agent: Any,
-        context_tasks: Optional[List[Any]] = None,
-    ) -> Any:
-        Task = get_crewai_task_class()
-        if Task is None:
-            return None
+BUDGET & REPETITION CONSTRAINTS:
+- You operate under a STRICT BUDGET of 3 to 5 total search queries.
+- NEVER execute near-identical queries, rephrased searches, or follow-up queries for the same brand. Once a search returns results, analyze what you have.
+- Immediately stop searching and write your final summary once you have gathered 3-4 distinct evidence points across the relevant categories.
+"""
+
         return Task(
-            description="Discover direct, indirect, and emerging competitors, build a multidimensional comparison matrix, and uncover structural market and pricing gaps.",
-            expected_output="Structured CompetitorAnalysisResult containing classified competitor profiles, comparison matrix, and market gap vectors.",
+            description=description,
+            expected_output="A structured summary of verified market findings and signals gathered from the selected search tools.",
             agent=agent,
-            context=context_tasks or [],
         )
