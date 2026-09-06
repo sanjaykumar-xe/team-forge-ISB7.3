@@ -1678,6 +1678,8 @@ button[type="submit"]:disabled {
   -webkit-box-orient: vertical;
   overflow: hidden;
   max-width: 180px;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .th-startup {

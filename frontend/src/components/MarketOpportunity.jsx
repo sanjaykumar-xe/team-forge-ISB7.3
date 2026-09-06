@@ -32,6 +32,13 @@ export default function MarketOpportunity({ data }) {
         </div>
         <h3 className="section-headline">Market Potential & Economic Dynamics</h3>
         {summary && <p className="section-summary-text">{summary}</p>}
+        {data.analysis_status === "processing_error" && (
+          <div className="empty-category-notice" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+            <p className="insufficient-data-text">
+              ⚠️ {data.message || "Market opportunity analysis could not be completed due to a temporary processing error. Please retry your request."}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Market Sizing Cards */}

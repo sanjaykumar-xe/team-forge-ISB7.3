@@ -26,6 +26,7 @@ from schemas.validation_schemas import (
     MarketAnalysisResult,
 )
 from services.llm_service import call_groq_json
+from services.text_utils import truncate_at_word_boundary
 
 
 COMPETITOR_ANALYSIS_SYSTEM_PROMPT = """\
@@ -65,10 +66,10 @@ class CompetitorAnalysisAgent:
         lines = []
         for i, s in enumerate(selected[:8], 1):
             category = s.get("category", "General")
-            title = s.get("title", "Untitled")[:90]
+            title = truncate_at_word_boundary(s.get("title", "Untitled"), max_length=90)
             url = s.get("url", "")
-            snippet = s.get("snippet", "") or s.get("content", "")
-            snippet = snippet[:280].strip()
+            raw_snip = s.get("snippet", "") or s.get("content", "")
+            snippet = truncate_at_word_boundary(raw_snip, max_length=280)
             lines.append(f"[{i}] Category: {category} | Title: {title}\nURL: {url}\nEvidence: {snippet}\n")
 
         return "\n".join(lines)
@@ -225,7 +226,7 @@ class CompetitorAnalysisAgent:
             comparison_matrix = [
                 ComparisonMatrixRow(
                     feature_or_dimension="Core Value Proposition",
-                    startup_approach=f"Directly addresses {core_problem[:60]}",
+                    startup_approach=f"Directly addresses {truncate_at_word_boundary(core_problem, max_length=70)}",
                     competitor_approaches={
                         name: f"Established approach in {industry} ({name})"
                         for name in comp_names[:3]
@@ -255,7 +256,7 @@ class CompetitorAnalysisAgent:
             comparison_matrix = []
             market_gaps = [
                 f"No direct commercial competitors found in retrieved sources for {industry.lower()}.",
-                f"Unmet market opportunity for specialized solutions addressing: {core_problem[:100]}",
+                f"Unmet market opportunity for specialized solutions addressing: {truncate_at_word_boundary(core_problem, max_length=110)}",
             ]
             pricing_insights = [
                 "Direct commercial pricing is currently unavailable in retrieved search evidence for this niche.",

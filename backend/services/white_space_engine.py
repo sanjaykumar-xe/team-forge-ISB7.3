@@ -22,6 +22,7 @@ from schemas.validation_schemas import (
     CompetitorAnalysisResult,
 )
 from services.llm_service import call_groq_json
+from services.text_utils import truncate_at_word_boundary
 
 
 WHITE_SPACE_SYSTEM_PROMPT = """\
@@ -64,9 +65,10 @@ class WhiteSpaceEngine:
         lines = []
         for i, s in enumerate(selected[:6], 1):
             category = s.get("category", "General")
-            title = s.get("title", "Untitled")[:80]
+            title = truncate_at_word_boundary(s.get("title", "Untitled"), max_length=90)
             url = s.get("url", "")
-            snippet = s.get("snippet", "")[:220].strip()
+            raw_snip = s.get("snippet", "") or s.get("content", "")
+            snippet = truncate_at_word_boundary(raw_snip, max_length=240)
             lines.append(f"[{i}] [{category}] {title}\nURL: {url}\nExcerpt: {snippet}\n")
 
         return "\n".join(lines)
@@ -79,62 +81,17 @@ class WhiteSpaceEngine:
         sources: List[Dict[str, Any]],
         market_analysis: Optional[MarketAnalysisResult] = None,
         competitor_analysis: Optional[CompetitorAnalysisResult] = None,
+        reason: str = "LLM unavailable",
     ) -> WhiteSpaceAnalysisResult:
-        """Deterministic algorithmic synthesis of white-space opportunities."""
-        product_name = structured_idea.get("product_name") or "Startup Platform"
-        industry = structured_idea.get("industry") or "Software / Technology"
-        target_audience = structured_idea.get("target_audience") or "Target Customers"
-        core_problem = structured_idea.get("core_problem") or idea
-
-        demand_urls = [s.get("url") for s in sources if s.get("category") == "Customer Demand" and s.get("url")]
-        comp_urls = [s.get("url") for s in sources if s.get("category") == "Competitors" and s.get("url")]
-
-        has_demand_evidence = bool(demand_urls)
-        has_comp_evidence = bool(comp_urls)
-
-        opp_1 = WhiteSpaceOpportunity(
-            opportunity_name=f"Automated Intelligence for Underserved {target_audience}",
-            segment=target_audience,
-            pain_point=core_problem,
-            demand_evidence=[
-                f"Market research indicates {target_audience.lower()} face persistent friction with {core_problem[:60]}."
-                if has_demand_evidence else "Hypothesized operational friction requiring primary user validation.",
-            ],
-            competitor_coverage=[
-                "Incumbents focus primarily on enterprise accounts with complex manual configurations."
-                if has_comp_evidence else "Competitor capabilities unverified in current search index.",
-            ],
-            gap=f"Lightweight specialized intelligence tailored for {industry.lower()}.",
-            startup_fit=f"{product_name} addresses this by combining domain workflows with automated prediction.",
-            differentiation_hypothesis="Immediate time-to-value with low configuration friction.",
-            evidence_strength="Medium" if has_demand_evidence else "Low",
-            confidence=None,
-            potential_risk="Incumbent platforms expanding into lightweight entry-tier offerings.",
-            evidence=demand_urls[:2] if demand_urls else [],
+        """
+        Deterministic degraded result when LLM synthesis fails.
+        Returns zero fabricated opportunities and explicitly flags the processing error.
+        """
+        return WhiteSpaceAnalysisResult(
+            opportunities=[],
+            analysis_status="processing_error",
+            message=f"White-space opportunity synthesis could not be completed due to a temporary processing error: {reason[:100]}. Please retry your validation request.",
         )
-
-        opp_2 = WhiteSpaceOpportunity(
-            opportunity_name="Actionable Decision Support & Workflow Automation",
-            segment=f"Operators in {industry}",
-            pain_point="Lag between data insight generation and operational execution.",
-            demand_evidence=[
-                "Need for actionable intervention rather than static visual dashboards."
-                if has_demand_evidence else "Preliminary gap hypothesis based on category patterns.",
-            ],
-            competitor_coverage=[
-                "Current solutions provide visualization without direct execution automation."
-                if has_comp_evidence else "Direct competitor coverage unverified in current search sources.",
-            ],
-            gap="Closed-loop execution layer translating insights into direct interventions.",
-            startup_fit="Direct connection between data intelligence and operational triggers.",
-            differentiation_hypothesis="Outcome-driven automation creates higher user retention than passive dashboards.",
-            evidence_strength="Medium" if has_comp_evidence else "Low",
-            confidence=None,
-            potential_risk="Workflow and integration dependencies.",
-            evidence=comp_urls[:2] if comp_urls else [],
-        )
-
-        return WhiteSpaceAnalysisResult(opportunities=[opp_1, opp_2])
 
     def discover(
         self,
@@ -213,10 +170,11 @@ JSON format must match this structure:
             parsed = call_groq_json(
                 prompt=prompt,
                 system_prompt=WHITE_SPACE_SYSTEM_PROMPT,
-                max_tokens=2500,
+                max_tokens=4096,
                 temperature=0.1,
             )
             result = WhiteSpaceAnalysisResult(**parsed)
+            result.analysis_status = "completed"
             return result
         except Exception as exc:
             print(f"  [WhiteSpaceEngine] LLM synthesis failed ({exc}), triggering fallback.")
@@ -226,4 +184,5 @@ JSON format must match this structure:
                 sources=sources,
                 market_analysis=market_analysis,
                 competitor_analysis=competitor_analysis,
+                reason=str(exc),
             )

@@ -12,7 +12,7 @@ Defines strict, typed contracts for:
 """
 
 from typing import List, Dict, Any, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class IdeaSubmission(BaseModel):
@@ -80,6 +80,8 @@ class MarketAnalysisResult(BaseModel):
     market_risks: List[str] = Field(default_factory=list)
     attractiveness: Optional[MarketAttractiveness] = None
     confidence: Optional[float] = Field(default=None, description="Calibrated confidence score if verified by LLM analysis")
+    analysis_status: Optional[str] = Field(default="completed", description="Analysis status: 'completed' or 'processing_error'")
+    message: Optional[str] = Field(default=None, description="Diagnostic notice or retry message if processing encountered an error")
 
 
 class CompetitorRecord(BaseModel):
@@ -116,22 +118,37 @@ class CompetitorAnalysisResult(BaseModel):
 class WhiteSpaceOpportunity(BaseModel):
     """Traceable, evidence-backed market white space opportunity."""
     opportunity_name: str = Field(..., description="Actionable title of the identified opportunity gap")
-    segment: str = Field(..., description="Underserved customer segment")
-    pain_point: str = Field(..., description="Acute unaddressed customer pain point")
+    segment: str = Field(default="", description="Underserved customer segment")
+    pain_point: str = Field(default="", description="Acute unaddressed customer pain point")
     demand_evidence: List[str] = Field(default_factory=list, description="Supporting empirical evidence quotes/signals")
     competitor_coverage: List[str] = Field(default_factory=list, description="Current competitor behavior and omissions")
-    gap: str = Field(..., description="Clear structural gap left open in the market")
-    startup_fit: str = Field(..., description="Why the startup concept is structurally suited to conquer this gap")
-    differentiation_hypothesis: str = Field(..., description="Strategic hypothesis for sustainable differentiation")
+    gap: str = Field(default="", description="Clear structural gap left open in the market")
+    startup_fit: str = Field(default="", description="Why the startup concept is structurally suited to conquer this gap")
+    differentiation_hypothesis: str = Field(default="", description="Strategic hypothesis for sustainable differentiation")
     evidence_strength: str = Field(default="Low", description="Evidence backing tier: High, Medium, or Low")
     confidence: Optional[float] = Field(default=None, description="Conviction score (null if preliminary/unverified)")
     potential_risk: Optional[str] = Field(default=None, description="Key execution or market hazard to monitor")
     evidence: List[str] = Field(default_factory=list, description="Traceable source URLs and citations")
 
+    @field_validator("demand_evidence", "competitor_coverage", "evidence", mode="before")
+    @classmethod
+    def coerce_string_list(cls, v):
+        if not isinstance(v, list):
+            return [str(v)] if v else []
+        flattened = []
+        for item in v:
+            if isinstance(item, list):
+                flattened.extend(cls.coerce_string_list(item))
+            elif item is not None:
+                flattened.append(str(item))
+        return flattened
+
 
 class WhiteSpaceAnalysisResult(BaseModel):
     """Aggregated output from the Evidence-Backed Market White-Space Engine."""
     opportunities: List[WhiteSpaceOpportunity] = Field(default_factory=list)
+    analysis_status: Optional[str] = Field(default="completed", description="Analysis status: 'completed' or 'processing_error'")
+    message: Optional[str] = Field(default=None, description="Diagnostic notice or retry message if processing encountered an error")
 
 
 class ValidationResponse(BaseModel):

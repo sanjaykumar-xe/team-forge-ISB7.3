@@ -24,6 +24,7 @@ from schemas.validation_schemas import (
     MarketAttractiveness,
 )
 from services.llm_service import call_groq_json
+from services.text_utils import truncate_at_word_boundary
 
 
 MARKET_ANALYSIS_SYSTEM_PROMPT = """\
@@ -71,10 +72,10 @@ class MarketOpportunityAgent:
         lines = []
         for i, s in enumerate(selected[:8], 1):
             category = s.get("category", "General")
-            title = s.get("title", "Untitled")[:90]
+            title = truncate_at_word_boundary(s.get("title", "Untitled"), max_length=90)
             url = s.get("url", "")
             snippet = s.get("snippet", "") or s.get("content", "")
-            snippet = snippet[:280].strip()
+            snippet = truncate_at_word_boundary(snippet, max_length=280)
             lines.append(f"[{i}] Category: {category} | Title: {title}\nURL: {url}\nEvidence: {snippet}\n")
 
         return "\n".join(lines)
@@ -92,44 +93,64 @@ class MarketOpportunityAgent:
 
         seen_figures = set()
 
+        # Regex supporting comma-separated values like $1,870 Million, USD 1,870.5M, 1,870 Million USD, $101.81 Billion
+        figures_pattern = re.compile(
+            r'(?:(?:USD\s*|US\$\s*|\$\s*)((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*(Billion|Million|Trillion|B|M|T)?)'
+            r'|'
+            r'(?:((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*(Billion|Million|Trillion|B|M|T)\s*(?:USD|dollars|\$))',
+            re.IGNORECASE
+        )
+
         for s in relevant_sources:
-            snippet = s.get("snippet", "") or s.get("content", "")
+            raw_snippet = s.get("snippet", "") or s.get("content", "")
             title = s.get("title", "")
-            text = f"{title}. {snippet}"
+            text = f"{title}. {raw_snippet}"
             url = s.get("url", "")
 
-            # Look for dollar / USD figures: e.g. USD 1.28 Billion, $101.81 Billion, $101.81B
-            figures = re.findall(
-                r'(?:USD\s*|\$\s*)(\d+(?:\.\d+)?)\s*(Billion|Million|Trillion|B|M|T)?',
-                text,
-                re.IGNORECASE
-            )
+            raw_matches = []
+            for m in figures_pattern.finditer(text):
+                v = m.group(1) or m.group(3)
+                u = m.group(2) or m.group(4) or ""
+                raw_matches.append((v, u))
+
             # Look for CAGR percentages: e.g. 19.6% CAGR, CAGR of 15.2%
             cagr_match = re.search(
-                r'(\d+(?:\.\d+)?)\s*%\s*CAGR|CAGR\s*(?:of\s*)?(\d+(?:\.\d+)?)\s*%',
+                r'((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*%\s*CAGR|CAGR\s*(?:of\s*)?((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?)\s*%',
                 text,
                 re.IGNORECASE
             )
             # Look for forecast years: e.g. by 2030, through 2034, 2025 to 2032
             year_match = re.search(r'\b(202[5-9]|203[0-9]|2040)\b', text)
 
-            if figures:
-                val, unit = figures[0]
-                unit_str = f" {unit.capitalize()}" if unit else ""
-                if unit and unit.lower() == "b":
-                    unit_str = " Billion"
-                elif unit and unit.lower() == "m":
-                    unit_str = " Million"
-                figure_str = f"${val}{unit_str}"
+            if raw_matches:
+                v1, u1 = raw_matches[0]
+                u1_clean = u1.capitalize() if u1 else ""
+                if u1 and u1.lower() == "b":
+                    u1_clean = "Billion"
+                elif u1 and u1.lower() == "m":
+                    u1_clean = "Million"
+                elif u1 and u1.lower() == "t":
+                    u1_clean = "Trillion"
 
-                if len(figures) > 1:
-                    v2, u2 = figures[1]
-                    u2_str = f" {u2.capitalize()}" if u2 else ""
+                if len(raw_matches) > 1:
+                    v2, u2 = raw_matches[1]
+                    u2_clean = u2.capitalize() if u2 else ""
                     if u2 and u2.lower() == "b":
-                        u2_str = " Billion"
+                        u2_clean = "Billion"
                     elif u2 and u2.lower() == "m":
-                        u2_str = " Million"
-                    figure_str += f" to ${v2}{u2_str}"
+                        u2_clean = "Million"
+                    elif u2 and u2.lower() == "t":
+                        u2_clean = "Trillion"
+
+                    # Bidirectional unit inheritance between endpoints
+                    if not u1_clean and u2_clean:
+                        u1_clean = u2_clean
+                    elif not u2_clean and u1_clean:
+                        u2_clean = u1_clean
+
+                    figure_str = f"${v1}{f' {u1_clean}' if u1_clean else ''} to ${v2}{f' {u2_clean}' if u2_clean else ''}"
+                else:
+                    figure_str = f"${v1}{f' {u1_clean}' if u1_clean else ''}"
 
                 if figure_str in seen_figures:
                     continue
@@ -143,6 +164,8 @@ class MarketOpportunityAgent:
                 forecast_yr = year_match.group(1) if year_match else None
                 market_type = "global" if any(w in text.lower() for w in ["global", "worldwide", "international"]) else "niche"
 
+                evidence_text = truncate_at_word_boundary(raw_snippet, max_length=260) if raw_snippet else title
+
                 estimates.append(
                     MarketSizeEstimate(
                         figure=figure_str,
@@ -150,12 +173,12 @@ class MarketOpportunityAgent:
                         cagr=cagr_str,
                         forecast_year=forecast_yr,
                         source_url=url,
-                        evidence_snippet=snippet[:240].strip() if snippet else title,
+                        evidence_snippet=evidence_text,
                         notes="Quantitative market sizing extracted from verified research source.",
                     )
                 )
 
-        return estimates[:4]
+        return estimates[:6]
 
     def _fallback_analysis(
         self,
@@ -164,72 +187,35 @@ class MarketOpportunityAgent:
         sources: List[Dict[str, Any]],
         reason: str = "LLM unavailable",
     ) -> MarketAnalysisResult:
-        """Deterministic fallback synthesis extracting quantitative market metrics when available."""
-        industry = structured_idea.get("industry") or "Software / Technology"
-        target_audience = structured_idea.get("target_audience") or "Target Customers"
+        """
+        Deterministic degraded result when LLM analysis fails.
+        Preserves verified empirical market sizing from sources if available,
+        but outputs NO fabricated trends, demand signals, or customer segments.
+        """
         product_name = structured_idea.get("product_name") or "Startup"
-        core_problem = structured_idea.get("core_problem") or idea
+        industry = structured_idea.get("industry") or "the sector"
 
+        # Deterministically extract real empirical market sizing from sources (zero LLM involved)
         market_size_estimates = self._extract_market_sizing(sources)
 
-        if market_size_estimates:
-            top_est = market_size_estimates[0]
-            summary = (
-                f"The market for {product_name} in {industry} is backed by empirical research reports "
-                f"estimating market size at {top_est.figure}"
-                f"{f' with a projected {top_est.cagr} CAGR' if top_est.cagr else ''}"
-                f"{f' through {top_est.forecast_year}' if top_est.forecast_year else ''}. "
-                f"Growing sustainability demands and subscription adoption drive solid market momentum."
-            )
-            confidence = round(min(0.85, 0.45 + 0.10 * len(market_size_estimates)), 2)
-            demand_strength = "High"
-            growth_strength = "High" if top_est.cagr else "Medium"
-        else:
-            summary = (
-                f"The market for {product_name} in {industry} addresses {core_problem[:80]}. "
-                f"Quantitative market sizing requires domain-specific reports."
-            )
-            confidence = None
-            demand_strength = "Low"
-            growth_strength = "Low"
-
-        segment_1 = CustomerSegment(
-            segment_name=f"Primary {target_audience}",
-            who_they_are=f"Key users and organizations seeking solutions for {core_problem[:60]}",
-            end_users=f"Frontline {target_audience.lower()} experiencing daily friction",
-            decision_makers=f"Department leads, founders, or individual buyers in {industry}",
-            primary_needs=["Workflow automation", "Cost reduction", "Seamless integration", "High reliability"],
-            pain_points=[core_problem, "Lack of modern dedicated tooling", "High manual overhead"],
-            motivations=["Efficiency gains", "Improved outcomes", "Modern digital experience"],
-            buying_behavior="Evaluates ROI, relies on peer recommendations, prefers free trials or pilots.",
-            industry_terminology=structured_idea.get("keywords", []) or [industry.lower()],
+        summary = (
+            f"Market opportunity analysis for {product_name} ({industry}) could not be completed "
+            f"due to a temporary LLM processing error. Please retry your validation request."
         )
 
         return MarketAnalysisResult(
             summary=summary,
             market_size=market_size_estimates,
-            growth_trends=[
-                f"Increasing consumer adoption of zero-waste and sustainable alternatives in {industry}.",
-                "Shift toward direct-to-consumer recurring replenishment and refillable packaging models.",
-                "Growing regulatory and consumer pressure against single-use plastics.",
-            ],
-            demand_signals=[
-                f"Active search and review engagement around eco-friendly supplies and refills.",
-                "Consumers actively seeking alternatives with reduced environmental footprint.",
-            ],
-            customer_segments=[segment_1],
-            pain_points=[core_problem, "Inflexible subscription cadences", "Excess packaging waste"],
-            buying_behavior=["Values transparent ingredients", "Prefers customizable delivery intervals"],
-            market_risks=["Supply chain friction for refillable hardware", "Customer acquisition cost pressures"],
-            attractiveness=MarketAttractiveness(
-                demand_strength=demand_strength,
-                growth_strength=growth_strength,
-                customer_urgency="Medium",
-                market_accessibility="Medium",
-                major_barriers=["Brand awareness", "Initial kit adoption costs"],
-                important_assumptions=["Consumers will adopt refill habits if delivery and pricing friction is minimal."],
-            ),
-            confidence=confidence,
+            growth_trends=[],
+            demand_signals=[],
+            customer_segments=[],
+            pain_points=[],
+            buying_behavior=[],
+            market_risks=[],
+            attractiveness=None,
+            confidence=None,
+            analysis_status="processing_error",
+            message=f"LLM processing error: {reason[:120]}. Please retry.",
         )
 
     def analyze(
@@ -257,7 +243,12 @@ VERIFIED SEARCH SOURCES FROM RESEARCH:
 {context_str}
 
 TASK:
-Produce a comprehensive Market Opportunity & Customer Segmentation analysis.
+Produce a concise, grounded Market Opportunity & Customer Segmentation analysis.
+CONSTRAINTS:
+- Keep evidence snippets concise (1-2 sentences).
+- Limit customer_segments to top 2 segments max.
+- Maintain valid JSON syntax.
+
 JSON structure must match this format:
 {{
   "summary": "2-3 sentence executive synthesis of market attractiveness and opportunity size.",
@@ -277,14 +268,14 @@ JSON structure must match this format:
   "customer_segments": [
     {{
       "segment_name": "Name of Segment",
-      "who_they_are": "Detailed profile",
+      "who_they_are": "Concise profile description",
       "end_users": "Who uses it daily",
       "decision_makers": "Who buys / signs off",
       "primary_needs": ["Need 1", "Need 2", "Need 3"],
       "pain_points": ["Pain point 1", "Pain point 2"],
       "motivations": ["Motivation 1", "Motivation 2"],
       "buying_behavior": "Procurement cycle and purchasing habits",
-      "industry_terminology": ["term1", "term2", "term3"]
+      "industry_terminology": ["term1", "term2"]
     }}
   ],
   "pain_points": ["Aggregated top pain point 1", "Pain point 2", "Pain point 3"],
@@ -306,12 +297,13 @@ JSON structure must match this format:
             parsed = call_groq_json(
                 prompt=prompt,
                 system_prompt=MARKET_ANALYSIS_SYSTEM_PROMPT,
-                max_tokens=2500,
+                max_tokens=4096,
                 temperature=0.1,
             )
             
             # Validate and construct typed Pydantic result
             result = MarketAnalysisResult(**parsed)
+            result.analysis_status = "completed"
             # If LLM returned empty market_size but sources contain market sizing figures, supplement them
             if not result.market_size:
                 extracted = self._extract_market_sizing(sources)

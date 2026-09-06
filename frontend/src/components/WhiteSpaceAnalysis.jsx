@@ -7,6 +7,26 @@ import React from "react";
  */
 export default function WhiteSpaceAnalysis({ data }) {
   if (!data || !Array.isArray(data.opportunities) || data.opportunities.length === 0) {
+    if (data && data.analysis_status === "processing_error") {
+      return (
+        <div id="section-whitespace" className="whitespace-engine-section">
+          <div className="section-masthead whitespace-masthead">
+            <div className="section-eyebrow-row">
+              <span className="section-badge badge-amber">§ MARKET WHITE-SPACE</span>
+              <span className="section-meta-tag">[PROCESSING ERROR]</span>
+            </div>
+            <h3 className="section-headline whitespace-headline">
+              Evidence-Backed Market White-Space Map
+            </h3>
+            <div className="empty-category-notice" style={{ marginTop: "1rem" }}>
+              <p className="insufficient-data-text">
+                ⚠️ {data.message || "White-space opportunity synthesis could not be completed due to a temporary processing error. Please retry your validation request."}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 

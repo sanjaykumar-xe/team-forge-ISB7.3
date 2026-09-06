@@ -83,14 +83,12 @@ def test_market_opportunity_agent_fallback():
     )
 
     assert isinstance(result, MarketAnalysisResult)
-    assert len(result.customer_segments) > 0
-    seg = result.customer_segments[0]
-    assert isinstance(seg, CustomerSegment)
-    assert seg.end_users != ""
-    assert seg.decision_makers != ""
-    assert len(seg.pain_points) > 0
-    assert result.attractiveness is not None
-    assert result.attractiveness.demand_strength in ["High", "Medium", "Low"]
+    assert result.analysis_status == "processing_error"
+    assert result.confidence is None
+    assert len(result.customer_segments) == 0
+    assert len(result.growth_trends) == 0
+    assert len(result.market_size) > 0  # Preserves verified empirical market sizing from sources
+    assert "$6.2 Billion" in result.market_size[0].figure
 
 
 def test_competitor_analysis_agent_fallback():
@@ -173,16 +171,9 @@ def test_white_space_engine_fallback():
     )
 
     assert isinstance(result, WhiteSpaceAnalysisResult)
-    assert len(result.opportunities) >= 2
-    opp = result.opportunities[0]
-    assert isinstance(opp, WhiteSpaceOpportunity)
-    assert opp.segment != ""
-    assert opp.pain_point != ""
-    assert opp.gap != ""
-    assert opp.startup_fit != ""
-    assert opp.differentiation_hypothesis != ""
-    assert opp.evidence_strength in ["High", "Medium", "Low"]
-    assert len(opp.evidence) > 0
+    assert result.analysis_status == "processing_error"
+    assert len(result.opportunities) == 0
+    assert "temporary processing error" in (result.message or "")
 
 
 def test_orchestrator_gibberish_defense():

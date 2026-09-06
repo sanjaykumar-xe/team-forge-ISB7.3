@@ -84,9 +84,10 @@ def clean_json_response(raw_text: str) -> str:
 
 def execute_groq_completion(
     messages: List[Dict[str, str]],
-    max_tokens: int = 2048,
+    max_tokens: int = 4096,
     temperature: float = 0.1,
     models: Optional[List[str]] = None,
+    json_mode: bool = False,
 ) -> Tuple[str, str]:
     """
     Executes a chat completion across model pool with automatic failover and rate limit backoff.
@@ -103,18 +104,35 @@ def execute_groq_completion(
     for model in target_models:
         for attempt in range(2):
             try:
-                resp = client.chat.completions.create(
-                    model=model,
-                    messages=messages,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    timeout=8.0,
-                )
+                kwargs = {
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    "timeout": 12.0,
+                }
+                if json_mode:
+                    kwargs["response_format"] = {"type": "json_object"}
+                resp = client.chat.completions.create(**kwargs)
                 content = resp.choices[0].message.content or ""
                 return content, model
             except Exception as exc:
                 last_exc = exc
                 err_msg = str(exc).lower()
+                # If json_object response_format not supported by this specific model, retry without it
+                if json_mode and ("response_format" in err_msg or "unsupported" in err_msg):
+                    try:
+                        resp = client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            max_tokens=max_tokens,
+                            temperature=temperature,
+                            timeout=12.0,
+                        )
+                        content = resp.choices[0].message.content or ""
+                        return content, model
+                    except Exception as inner_exc:
+                        last_exc = inner_exc
                 if "429" in err_msg or "rate limit" in err_msg or "rate_limit" in err_msg:
                     sleep_time = (2 ** attempt) + 0.5
                     time.sleep(sleep_time)
@@ -127,7 +145,7 @@ def execute_groq_completion(
 def call_groq_json(
     prompt: str,
     system_prompt: str,
-    max_tokens: int = 2500,
+    max_tokens: int = 4096,
     temperature: float = 0.1,
 ) -> Dict[str, Any]:
     """
@@ -143,6 +161,7 @@ def call_groq_json(
         messages=messages,
         max_tokens=max_tokens,
         temperature=temperature,
+        json_mode=True,
     )
     
     cleaned = clean_json_response(raw_content)
@@ -155,4 +174,16 @@ def call_groq_json(
             fixed = re.sub(r",\s*([\]}])", r"\1", cleaned)
             return json.loads(fixed)
         except Exception:
-            raise ValueError(f"Failed to parse JSON from Groq ({model_used}): {err}\nRaw snippet: {cleaned[:300]}")
+            pass
+        # Tertiary recovery attempt: close open structures if truncated
+        try:
+            open_braces = cleaned.count("{") - cleaned.count("}")
+            open_brackets = cleaned.count("[") - cleaned.count("]")
+            candidate = cleaned
+            if candidate.endswith(","):
+                candidate = candidate[:-1]
+            candidate = candidate + ("]" * max(0, open_brackets)) + ("}" * max(0, open_braces))
+            return json.loads(candidate)
+        except Exception:
+            pass
+        raise ValueError(f"Failed to parse JSON from Groq ({model_used}): {err}\nRaw snippet: {cleaned[:300]}")
