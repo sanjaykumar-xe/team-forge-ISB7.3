@@ -24,17 +24,12 @@ Enforces exact milestone logging and robust error resilience:
     gracefully to maintain pipeline continuity without crashing the API.
 """
 
-import sys
-import time
-from typing import Dict, Any, Optional, List
+from typing import Any, List
 
 from schemas.validation_schemas import (
     IdeaSubmission,
     ValidationResponse,
     SourceRecord,
-    MarketAnalysisResult,
-    CompetitorAnalysisResult,
-    WhiteSpaceAnalysisResult,
 )
 from agents.idea_extraction_agent import IdeaExtractionAgent
 from agents.web_search_agent import WebSearchAgent
@@ -43,7 +38,7 @@ from agents.market_analysis_agent import MarketOpportunityAgent
 from agents.competitor_analysis_agent import CompetitorAnalysisAgent
 from services.white_space_engine import WhiteSpaceEngine
 
-from .agents import ValidationAgentFactory, get_crewai_classes
+from .agents import ValidationAgentFactory
 from .tasks import ValidationTaskFactory
 
 

@@ -9,19 +9,36 @@ The backend is a high-performance **FastAPI** service that manages autonomous mu
 ```
 backend/
 ├── agents/
-│   ├── __init__.py               # Agent package exports
-│   ├── idea_extraction_agent.py  # Groq LLM semantic extraction & multi-model failover
-│   ├── web_search_agent.py       # Multi-category parallel search execution via Tavily
-│   └── data_retrieval_agent.py   # Blocklist filtering, English check, dedup, & ranking
+│   ├── __init__.py                  # Agent package exports
+│   ├── idea_extraction_agent.py     # Groq LLM semantic extraction & multi-model failover
+│   ├── web_search_agent.py          # Tavily search wrapper with query category routing
+│   ├── data_retrieval_agent.py      # Blocklist filtering, English check, dedup, & ranking
+│   ├── market_analysis_agent.py     # TAM/SAM sizing, CAGR estimation, & customer personas
+│   └── competitor_analysis_agent.py # Competitor mapping, feature matrix, & gap analysis
+├── crew/
+│   ├── agents.py                    # CrewAI Agent definitions
+│   ├── orchestrator.py              # CrewAI autonomous execution & milestone logging
+│   ├── tasks.py                     # CrewAI Task definitions & context handoffs
+│   └── tools.py                     # Search & retrieval tools exposed to the CrewAI Agent
+├── schemas/
+│   ├── __init__.py                  # Schema package exports
+│   └── validation.py                # Pydantic models & validation contracts
+├── services/
+│   ├── __init__.py                  # Service package exports
+│   ├── llm_service.py               # Resilient Groq LLM client with JSON validation & failover
+│   └── white_space_engine.py        # Triangulation engine: Customer Pain × Competitor Void × Startup
 ├── scripts/
-│   ├── run_eval.py               # 10-idea automated benchmark evaluation harness
-│   └── smoke_test.py             # Single-idea smoke test script
+│   ├── test_milestone2_e2e.py       # 3-industry end-to-end benchmark evaluation
+│   ├── run_5_regression_ideas.py    # Multi-idea regression test suite
+│   ├── run_eval.py                  # Evaluation harness
+│   └── smoke_test.py                # Single-idea smoke test script
 ├── tests/
-│   └── test_agents.py            # Unit tests for agents and validation logic
-├── config.py                     # Environment loading & CORS policies
-├── main.py                       # FastAPI entrypoint, Pydantic models & in-process pipeline
-├── requirements.txt              # Python dependencies (FastAPI, Groq, Tavily, etc.)
-└── .env.example                  # Environment configuration template
+│   ├── test_agents.py               # Unit tests for agents
+│   └── test_milestone2.py           # Milestone 2 regression & data integrity tests
+├── config.py                        # Environment loading & CORS policies
+├── main.py                          # FastAPI entrypoint, input validation, & router
+├── requirements.txt                 # Python dependencies (FastAPI, CrewAI, Groq, Tavily, etc.)
+└── .env.example                     # Environment configuration template
 ```
 
 ---
@@ -30,23 +47,37 @@ backend/
 
 1. **`IdeaExtractionAgent`** ([`agents/idea_extraction_agent.py`](agents/idea_extraction_agent.py))
    - Ingests raw conversational startup descriptions.
-   - Uses **Groq Cloud LLM** (`qwen/qwen3.8-27b`) with automatic failover to `allam-2-7b` and `groq/compound-mini` on HTTP 429 rate limits.
+   - Uses **Groq Cloud LLM** with automatic failover across models (`qwen/qwen3.8-27b`, `allam-2-7b`, `groq/compound-mini`) on rate limits.
    - Extracts structured domain context: *Product Name*, *Industry Vertical*, *Target Audience*, *Core Problem*, and *Contextual Keywords*.
 
-2. **`WebSearchAgent`** ([`agents/web_search_agent.py`](agents/web_search_agent.py))
-   - Synthesizes 4 distinct search queries across strategic market categories:
+2. **Autonomous `MarketResearchAgent` via CrewAI** ([`crew/orchestrator.py`](crew/orchestrator.py))
+   - Given the extracted domain context, the agent autonomously plans and issues targeted search queries across 4 dimensions:
      1. *Competitors & Alternatives*
-     2. *Industry News & Trends* (`topic="news"`)
+     2. *Industry News & Trends*
      3. *Customer Demand & User Pain Points*
      4. *Market Size & Growth Forecasts*
-   - Queries the **Tavily Search API** in parallel using `ThreadPoolExecutor(max_workers=4)` with `search_depth="advanced"`.
-   - Uses Tavily's native calibrated semantic relevance scores (`0.0` to `1.0`).
+   - Interacts with **Tavily Search API** through discrete tool definitions, governed by a query repetition filter and budget cap.
 
 3. **`DataRetrievalAgent`** ([`agents/data_retrieval_agent.py`](agents/data_retrieval_agent.py))
    - Strips non-commercial dictionary, encyclopedia, and forum domains (`BLOCKED_DOMAINS`).
    - Validates English text coherence deterministically via seeded `langdetect`.
    - Deduplicates identical canonical URLs across queries and category boundaries.
    - Sorts records strictly by relevance score descending and computes summary distributions.
+
+4. **`MarketOpportunityAgent`** ([`agents/market_analysis_agent.py`](agents/market_analysis_agent.py))
+   - Synthesizes market sizing estimates (TAM/SAM), CAGR projections, and market attractiveness scores.
+   - Constructs detailed customer personas separating Daily End Users from Economic Decision Makers.
+   - Honest empty states: suppresses scorecards and nulls confidence when 0 market size sources exist.
+
+5. **`CompetitorAnalysisAgent`** ([`agents/competitor_analysis_agent.py`](agents/competitor_analysis_agent.py))
+   - Identifies direct competitors and indirect substitutes.
+   - Extracts business models, strengths, weaknesses, and customer complaints.
+   - Constructs a side-by-side comparison matrix evaluating the startup's approach against key rivals.
+
+6. **`WhiteSpaceEngine`** ([`services/white_space_engine.py`](services/white_space_engine.py))
+   - Computes deterministic opportunity gaps at the intersection:
+     $$\text{White-Space Opportunity} = \text{Customer Pain} \cap \text{Competitor Void} \cap \text{Startup Capability}$$
+   - Outputs 2–4 high-conviction opportunity gaps with evidence strength, confidence ratings, and source citations.
 
 ---
 

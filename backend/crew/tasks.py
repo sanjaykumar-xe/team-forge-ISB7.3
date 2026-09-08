@@ -4,7 +4,7 @@ Team Forge — CrewAI Task Definitions
 Defines structured tasks executed by the CrewAI validation pipeline.
 """
 
-from typing import Optional, List, Any, Dict
+from typing import Any, Dict
 from crewai import Task
 
 

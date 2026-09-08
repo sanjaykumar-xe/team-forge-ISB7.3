@@ -16,7 +16,7 @@ Milestone 2 delivers:
 - **CrewAI Orchestration Layer**: Sequential multi-agent workflow using CrewAI concepts (`Agent`, `Task`, `Crew`, `Process.sequential`) with strict step-by-step progress logging.
 - **5 Autonomous Research & Intelligence Agents**:
   1. `IdeaExtractionAgent`: Extracts domain semantics, industry vertical, audience profile, core problem statement, and contextual keywords using Groq LLMs with cascading failover.
-  2. `WebSearchAgent`: AI-native search coordinator querying the **Tavily Search API** in parallel across 4 market categories.
+  2. `MarketResearchAgent` / `WebSearchAgent`: Autonomous research agent invoking discrete CrewAI search tools (`search_competitors`, `search_industry_news`, `search_customer_demand`, `search_market_size`) powered by the **Tavily Search API** with query deduplication, budget cap, and deterministic fallback.
   3. `DataRetrievalAgent`: Sanitization and verification engine filtering blocked domains, verifying English language, deduplicating URLs, and computing relevance metrics.
   4. `MarketOpportunityAgent`: Analyzes empirical search data to produce market size estimates (global/regional/niche), CAGR growth drivers, customer personas, and market attractiveness scorecards without hallucinating numbers.
   5. `CompetitorAnalysisAgent`: Discovers direct, indirect, and emerging competitors, maps feature comparisons, and identifies pricing/business-model voids.
@@ -55,7 +55,10 @@ Milestone 2 delivers:
 │                                                                                                         │
 │   [1] Idea Extraction Agent       ──> Extracts product_name, vertical, audience, core_problem, keywords │
 │              ↓                                                                                          │
-│   [2] Web Search Agent            ──> Dispatches 4 parallel Tavily queries (ThreadPoolExecutor)         │
+│   [2] Market Research Agent       ──> Autonomous tool calling via crew.kickoff()                        │
+│       (MarketResearchToolKit)         • search_competitors     • search_industry_news                   │
+│                                       • search_customer_demand • search_market_size                     │
+│                                       (Query deduplication, budget cap & direct failover)                │
 │              ↓                                                                                          │
 │   [3] Data Retrieval Agent        ──> Domain blocklist, langdetect English check, deduplication, ranks  │
 │              ↓                                                                                          │

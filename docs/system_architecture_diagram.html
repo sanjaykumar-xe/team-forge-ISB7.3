@@ -3,265 +3,775 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Startup Idea Validator — System Architecture Diagram</title>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <title>Team Forge — Startup Idea Validator System Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0F1117;
-      --card-bg: #1A1D27;
-      --border: #2E3346;
-      --text-main: #E2E8F0;
-      --text-muted: #94A3B8;
-      --accent-amber: #F59E0B;
-      --accent-blue: #38BDF8;
-      --accent-green: #34D399;
-      --accent-purple: #A78BFA;
-    }
-    body {
+    * {
+      box-sizing: border-box;
       margin: 0;
-      padding: 32px;
-      background: var(--bg);
-      color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 0;
     }
-    .container {
-      max-width: 1300px;
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f1f5fa;
+      background-image: 
+        linear-gradient(to right, rgba(180, 202, 230, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(180, 202, 230, 0.4) 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: #0f172a;
+      padding: 32px 20px;
+      min-width: 1360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .canvas-container {
+      width: 1380px;
+      position: relative;
       margin: 0 auto;
     }
-    .header {
-      margin-bottom: 28px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 20px;
+
+    /* Header */
+    .main-title {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: #0a192f;
+      margin-bottom: 24px;
     }
-    .badge {
-      display: inline-block;
-      font-family: monospace;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      padding: 4px 10px;
-      background: rgba(245, 158, 11, 0.15);
-      color: var(--accent-amber);
-      border: 1px solid var(--accent-amber);
-      margin-bottom: 12px;
+
+    .main-title span {
+      color: #2563eb;
     }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-      font-weight: 600;
+
+    /* Common Box Styles */
+    .tier-card {
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
+      background: #ffffff;
+      position: relative;
+      border: 1.5px solid #cbd5e1;
     }
-    p {
-      color: var(--text-muted);
-      margin: 0;
+
+    .tier-header {
+      padding: 8px 16px;
+      font-weight: 700;
       font-size: 15px;
-      line-height: 1.5;
-    }
-    .diagram-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 32px;
-      margin-bottom: 32px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      overflow-x: auto;
-    }
-    .diagram-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 20px;
-      color: var(--accent-blue);
+      text-align: center;
+      border-top-left-radius: 10px;
+      border-top-right-radius: 10px;
+      letter-spacing: -0.01em;
+      color: #ffffff;
       display: flex;
       align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Left Floating Labels */
+    .tier-side-label {
+      position: absolute;
+      left: -210px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 190px;
+      text-align: right;
+    }
+
+    .tier-side-label .name {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #0f172a;
+      line-height: 1.25;
+    }
+
+    .tier-side-label .cloud {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    /* Tier 1: Client */
+    .client-tier {
+      width: 860px;
+      margin: 0 auto;
+      border-color: #3b82f6;
+      background: #eef6ff;
+    }
+
+    .client-tier .tier-header {
+      background: #2563eb;
+    }
+
+    .client-inner {
+      padding: 14px 16px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 10px;
     }
-    .legend-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
+
+    .client-component {
+      background: #ffffff;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 72px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
-    .legend-item {
+
+    .client-component .title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1e3a8a;
+      line-height: 1.25;
+    }
+
+    .client-component .desc {
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 3px;
+      line-height: 1.2;
+    }
+
+    /* Flow Connectors Row 1 */
+    .connector-row-1 {
+      width: 860px;
+      height: 48px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .arrow-badge {
+      background: #e0f2fe;
+      border: 1.5px solid #7dd3fc;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      color: #0369a1;
+      position: absolute;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      white-space: nowrap;
+    }
+
+    /* Tier 2: API Gateway */
+    .backend-tier {
+      width: 680px;
+      margin: 0 auto;
+      border-color: #f97316;
+      background: #fff7ed;
+    }
+
+    .backend-tier .tier-header {
+      background: #ea580c;
+    }
+
+    .backend-inner {
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .backend-component {
+      background: #ffffff;
+      border: 1.5px solid #fed7aa;
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .backend-component .title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #9a3412;
+    }
+
+    .backend-component .desc {
+      font-size: 11px;
+      color: #7c2d12;
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 3px;
+      background: #ffedd5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    /* Flow Connectors Row 2 */
+    .connector-row-2 {
+      height: 42px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Tier 3: Agent Pipeline */
+    .agent-tier {
+      width: 1120px;
+      margin: 0 auto;
+      border: 2px solid #0f172a;
+      border-radius: 14px;
+      background: #ffffff;
+      padding: 18px 22px 22px;
+      position: relative;
+      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .agent-tier-title {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #0f172a;
+      margin-bottom: 18px;
+    }
+
+    /* Left / Right Cloud Badges */
+    .cloud-badge {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 140px;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 40px;
+      padding: 16px 12px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+
+    .cloud-badge.left {
+      left: -170px;
+    }
+
+    .cloud-badge.right {
+      right: -170px;
+    }
+
+    .cloud-icon {
+      width: 38px;
+      height: 38px;
+    }
+
+    .cloud-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .cloud-sub {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #64748b;
+      line-height: 1.15;
+    }
+
+    /* Top Row in Agent Tier: Agents 1, 2, and 4 Tools */
+    .agent-pipeline-top {
+      display: grid;
+      grid-template-columns: 210px 240px 360px;
+      gap: 16px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+
+    .agent-box {
+      border-radius: 10px;
+      padding: 14px 12px;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .agent-box.agent1 {
+      background: #1d4ed8;
+      border: 2px solid #1e40af;
+    }
+
+    .agent-box.agent2 {
+      background: #6d28d9;
+      border: 2px solid #5b21b6;
+    }
+
+    .agent-tag {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.85;
+      margin-bottom: 2px;
+    }
+
+    .agent-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .agent-desc {
+      font-size: 11px;
+      opacity: 0.9;
+      line-height: 1.35;
+    }
+
+    .agent-meta-badge {
+      margin-top: 8px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 5px;
+      padding: 4px 6px;
+      font-size: 9.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* 4 Vector Tools */
+    .tools-column {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .tool-pill {
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .tool-pill.comp { background: #0284c7; }
+    .tool-pill.news { background: #ea580c; }
+    .tool-pill.demand { background: #7c3aed; }
+    .tool-pill.size { background: #16a34a; }
+
+    .tool-pill .cat {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      opacity: 0.9;
+    }
+
+    /* Agent 3: DataRetrievalAgent Pipeline */
+    .retrieval-container {
+      background: #f0fdfa;
+      border: 1.5px solid #5eead4;
+      border-radius: 10px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       gap: 12px;
-      font-size: 13.5px;
-      color: var(--text-muted);
+      margin-bottom: 18px;
     }
+
+    .retrieval-lead {
+      background: #0d9488;
+      color: #ffffff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .retrieval-lead .sub {
+      font-size: 9.5px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    .retrieval-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .pipe-step {
+      background: #ffffff;
+      border: 1px solid #99f6e4;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #0f766e;
+      text-align: center;
+      flex: 1;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .pipe-arrow {
+      color: #0d9488;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    /* Bottom Row: Agents 4, 5 and White-Space Engine */
+    .agent-pipeline-bottom {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.3fr;
+      gap: 16px;
+    }
+
+    .agent-box.agent4 {
+      background: #1e3a8a;
+      border: 2px solid #172554;
+    }
+
+    .agent-box.agent5 {
+      background: #9f1239;
+      border: 2px solid #881337;
+    }
+
+    .agent-box.core-novelty {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      border: 2px solid #78350f;
+      box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
+    }
+
+    .core-novelty .badge-novelty {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    /* SVG Connecting Arrows */
+    .arrow-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Legend / Footer */
+    .footer-bar {
+      margin-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 1120px;
+      color: #64748b;
+      font-size: 12px;
+      border-top: 1px solid #cbd5e1;
+      padding-top: 16px;
+    }
+
+    .legend-chips {
+      display: flex;
+      gap: 16px;
+    }
+
+    .legend-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+    }
+
     .legend-dot {
-      width: 14px;
-      height: 14px;
+      width: 12px;
+      height: 12px;
       border-radius: 3px;
+    }
+
+    .actions-bar {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <span class="badge">Milestone 1 — System Architecture</span>
-      <h1>Autonomous Startup Idea Research Engine</h1>
-      <p>Multi-agent orchestration, structured domain extraction, parallel search synthesis, and verification flow.</p>
-    </div>
 
-    <!-- Tiered Architecture Diagram -->
-    <div class="diagram-card">
-      <div class="diagram-title">📦 Component Architecture & Multi-Tier Topology</div>
-      <div class="mermaid">
-flowchart TB
-    subgraph ClientTier["🌐 Client Tier (Presentation)"]
-        UI["React 18 SPA (Vite)<br/>• IdeaSubmission Form<br/>• ExtractedMetadata Dossier<br/>• CategorySection Grid"]
-    end
+  <div class="actions-bar">
+    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+  </div>
 
-    subgraph APITier["⚡ API Gateway & Routing (FastAPI)"]
-        Router["FastAPI Application Router (/api/validate)"]
-        GibberishCheck{"English Coherence &<br/>Gibberish Validator<br/>(wordfreq >= 0.45)"}
-    end
+  <div class="canvas-container">
+    <h1 class="main-title">Team Forge — <span>Startup Idea Validator</span> System Architecture</h1>
 
-    subgraph AgentTier["🧠 Multi-Agent Orchestration Tier"]
-        IEA["IdeaExtractionAgent<br/>• Domain Semantics Parser<br/>• Concept Normalizer<br/>• Contextual Keywords"]
-        
-        subgraph FailoverStack["Groq Model Failover Stack"]
-            M1["Primary: qwen/qwen3.8-27b"]
-            M2["Backup 1: allam-2-7b"]
-            M3["Backup 2: groq/compound-mini"]
-            M4["Deterministic Regex Fallback"]
-        end
-
-        WSA["WebSearchAgent<br/>• 4-Vector Query Builder<br/>• ThreadPoolExecutor(max_workers=4)<br/>• Native Relevance Scoring"]
-        DRA["DataRetrievalAgent<br/>• Blocklist Domain Filter<br/>• langdetect Seeded Verifier<br/>• Canonical URL Deduplication"]
-    end
-
-    subgraph SearchTier["🔍 Parallel 4-Category Search Vectors"]
-        C1["Vector 1: Competitors<br/>(topic='general', depth='advanced')"]
-        C2["Vector 2: Industry News<br/>(topic='news', depth='advanced')"]
-        C3["Vector 3: Customer Demand<br/>(topic='general', depth='advanced')"]
-        C4["Vector 4: Market Size & Trends<br/>(topic='general', depth='advanced')"]
-    end
-
-    subgraph CloudTier["☁️ External Cloud Services"]
-        GroqCloud["Groq Cloud Inference API<br/>(Ultra-Low Latency LPU)"]
-        TavilyAPI["Tavily Search API<br/>(AI-Native Clean Web Index)"]
-    end
-
-    %% Connections
-    UI -- "POST /api/validate (JSON)" --> Router
-    Router --> GibberishCheck
-    GibberishCheck -- "Valid Idea Text" --> IEA
-    GibberishCheck -- "Nonsense String" --> UI
-
-    IEA --> M1
-    M1 -.->|429 / Quota Error| M2
-    M2 -.->|429 / Quota Error| M3
-    M3 -.->|Exception| M4
-    M1 & M2 & M3 <--> GroqCloud
-
-    IEA -- "Structured Metadata<br/>{product, industry, keywords}" --> WSA
-    WSA --> C1 & C2 & C3 & C4
-    C1 & C2 & C3 & C4 <--> TavilyAPI
-    
-    C1 & C2 & C3 & C4 -- "Raw Search Batches" --> DRA
-    DRA -- "Sanitized & Deduplicated Sources" --> Router
-    Router -- "ValidationResponse (HTTP 200)" --> UI
-
-    classDef clientStyle fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#F8FAFC;
-    classDef apiStyle fill:#1E293B,stroke:#A78BFA,stroke-width:2px,color:#F8FAFC;
-    classDef agentStyle fill:#1E293B,stroke:#F59E0B,stroke-width:2px,color:#F8FAFC;
-    classDef searchStyle fill:#1E293B,stroke:#34D399,stroke-width:2px,color:#F8FAFC;
-    classDef cloudStyle fill:#0F172A,stroke:#64748B,stroke-width:1.5px,stroke-dasharray: 4 4,color:#CBD5E1;
-
-    class UI clientStyle;
-    class Router,GibberishCheck apiStyle;
-    class IEA,WSA,DRA,M1,M2,M3,M4 agentStyle;
-    class C1,C2,C3,C4 searchStyle;
-    class GroqCloud,TavilyAPI cloudStyle;
+    <!-- 1. CLIENT PRESENTATION LAYER -->
+    <div class="tier-card client-tier">
+      <div class="tier-side-label">
+        <div class="name">Client<br>Presentation Layer</div>
+        <div class="cloud">
+          <svg width="12" height="12" viewBox="0 0 76 65" fill="#000"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z"/></svg>
+          on Vercel Cloud
+        </div>
       </div>
 
-      <div class="legend-grid">
-        <div class="legend-item">
-          <div class="legend-dot" style="background: #38BDF8;"></div>
-          <span><strong>Client Presentation:</strong> React 18, Vite SPA</span>
+      <div class="tier-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+        React 18 + Vite SPA (Client Browser Application)
+      </div>
+
+      <div class="client-inner">
+        <div class="client-component">
+          <div class="title">Idea Submission Form</div>
+          <div class="desc">Unlimited pitch text + optional overrides</div>
         </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: #A78BFA;"></div>
-          <span><strong>API Gateway:</strong> FastAPI Controller & Defense</span>
+        <div class="client-component">
+          <div class="title">AI Dossier Metadata Card</div>
+          <div class="desc">Stamped case-file parameters</div>
         </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: #F59E0B;"></div>
-          <span><strong>Intelligence Agents:</strong> LLM Extraction & Failover</span>
+        <div class="client-component" style="border-color: #f59e0b; background: #fffbeb;">
+          <div class="title" style="color: #b45309;">Market White-Space Map</div>
+          <div class="desc">Triangulated opportunity gaps</div>
         </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background: #34D399;"></div>
-          <span><strong>Search & Retrieval:</strong> Parallel ThreadPool & Cleaning</span>
+        <div class="client-component">
+          <div class="title">Market Sizing & Scorecard</div>
+          <div class="desc">TAM/SAM, CAGR, honest empty states</div>
+        </div>
+        <div class="client-component">
+          <div class="title">Competitor Comparison</div>
+          <div class="desc">Direct vs substitute matrix</div>
         </div>
       </div>
     </div>
 
-    <!-- Sequence Flow Diagram -->
-    <div class="diagram-card">
-      <div class="diagram-title">🔄 End-to-End Sequence & Data Flow</div>
-      <div class="mermaid">
-sequenceDiagram
-    autonumber
-    actor User as User / Browser
-    participant App as React Frontend (App.jsx)
-    participant API as FastAPI Backend (main.py)
-    participant IEA as IdeaExtractionAgent
-    participant Groq as Groq Cloud LLM
-    participant WSA as WebSearchAgent
-    participant Tavily as Tavily Search API
-    participant DRA as DataRetrievalAgent
-
-    User->>App: Submits startup idea text
-    App->>API: POST /api/validate { idea, product_name? }
-    
-    API->>API: is_valid_idea() coherence check
-    
-    API->>IEA: extract(idea, product_name)
-    IEA->>Groq: ChatCompletion (qwen/qwen3.8-27b)
-    Groq-->>IEA: Structured JSON { product_name, industry, keywords, core_problem }
-    IEA-->>API: Extracted domain metadata
-
-    API->>WSA: search(structured_idea)
-    par Concurrent Category Searches (max_workers=4)
-        WSA->>Tavily: Search Competitors (advanced depth)
-        WSA->>Tavily: Search Industry News (topic="news")
-        WSA->>Tavily: Search Customer Demand (advanced depth)
-        WSA->>Tavily: Search Market Size (advanced depth)
-    end
-    Tavily-->>WSA: 4 Result batches with native scores
-    WSA-->>API: Raw category batches
-
-    API->>DRA: structure(raw_batches)
-    DRA->>DRA: Filter BLOCKED_DOMAINS
-    DRA->>DRA: Validate English (langdetect)
-    DRA->>DRA: Canonical URL deduplication
-    DRA->>DRA: Sort by score descending & compute metrics
-    DRA-->>API: Structured sources & summary counts
-
-    API-->>App: ValidationResponse { extracted_data, sources, summary }
-    App->>User: Renders AI Dossier card + Animated count + 4 Category grids
+    <!-- CONNECTOR ROW 1: Client <-> Backend -->
+    <div class="connector-row-1">
+      <div class="arrow-badge" style="left: 170px; top: 12px;">
+        ↓ HTTPS POST /api/validate (JSON Payload)
       </div>
+      <div class="arrow-badge" style="left: 490px; top: 12px; background: #dcfce7; border-color: #86efac; color: #166534;">
+        ↑ ValidationResponse (JSON: 5-Agent Intelligence & Sources)
+      </div>
+    </div>
+
+    <!-- 2. BACKEND API & GATEWAY LAYER -->
+    <div class="tier-card backend-tier">
+      <div class="tier-side-label">
+        <div class="name">Backend API &<br>Gateway Layer</div>
+        <div class="cloud">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="#ea580c"><circle cx="12" cy="12" r="10"/></svg>
+          on Render Cloud
+        </div>
+      </div>
+
+      <div class="tier-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        FastAPI REST API (Python 3.11 High-Performance Service)
+      </div>
+
+      <div class="backend-inner">
+        <div class="backend-component">
+          <div class="title">Input Validator & Gibberish Defense</div>
+          <div class="desc">wordfreq ratio &gt;= 0.45</div>
+        </div>
+        <div class="backend-component">
+          <div class="title">ValidationCrewOrchestrator</div>
+          <div class="desc">Sequential Pipeline &amp; Milestones</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECTOR ROW 2: Backend <-> Multi-Agent Pipeline -->
+    <div class="connector-row-2">
+      <div class="arrow-badge" style="position: static; background: #f1f5f9; border-color: #cbd5e1; color: #334155;">
+        ↓ In-Process Python Execution (CrewAI Kickoff)
+      </div>
+    </div>
+
+    <!-- 3. AUTONOMOUS MULTI-AGENT PIPELINE -->
+    <div class="agent-tier">
+      <!-- Left Cloud Badge: Groq -->
+      <div class="cloud-badge left">
+        <svg class="cloud-icon" viewBox="0 0 24 24" fill="#ea580c">
+          <path d="M12 2C6.48 2 2 6.48 2 12c0 4.41 2.87 8.14 6.84 9.47.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.15-1.11-1.46-1.11-1.46-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.02.8-.22 1.65-.33 2.5-.33.85 0 1.7.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.38.2 2.4.1 2.65.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48C19.14 20.14 22 16.41 22 12c0-5.52-4.48-10-10-10z"/>
+        </svg>
+        <div class="cloud-name">Groq Cloud LLM</div>
+        <div class="cloud-sub">Qwen-27B / Allam-7B Failover</div>
+      </div>
+
+      <!-- Right Cloud Badge: Tavily -->
+      <div class="cloud-badge right">
+        <svg class="cloud-icon" viewBox="0 0 24 24" fill="#0284c7">
+          <circle cx="12" cy="12" r="10" fill="#0284c7"/>
+          <path d="M8 12l3 3 5-5" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+        </svg>
+        <div class="cloud-name">Tavily Search API</div>
+        <div class="cloud-sub">Native Semantic Relevance</div>
+      </div>
+
+      <div class="agent-tier-title">Autonomous Multi-Agent Pipeline &amp; Synthesis Engine (Milestone 2)</div>
+
+      <!-- Pipeline Row 1: Agent 1 -> Agent 2 -> Search Vector Tools -->
+      <div class="agent-pipeline-top">
+        <!-- Agent 1 -->
+        <div class="agent-box agent1">
+          <div>
+            <div class="agent-tag">Agent 1</div>
+            <div class="agent-name">IdeaExtractionAgent</div>
+            <div class="agent-desc">Extracts normalized product name, industry vertical, target audience, core problem, and high-signal domain keywords.</div>
+          </div>
+          <div class="agent-meta-badge">→ Structured Metadata JSON</div>
+        </div>
+
+        <!-- Agent 2 -->
+        <div class="agent-box agent2">
+          <div>
+            <div class="agent-tag">Agent 2 (CrewAI)</div>
+            <div class="agent-name">MarketResearchAgent</div>
+            <div class="agent-desc">Autonomous tool-calling agent. Plans queries, filters near-duplicates, and abides by a strict 3–5 search query budget.</div>
+          </div>
+          <div class="agent-meta-badge">MarketResearchToolKit</div>
+        </div>
+
+        <!-- 4 Search Vector Tools -->
+        <div class="tools-column">
+          <div class="tool-pill comp">
+            <span>🔹 search_competitors</span>
+            <span class="cat">Competitors &amp; Alternatives</span>
+          </div>
+          <div class="tool-pill news">
+            <span>🔸 search_industry_news</span>
+            <span class="cat">Trends, Funding, Regulation</span>
+          </div>
+          <div class="tool-pill demand">
+            <span>🟣 search_customer_demand</span>
+            <span class="cat">User Reviews &amp; Pain Points</span>
+          </div>
+          <div class="tool-pill size">
+            <span>🟢 search_market_size</span>
+            <span class="cat">TAM / SAM / CAGR Reports</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline Row 2: Agent 3 Data Retrieval Sanitization -->
+      <div class="retrieval-container">
+        <div class="retrieval-lead">
+          AGENT 3: DataRetrievalAgent
+          <div class="sub">Deterministic Verification</div>
+        </div>
+        <div class="retrieval-steps">
+          <div class="pipe-step">1. Blocked Domain Filter<br><small style="color:#64748b;">(Dictionaries/Wikis)</small></div>
+          <div class="pipe-arrow">➔</div>
+          <div class="pipe-step">2. langdetect Verifier<br><small style="color:#64748b;">(Enforce English)</small></div>
+          <div class="pipe-arrow">➔</div>
+          <div class="pipe-step">3. Canonical Deduplication<br><small style="color:#64748b;">(Zero Duplicate URLs)</small></div>
+          <div class="pipe-arrow">➔</div>
+          <div class="pipe-step">4. Score-Ranked Sorting<br><small style="color:#64748b;">(Tavily Semantic Rank)</small></div>
+        </div>
+      </div>
+
+      <!-- Pipeline Row 3: Agents 4, 5, and White-Space Engine -->
+      <div class="agent-pipeline-bottom">
+        <!-- Agent 4 -->
+        <div class="agent-box agent4">
+          <div class="agent-tag">Agent 4</div>
+          <div class="agent-name">MarketOpportunityAgent</div>
+          <div class="agent-desc">Synthesizes TAM/SAM metrics and CAGR. Distinguishes <strong>Daily End Users</strong> vs <strong>Economic Decision Makers</strong>. Clamps confidence if 0 market sources exist.</div>
+        </div>
+
+        <!-- Agent 5 -->
+        <div class="agent-box agent5">
+          <div class="agent-tag">Agent 5</div>
+          <div class="agent-name">CompetitorAnalysisAgent</div>
+          <div class="agent-desc">Maps direct rivals and indirect substitutes. Extracts pricing, strengths, and customer complaints into a side-by-side comparison matrix.</div>
+        </div>
+
+        <!-- Core Novelty: WhiteSpaceEngine -->
+        <div class="agent-box core-novelty">
+          <span class="badge-novelty">Core Novelty</span>
+          <div class="agent-name">Evidence-Backed WhiteSpaceEngine</div>
+          <div class="agent-desc">Triangulates: <strong>Customer Pain ∩ Competitor Void ∩ Startup Fit</strong>. Generates 2–4 high-conviction opportunity gaps with confidence scores and traceable citations.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legend & Metadata Footer -->
+    <div class="footer-bar">
+      <div class="legend-chips">
+        <div class="legend-chip">
+          <div class="legend-dot" style="background: #2563eb;"></div>
+          <span>Client (Vercel)</span>
+        </div>
+        <div class="legend-chip">
+          <div class="legend-dot" style="background: #ea580c;"></div>
+          <span>API Gateway (Render)</span>
+        </div>
+        <div class="legend-chip">
+          <div class="legend-dot" style="background: #6d28d9;"></div>
+          <span>CrewAI Autonomous Agent</span>
+        </div>
+        <div class="legend-chip">
+          <div class="legend-dot" style="background: #0d9488;"></div>
+          <span>Deterministic Sanitizer</span>
+        </div>
+        <div class="legend-chip">
+          <div class="legend-dot" style="background: #d97706;"></div>
+          <span>White-Space Engine</span>
+        </div>
+      </div>
+      <div>Team Forge — Milestone 2 Deliverable</div>
     </div>
   </div>
 
-  <script>
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'dark',
-      securityLevel: 'loose',
-      flowchart: { curve: 'basis', htmlLabels: true },
-      themeVariables: {
-        darkMode: true,
-        background: '#1A1D27',
-        primaryColor: '#1E293B',
-        primaryTextColor: '#F8FAFC',
-        primaryBorderColor: '#38BDF8',
-        lineColor: '#64748B',
-        secondaryColor: '#1E293B',
-        tertiaryColor: '#0F172A'
-      }
-    });
-  </script>
 </body>
 </html>

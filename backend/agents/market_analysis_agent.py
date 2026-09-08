@@ -16,12 +16,10 @@ Strict Anti-Hallucination Policy:
 - If empirical evidence for a specific metric is absent, it is marked as "insufficient evidence".
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from schemas.validation_schemas import (
     MarketAnalysisResult,
     MarketSizeEstimate,
-    CustomerSegment,
-    MarketAttractiveness,
 )
 from services.llm_service import call_groq_json
 from services.text_utils import truncate_at_word_boundary
