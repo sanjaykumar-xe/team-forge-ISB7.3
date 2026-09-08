@@ -16,7 +16,6 @@ traceable source citations.
 
 from typing import List, Dict, Any, Optional
 from schemas.validation_schemas import (
-    WhiteSpaceOpportunity,
     WhiteSpaceAnalysisResult,
     MarketAnalysisResult,
     CompetitorAnalysisResult,

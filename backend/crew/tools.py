@@ -14,8 +14,6 @@ Also provides tools wrapping downstream reasoning engines while keeping
 DataRetrievalAgent strictly deterministic (non-LLM).
 """
 
-import os
-import json
 from typing import Dict, Any, List, Optional
 from crewai.tools import tool
 

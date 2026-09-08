@@ -28,7 +28,10 @@ The platform utilizes a **CrewAI sequential multi-agent orchestration layer** to
 │                                                                                        │
 │  [1] Idea Extraction Agent       ──> Product identity, vertical, problem & keywords    │
 │            ↓                                                                           │
-│  [2] Web Search Agent            ──> Parallel Tavily queries across 4 categories       │
+│  [2] Market Research Agent       ──> Autonomous tool calling via crew.kickoff()        │
+│      (MarketResearchToolKit)         • search_competitors     • search_industry_news   │
+│                                      • search_customer_demand • search_market_size     │
+│                                      (Query deduplication, budget cap & direct failover)│
 │            ↓                                                                           │
 │  [3] Data Retrieval Agent        ──> Domain blocklist, langdetect English check, rank  │
 │            ↓                                                                           │
@@ -174,6 +177,19 @@ python backend/tests/test_milestone2.py
 # Run the 3-Industry End-to-End Benchmark Suite
 python backend/scripts/test_milestone2_e2e.py
 ```
+
+---
+
+## ⚠️ Known Limitations
+
+1. **Search Space Bounded by Query Budget**:
+   The autonomous research agent operates under a strict tool-calling budget cap (default 8 queries). While this prevents runaway query loops and latency spikes, specialized or ultra-niche domains may experience bounded discovery if 8 queries cannot fully exhaust the search space. When the cap is reached, the system marks the search status as `budget_limited` and provides explicit transparency in the summary payload.
+2. **Niche Market Sizing & Analyst Coverage**:
+   For novel, artisanal, or hyper-niche startup concepts where institutional market analysts have published zero quantitative reports, the platform strictly avoids fabricating TAM/SAM figures. In these cases, the response honestly sets `market_size: []`, `confidence: null`, and suppresses ungrounded attractiveness scorecards, displaying an amber empty-state disclaimer instead.
+3. **LLM Provider Daily Rate Limits**:
+   Multi-agent reasoning loops consume multiple LLM calls per validation. Under high traffic or free/developer service tiers on Groq (`openai/gpt-oss-120b`, `qwen/qwen3.8-27b`), daily token limits (TPD) can occasionally be reached. The pipeline incorporates automatic failover to deterministic direct search so the user always receives valid research evidence without application crashes.
+4. **Language Scope**:
+   The validation pipeline is optimized for English-language inputs. Inputs submitted in non-English or random character strings are screened at the API gateway via dictionary density checks (`wordfreq >= 0.45`) and deterministic language detection (`langdetect`).
 
 ---
 

@@ -42,11 +42,11 @@ flowchart TB
         Orch["ValidationCrewOrchestrator<br/>(Process.sequential)"]
         
         A1["[1] IdeaExtractionAgent<br/>• Domain Semantics<br/>• Core Problem<br/>• Keywords"]
-        A2["[2] WebSearchAgent<br/>• 4-Vector Search<br/>• ThreadPoolExecutor(4)<br/>• Tavily Native Scoring"]
-        A3["[3] DataRetrievalAgent<br/>• Blocklist Filter<br/>• langdetect Verifier<br/>• URL Deduplication"]
-        A4["[4] MarketOpportunityAgent<br/>• Market Sizing & CAGR<br/>• Customer Personas<br/>• Attractiveness Scorecard"]
-        A5["[5] CompetitorAnalysisAgent<br/>• Direct/Indirect Rivals<br/>• Feature Matrix<br/>• Market Gaps"]
-        WSE["Evidence-Backed White-Space Engine<br/>• Pain ∩ Competitor Void ∩ Startup Fit"]
+        A2["[2] MarketResearchAgent<br/>• Autonomous Tool Calling (crew.kickoff)<br/>• 4 Search Tools (MarketResearchToolKit)<br/>• Repetition Filter & Budget Cap"]
+        A3["[3] DataRetrievalAgent<br/>• Deterministic Sanitization<br/>• langdetect Verifier<br/>• Canonical Deduplication & Ranks"]
+        A4["[4] MarketOpportunityAgent<br/>• Honest Market Sizing (Empty State on 0 Sources)<br/>• Customer Personas<br/>• Calibrated Attractiveness Scorecard"]
+        A5["[5] CompetitorAnalysisAgent<br/>• Direct/Indirect Rivals<br/>• Feature Comparison Matrix<br/>• Market Gaps"]
+        WSE["Evidence-Backed White-Space Engine<br/>• Customer Pain ∩ Competitor Void ∩ Startup Fit"]
 
         Orch --> A1 --> A2 --> A3 --> A4 --> A5 --> WSE
     end
@@ -62,7 +62,7 @@ flowchart TB
     GibberishCheck -- "Valid Idea Text" --> Orch
     GibberishCheck -- "Nonsense String" --> UI
     
-    A1 & A4 & A5 & WSE <--> GroqCloud
+    A1 & A2 & A4 & A5 & WSE <--> GroqCloud
     A2 <--> TavilyAPI
     WSE -- "ValidationResponse (HTTP 200)" --> UI
 ```
@@ -71,16 +71,17 @@ flowchart TB
 
 ## 3. Sequential Agent Execution Flow & Explicit Logging
 
-The backend stdout prints standardized milestone markers:
+The backend stdout prints standardized milestone markers matching the execution flow:
 ```
 [1] Idea Extraction started
 [1] Idea Extraction completed
 
-[2] Web Search started
-[2] Web Search completed
+[2] CrewAI Market Research Agent started (Autonomous Tool-Calling via crew.kickoff())
+[2] CrewAI Market Research completed. Result: ...
 
-[3] Data Retrieval started
-[3] Data Retrieval completed
+[3] Data Retrieval (Deterministic Sanitization, Filtering, Deduplication)
+[3] Data Retrieval completed: X sanitized sources across categories.
+    Tool-call trace: [{'tool': '...', 'category': '...', 'query': '...'}, ...]
 
 [4] Market Opportunity Analysis started
 [4] Market Opportunity Analysis completed

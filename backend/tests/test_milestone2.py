@@ -11,7 +11,6 @@ Tests:
 """
 
 import sys
-import os
 from pathlib import Path
 
 # Add backend directory to sys.path
@@ -21,17 +20,11 @@ if str(backend_dir) not in sys.path:
 
 from schemas.validation_schemas import (
     IdeaSubmission,
-    ValidationResponse,
     MarketAnalysisResult,
     CompetitorAnalysisResult,
     WhiteSpaceAnalysisResult,
-    CustomerSegment,
     CompetitorRecord,
-    WhiteSpaceOpportunity,
 )
-from agents.idea_extraction_agent import IdeaExtractionAgent
-from agents.web_search_agent import WebSearchAgent
-from agents.data_retrieval_agent import DataRetrievalAgent
 from agents.market_analysis_agent import MarketOpportunityAgent
 from agents.competitor_analysis_agent import CompetitorAnalysisAgent
 from services.white_space_engine import WhiteSpaceEngine
