@@ -185,12 +185,60 @@ def test_orchestrator_gibberish_defense():
     assert "plain English" in resp.summary["message"]
 
 
+def test_market_opportunity_zero_market_sources_honest_empty():
+    """
+    Verify that when research sources contain 0 Market Size & Trends entries
+    (and no quantitative sizing figures), MarketOpportunityAgent produces:
+      - market_size: [] (no placeholder cards like 'Not specified')
+      - attractiveness: None (suppressing ungrounded scorecard)
+      - confidence: None (honest unverified state)
+    """
+    agent = MarketOpportunityAgent()
+    mock_sources_no_market_size = [
+        {
+            "category": "Competitors",
+            "title": "Obsidian Note Taking App",
+            "url": "https://obsidian.md",
+            "snippet": "A private and flexible note-taking app that adapts to the way you think.",
+            "score": 0.88,
+        },
+        {
+            "category": "Industry News",
+            "title": "On-Device AI Trends in Knowledge Work",
+            "url": "https://example.com/trends",
+            "snippet": "Knowledge workers increasingly prefer offline tools to safeguard sensitive data.",
+            "score": 0.85,
+        },
+    ]
+
+    structured_idea = {
+        "product_name": "CortexLocal",
+        "industry": "Personal Knowledge Management & Local AI",
+        "target_audience": "Privacy-conscious developers",
+        "core_problem": "Privacy violations in cloud-hosted AI note apps.",
+        "keywords": ["local AI", "privacy PKM", "offline second brain"],
+    }
+
+    result = agent.analyze(
+        idea="CortexLocal: An on-device zero-cloud personal AI second brain and local knowledge workspace.",
+        structured_idea=structured_idea,
+        sources=mock_sources_no_market_size,
+    )
+
+    assert isinstance(result, MarketAnalysisResult)
+    assert result.market_size == [], f"Expected empty market_size, got: {result.market_size}"
+    assert result.attractiveness is None, f"Expected attractiveness to be None, got: {result.attractiveness}"
+    assert result.confidence is None, f"Expected confidence to be None, got: {result.confidence}"
+
+
 if __name__ == "__main__":
     print("--- Running Milestone 2 Test Suite ---")
     test_unlimited_input_length()
     print("[PASS] test_unlimited_input_length")
     test_market_opportunity_agent_fallback()
     print("[PASS] test_market_opportunity_agent_fallback")
+    test_market_opportunity_zero_market_sources_honest_empty()
+    print("[PASS] test_market_opportunity_zero_market_sources_honest_empty")
     test_competitor_analysis_agent_fallback()
     print("[PASS] test_competitor_analysis_agent_fallback")
     test_white_space_engine_fallback()

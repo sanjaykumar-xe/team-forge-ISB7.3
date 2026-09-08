@@ -248,6 +248,7 @@ CONSTRAINTS:
 - Keep evidence snippets concise (1-2 sentences).
 - Limit customer_segments to top 2 segments max.
 - Maintain valid JSON syntax.
+- If VERIFIED SEARCH SOURCES contain no quantitative market size figures or market size sources are missing, return "market_size": [], "attractiveness": null, and "confidence": null. Do NOT synthesize placeholder entries (such as "Not specified", "Unavailable", "N/A", "No data") or ungrounded scorecard ratings without empirical evidence.
 
 JSON structure must match this format:
 {{
@@ -304,6 +305,38 @@ JSON structure must match this format:
             # Validate and construct typed Pydantic result
             result = MarketAnalysisResult(**parsed)
             result.analysis_status = "completed"
+
+            # Filter out any market_size entries where 'figure' contains placeholder phrases or lacks numbers
+            PLACEHOLDER_FIGURE_PHRASES = [
+                "not specified",
+                "unavailable",
+                "n/a",
+                "no data",
+                "none",
+                "unknown",
+                "not available",
+                "not explicitly quantified",
+                "tbd",
+                "not mentioned",
+                "not quantified",
+                "unspecified",
+                "not provided",
+                "pending",
+            ]
+            valid_market_size = []
+            for item in (result.market_size or []):
+                fig = (item.figure or "").strip()
+                fig_lower = fig.lower()
+                is_placeholder = (
+                    not fig
+                    or any(p in fig_lower for p in PLACEHOLDER_FIGURE_PHRASES)
+                    or not any(c.isdigit() for c in fig)
+                )
+                if not is_placeholder:
+                    valid_market_size.append(item)
+
+            result.market_size = valid_market_size
+
             # If LLM returned empty market_size but sources contain market sizing figures, supplement them
             if not result.market_size:
                 extracted = self._extract_market_sizing(sources)
@@ -311,6 +344,14 @@ JSON structure must match this format:
                     result.market_size = extracted
                     if not result.confidence:
                         result.confidence = round(min(0.85, 0.45 + 0.10 * len(extracted)), 2)
+
+            # When filtered market_size is empty (0 real entries with 0 real Market Size sources),
+            # clamp confidence to None and suppress/nullify the attractiveness scorecard
+            if not result.market_size:
+                result.market_size = []
+                result.confidence = None
+                result.attractiveness = None
+
             return result
         except Exception as exc:
             print(f"  [MarketOpportunityAgent] LLM analysis failed ({exc}), triggering fallback.")
