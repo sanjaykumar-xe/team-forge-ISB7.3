@@ -62,16 +62,22 @@ function formatSnippetWithSentenceBreak(cleanText, targetMin = 160, targetMax = 
   // If no sentence boundary found in ideal window, look for word boundary
   if (cutIdx === -1) {
     const wordBoundary = cleanText.slice(0, targetMax).lastIndexOf(" ");
-    if (wordBoundary > targetMin) {
+    if (wordBoundary > 0) {
       cutIdx = wordBoundary;
     } else {
-      cutIdx = targetMax;
+      // If no preceding space, search slightly forward to avoid cutting a word in half
+      const nextSpace = cleanText.indexOf(" ", targetMax);
+      if (nextSpace !== -1 && nextSpace <= targetMax + 20) {
+        cutIdx = nextSpace;
+      } else {
+        cutIdx = targetMax;
+      }
     }
     const truncated = cleanText.slice(0, cutIdx).trim().replace(/[.,;:!?]+$/, "") + "…";
     return {
       truncatedText: truncated,
       fullText: cleanText,
-      canExpand: cleanText.length - truncated.length > 25,
+      canExpand: cleanText.length - truncated.length > 15,
     };
   }
 

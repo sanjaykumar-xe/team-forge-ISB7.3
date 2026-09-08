@@ -5,9 +5,12 @@ export default function ExtractedMetadata({ data }) {
   if (!data) return null;
 
   return (
-    <div className="extracted-dossier-card">
+    <div id="section-context" className="extracted-dossier-card">
       <div className="extracted-header">
-        <span className="extracted-badge">AI DOMAIN EXTRACTION</span>
+        <div className="extracted-badge-row">
+          <span className="extracted-badge">§ IDEA CONTEXT</span>
+          <span className="extracted-dossier-id">SECTION 01 — DOMAIN PARAMETERS</span>
+        </div>
         <h3 className="extracted-title">{data.product_name || "Synthesized Concept"}</h3>
       </div>
 
@@ -29,7 +32,7 @@ export default function ExtractedMetadata({ data }) {
 
         {Array.isArray(data.keywords) && data.keywords.length > 0 && (
           <div className="extracted-item full-width">
-            <span className="extracted-label">RESEARCH KEYWORDS</span>
+            <span className="extracted-label">RESEARCH KEYWORDS & SIGNALS</span>
             <div className="extracted-tags">
               {data.keywords.map((kw, i) => (
                 <span key={i} className="keyword-chip">

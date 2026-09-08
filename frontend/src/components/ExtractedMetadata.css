@@ -1,67 +1,70 @@
-/* Warm Charcoal-Brown Ink Theme for AI Domain Extraction Card */
+/* Charcoal-Brown Ink Theme for Domain Context Dossier - Ultra High Visibility */
 .extracted-dossier-card {
-  background: #24201A;
-  border: 1px solid #3A342C;
-  border-left: 3px solid var(--accent-amber, #D99B26);
+  background: var(--panel-dark-bg, #1B1712);
+  border: 1px solid var(--panel-dark-border, #443B2E);
+  border-left: 4px solid var(--accent-amber, #D99B26);
   border-radius: 0;
   padding: 24px 28px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 18px rgba(23, 21, 15, 0.12);
-  animation: entranceSlideUp 220ms ease-out forwards;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-panel-dark, 0 8px 28px rgba(10, 8, 5, 0.28));
 }
 
 .extracted-header {
   display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
-  border-bottom: 1px solid rgba(235, 227, 204, 0.14);
-  padding-bottom: 14px;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--panel-dark-border-subtle, rgba(235, 227, 204, 0.18));
+  padding-bottom: 16px;
 }
 
-/* Stamped / Case-File Dossier Mark Badge */
+.extracted-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .extracted-badge {
   font-family: var(--font-mono, monospace);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-amber, #D99B26);
-  background: rgba(217, 155, 38, 0.12);
-  border: 1px solid var(--accent-amber, #D99B26);
+  background: var(--accent-amber-subtle, rgba(217, 155, 38, 0.14));
+  border: 1px solid var(--accent-amber-border, rgba(217, 155, 38, 0.45));
   padding: 4px 9px;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(217, 155, 38, 0.25);
-  position: relative;
-  display: inline-flex;
-  align-items: center;
 }
 
-.extracted-badge::before {
-  content: "§ ";
-  margin-right: 4px;
-  opacity: 0.8;
+.extracted-dossier-id {
+  font-family: var(--font-mono, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--panel-dark-muted, #C8C1B0);
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .extracted-title {
-  margin: 0;
+  margin: 4px 0 0;
   font-family: var(--font-display, Georgia, serif);
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--panel-dark-text, #EBE3CC);
+  font-size: 28px;
+  font-weight: 400;
+  color: var(--panel-dark-text, #FFFDF8);
   letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .extracted-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px 24px;
+  gap: 18px 28px;
 }
 
 .extracted-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .extracted-item.full-width {
@@ -72,68 +75,53 @@
   font-family: var(--font-mono, monospace);
   font-size: 10.5px;
   font-weight: 700;
-  color: var(--panel-dark-muted, #9E998B);
+  color: var(--panel-dark-muted, #C8C1B0);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .extracted-value {
   font-family: var(--font-body, sans-serif);
-  font-size: 14px;
-  color: var(--panel-dark-text, #EBE3CC);
-  font-weight: 500;
+  font-size: 15px;
+  color: var(--panel-dark-text, #FFFDF8);
+  font-weight: 600;
 }
 
 .extracted-problem {
   margin: 2px 0 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: #DDD6C3;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--panel-dark-text-secondary, #EAE3D2);
 }
 
 .extracted-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
 }
 
 .keyword-chip {
   font-family: var(--font-mono, monospace);
-  font-size: 11px;
-  background: rgba(235, 227, 204, 0.07);
-  color: #E2DAC4;
-  padding: 3px 8px;
-  border-radius: 0;
-  border: 1px solid rgba(235, 227, 204, 0.15);
-}
-
-/* Orchestrated Entrance Animation */
-@keyframes entranceSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .extracted-dossier-card {
-    animation: none !important;
-    transform: none !important;
-  }
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(235, 227, 204, 0.08);
+  color: var(--panel-dark-text, #FFFDF8);
+  padding: 4px 10px;
+  border: 1px solid rgba(235, 227, 204, 0.22);
 }
 
 @media (max-width: 640px) {
+  .extracted-dossier-card {
+    padding: 18px 18px;
+  }
   .extracted-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
-  .extracted-header {
+  .extracted-badge-row {
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
   }
 }

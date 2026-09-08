@@ -1,6 +1,6 @@
-# Team Forge — Startup Idea Validator: Complete Technical Guide & Codebase Explanation
+# Team Forge — Startup Idea Validator: Complete Technical Guide & Codebase Explanation (Milestone 2)
 
-> **Document Purpose**: A comprehensive, step-by-step technical guide explaining the Team Forge codebase, multi-agent architecture, data contracts, and frontend-backend lifecycle for team members, evaluators, and contributors.
+> **Document Purpose**: A comprehensive, step-by-step technical guide explaining the Team Forge codebase, CrewAI multi-agent orchestration, data contracts, White-Space Engine novelty, and frontend-backend lifecycle for team members, evaluators, and contributors.
 
 ---
 
@@ -11,98 +11,74 @@
    - [3.1 IdeaExtractionAgent (Groq LLM)](#31-ideaextractionagent-groq-llm)
    - [3.2 WebSearchAgent (Tavily Search API)](#32-websearchagent-tavily-search-api)
    - [3.3 DataRetrievalAgent (Verification & Deduplication)](#33-dataretrievalagent-verification--deduplication)
-4. [Frontend Architecture & User Interface](#4-frontend-architecture--user-interface)
-5. [Backend Architecture & API Endpoints](#5-backend-architecture--api-endpoints)
-6. [Data Contracts & Payload Specifications](#6-data-contracts--payload-specifications)
-7. [Environment Variables & Configuration](#7-environment-variables--configuration)
-8. [Testing, Benchmarking & Evaluation](#8-testing-benchmarking--evaluation)
-9. [Deployment Architecture](#9-deployment-architecture)
+   - [3.4 MarketOpportunityAgent (Market Sizing & Segmentation)](#34-marketopportunityagent-market-sizing--segmentation)
+   - [3.5 CompetitorAnalysisAgent (Competitive Mapping & Matrix)](#35-competitoranalysisagent-competitive-mapping--matrix)
+   - [3.6 Evidence-Backed Market White-Space Engine (Core Novelty)](#36-evidence-backed-market-white-space-engine-core-novelty)
+4. [CrewAI Orchestration Architecture](#4-crewai-orchestration-architecture)
+5. [Frontend Architecture & User Interface](#5-frontend-architecture--user-interface)
+6. [Backend Architecture & Data Contracts](#6-backend-architecture--data-contracts)
+7. [Testing, Benchmarking & 3-Industry Evaluation](#7-testing-benchmarking--3-industry-evaluation)
+8. [Deployment Architecture](#8-deployment-architecture)
 
 ---
 
 ## 1. Project Overview & Core Mission
 
-Before founders commit substantial capital, time, and engineering resources to a startup idea, they must validate three fundamental market assumptions:
-1. **Market Size & Economic Trajectory**: Is there an addressable market with quantifiable growth or market tailwinds?
-2. **Competitive Landscape**: Who are the direct rivals, incumbent platforms, and potential substitute solutions?
-3. **Customer Demand & Unmet Needs**: Are target users actively voicing pain points, seeking alternatives, or expressing dissatisfaction with existing tools?
-4. **Industry News & Momentum**: Are there recent venture investments, regulatory developments, or macro shifts validating the space?
+Before founders commit capital, engineering hours, and operational resources to a startup idea, they must validate four critical market pillars:
+1. **Market Size & Economic Trajectory**: Is there a quantifiable addressable market with visible growth tailwinds and CAGR?
+2. **Customer Segmentation & Urgent Pain**: Who are the daily end users vs economic decision makers, and what acute friction drives them to switch?
+3. **Competitive Landscape & Omissions**: Who are the direct rivals and indirect substitutes, and what weaknesses or pricing voids do they leave unaddressed?
+4. **Defensible White-Space Opportunity**: Where specifically does an opportunity gap exist that triangulates customer pain, competitor weaknesses, and startup capabilities?
 
-The **Startup Idea Validator** automates this preliminary discovery phase. It converts an unstructured natural-language startup pitch into structured market parameters, queries the web across 4 strategic intelligence vectors, cleans and deduplicates the results, and displays verifiable source evidence in a clean editorial interface.
+The **Startup Idea Validator (Milestone 2)** automates this discovery phase. It converts an unstructured natural language startup pitch of arbitrary length into structured intelligence, queries the web across 4 strategic dimensions, analyzes market sizing and customer personas, maps competitors into a comparison matrix, and synthesizes an evidence-backed White-Space Map with traceable citations.
 
 ---
 
 ## 2. High-Level System Architecture
 
-The application is built on a decoupled, production-ready client-server architecture:
-
 ```
                                  ┌─────────────────────────────────────────┐
                                  │          Client Browser (SPA)           │
                                  │     React 18 + Vite (Vanilla CSS)       │
-                                 │   - Natural language submission form    │
+                                 │   - Submission Form (Unlimited Length)  │
                                  │   - Stamped AI Dossier metadata view    │
+                                 │   - Evidence-Backed White-Space Map     │
+                                 │   - Market Opportunity & Sizing Panel   │
+                                 │   - Customer Segmentation Breakdown     │
+                                 │   - Competitor Comparison Matrix        │
                                  │   - 4-category evidence source cards    │
                                  └────────────────────┬────────────────────┘
                                                       │
                                                       │ HTTP POST /api/validate
                                                       ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                              FastAPI Application Layer                                                 │
-│                                                (backend/main.py)                                                       │
-│                                                                                                                        │
-│  1. Input Validation & Gibberish Filter:                                                                               │
-│     - Verifies minimum length (>= 5 chars) and dictionary word ratio (wordfreq >= 0.45)                                │
-│     - Fast-fails non-English nonsense strings with 200 OK + explanatory UX guidance                                   │
-└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                              FastAPI Application Layer                                 │
+│                                                (backend/main.py)                                       │
+│                                                                                                        │
+│  1. Input Validation & Gibberish Filter:                                                               │
+│     - Verifies minimum length (>= 5 chars) and dictionary word ratio (wordfreq >= 0.45)                │
+│     - Fast-fails non-English nonsense strings with 200 OK + explanatory UX guidance                   │
+└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
                                           │
-                                          │ Raw Idea Text + Optional Fields
+                                          │ Raw Idea Text (Arbitrary Length)
                                           ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       1. IdeaExtractionAgent (Groq LLM)                                                │
-│                                   (backend/agents/idea_extraction_agent.py)                                            │
-│                                                                                                                        │
-│  - Extracts structured product name, industry, target audience, core problem, and contextual keywords                   │
-│  - Multi-Model Failover: Primary (`qwen/qwen3.8-27b`) -> Backup 1 (`allam-2-7b`) -> Backup 2 (`groq/compound-mini`)    │
-│  - Exponential backoff on HTTP 429 rate limit triggers                                                                 │
-│  - Deterministic Fallback: Multi-pass regex & opener-stripping fallback parser                                         │
-└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┘
-                                          │
-                                          │ Structured Metadata
-                                          ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                         2. WebSearchAgent (Tavily API)                                                 │
-│                                     (backend/agents/web_search_agent.py)                                               │
-│                                                                                                                        │
-│  - Parallel search across 4 research categories via ThreadPoolExecutor(max_workers=4)                                  │
-│  - Category 1: Competitors (search_depth="advanced", topic="general")                                                   │
-│  - Category 2: Industry News (search_depth="advanced", topic="news")                                                    │
-│  - Category 3: Customer Demand (search_depth="advanced", topic="general")                                               │
-│  - Category 4: Market Size & Trends (search_depth="advanced", topic="general")                                         │
-│  - Native Relevance Scoring: Preserves calibrated Tavily float scores (0.0 to 1.0)                                     │
-└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┘
-                                          │
-                                          │ Raw Result Batches
-                                          ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                           3. DataRetrievalAgent                                                        │
-│                                   (backend/agents/data_retrieval_agent.py)                                             │
-│                                                                                                                        │
-│  - Blocklist Filtering: Drops non-commercial dictionaries, encyclopedias, and generic portals (BLOCKED_DOMAINS)         │
-│  - Language Verification: Enforces English results using langdetect with deterministic seed                             │
-│  - Canonical Deduplication: Drops duplicate URLs across queries and category boundaries                                │
-│  - Ranking & Summary: Sorts sources descending by relevance score; aggregates counts                                   │
-└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     CrewAI Sequential Orchestrator                                     │
+│                                     (backend/crew/orchestrator.py)                                     │
+│                                                                                                        │
+│  [1] Idea Extraction Agent: Groq LLM domain parameter extraction with cascading model failover         │
+│  [2] Web Search Agent: Parallel 4-category search via Tavily Search API (ThreadPoolExecutor)           │
+│  [3] Data Retrieval Agent: Blocklist filtering, langdetect English check, canonical deduplication     │
+│  [4] Market Opportunity Agent: TAM/SAM estimation, CAGR growth trends, customer personas               │
+│  [5] Competitor Analysis Agent: Direct/indirect rivals, comparison matrix, market gaps                 │
+│  [6] White-Space Engine: Triangulates Customer Pain × Competitor Void × Startup Capability             │
+└─────────────────────────────────────────┬──────────────────────────────────────────────────────────────┘
                                           │
                                           │ ValidationResponse (JSON)
                                           ▼
-┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       Frontend Presentation Layer (React)                                              │
-│                                                                                                                        │
-│  - ExtractedMetadata.jsx: Case-file stamped dossier displaying extracted domain entities & keyword chips               │
-│  - ResultsSummary.jsx: Smooth count-up counter showing total sources surfaced                                         │
-│  - CategorySection.jsx & SourceCard.jsx: Equal-height 3-column card grid with cleaned snippets & read-more toggle      │
-└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       Frontend Presentation Layer (React)                              │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -111,124 +87,201 @@ The application is built on a decoupled, production-ready client-server architec
 
 ### 3.1 `IdeaExtractionAgent` (Groq LLM)
 - **Source File**: [`backend/agents/idea_extraction_agent.py`](backend/agents/idea_extraction_agent.py)
-- **Problem Solved**: Unstructured natural language inputs frequently include ambiguous phrasing, filler words (*"I want to build an app that..."*), and polysemous terms. For example, in *"a marketplace that lets users find and book local fitness classes"*, simple token splitters grab *"book"*, polluting results with physical book reviews and bookstores. The LLM understands that *"book"* is an action verb in the fitness domain and extracts `["fitness classes", "local booking", "wellness marketplace"]`.
-- **Multi-Model Failover Strategy**:
-  1. `qwen/qwen3.8-27b` (Primary: high semantic comprehension, strict JSON compliance).
-  2. `allam-2-7b` (Backup 1: fast, high throughput failover).
-  3. `groq/compound-mini` (Backup 2: emergency failover).
-  4. `_fallback_extraction` (Deterministic heuristic regex parser if all external network calls fail).
+- Ingests raw startup descriptions of arbitrary length and optional user parameters (product name, industry, target audience).
+- Extracts clean domain keywords, normalized industry category, audience profile, and refined core problem statement using Groq inference with cascading model failovers.
 
 ### 3.2 `WebSearchAgent` (Tavily Search API)
 - **Source File**: [`backend/agents/web_search_agent.py`](backend/agents/web_search_agent.py)
-- **Problem Solved**: General search scrapers (e.g. DuckDuckGo, Bing scraping) suffer from IP throttling, CAPTCHAs, and lack of relevance scoring. The Web Search Agent connects to the Tavily AI-native search engine.
-- **Concurrency**: Dispatches 4 parallel threads via `ThreadPoolExecutor(max_workers=4)`.
-- **Query Construction**:
-  - *Competitors*: `{keywords} [{product_name}] competitors alternatives`
+- Dispatches 4 concurrent search threads across:
+  - *Competitors*: `{keywords} [{product_name}] competitors alternatives` (`search_depth="advanced"`)
   - *Industry News*: `{keywords} industry trends startup news` (`topic="news"`)
-  - *Customer Demand*: `{keywords} customer problems user demand reviews`
-  - *Market Size*: `{keywords} [{industry}] market size growth forecast`
+  - *Customer Demand*: `{keywords} customer problems user demand reviews` (`search_depth="advanced"`)
+  - *Market Size & Trends*: `{keywords} [{industry}] market size growth forecast` (`search_depth="advanced"`)
 
 ### 3.3 `DataRetrievalAgent` (Sanitization & Deduplication)
 - **Source File**: [`backend/agents/data_retrieval_agent.py`](backend/agents/data_retrieval_agent.py)
-- **Filters & Verification**:
-  - **`BLOCKED_DOMAINS`**: Strips encyclopedias, dictionaries, and generic forums (`wiktionary.org`, `wikipedia.org`, `dictionary.com`, `yelp.com`, `quora.com`, `medicinesfaq.com`).
-  - **Language Filtering**: Evaluates combined title and snippet text with `langdetect` seeded with `DetectorFactory.seed = 0` to discard non-English search noise.
-  - **Canonical Deduplication**: Maintains a `seen_urls` set across all category batches to ensure that a source is never displayed twice.
-  - **Relevance Sorting**: Orders records strictly by their native relevance score descending.
+- Filters generic dictionaries, encyclopedias, and non-commercial portals (`BLOCKED_DOMAINS`).
+- Seeded language verification (`langdetect`) rejects non-English noise.
+- Canonical URL deduplication guarantees zero duplicate sources across all categories.
+- Ranks sources descending by native semantic relevance score.
+
+### 3.4 `MarketOpportunityAgent` (Market Sizing & Segmentation)
+- **Source File**: [`backend/agents/market_analysis_agent.py`](backend/agents/market_analysis_agent.py)
+- Synthesizes verified search sources to estimate market size valuations (global, regional, or niche).
+- Extracts CAGR trajectories, growth drivers, and demand signals.
+- Constructs granular customer segments with explicit distinctions between **End Users** and **Decision Makers**, acute pain points, motivations, buying behaviors, and industry jargon.
+- Evaluates Market Attractiveness across Demand Strength, Growth Strength, Customer Urgency, and Accessibility.
+- Strict anti-hallucination: every quantitative figure links to a source URL; conflicting sources are explicitly documented.
+
+### 3.5 `CompetitorAnalysisAgent` (Competitive Mapping & Matrix)
+- **Source File**: [`backend/agents/competitor_analysis_agent.py`](backend/agents/competitor_analysis_agent.py)
+- Discovers and categorizes direct rivals, indirect substitutes, and emerging startups.
+- Evaluates core offerings, features, pricing (marked "unavailable" if undisclosed), business models, strengths, weaknesses, and documented customer complaints.
+- Generates a multidimensional comparison matrix evaluating the startup against key competitors.
+- Uncovers market gaps, pricing voids, and unmet customer needs.
+
+### 3.6 `WhiteSpaceEngine` (Core Novelty)
+- **Source File**: [`backend/services/white_space_engine.py`](backend/services/white_space_engine.py)
+- Computes deterministic opportunity intersections:
+  $$\text{White-Space Opportunity} = \text{Customer Pain} \cap \text{Competitor Void} \cap \text{Startup Capability}$$
+- Generates 2–4 high-conviction opportunity gaps with evidence strength ratings (High/Medium/Low), confidence percentages, differentiation hypotheses, and traceable citations.
 
 ---
 
-## 4. Frontend Architecture & User Interface
+## 4. CrewAI Orchestration Architecture
+
+The orchestration layer is located in [`backend/crew/`](backend/crew/):
+- **`agents.py`**: Factory creating CrewAI `Agent` instances for Idea Extraction, Web Research, Data Verification, Market Opportunity Analysis, and Competitor Discovery.
+- **`tasks.py`**: Factory creating CrewAI `Task` instances with explicit context handoffs.
+- **`tools.py`**: Custom CrewAI tools wrapping underlying agents and services.
+- **`orchestrator.py`**: Sequential orchestrator executing the 5-agent pipeline with standardized logging:
+  ```
+  [1] Idea Extraction started -> [1] Idea Extraction completed
+  [2] Web Search started -> [2] Web Search completed
+  [3] Data Retrieval started -> [3] Data Retrieval completed
+  [4] Market Opportunity Analysis started -> [4] Market Opportunity Analysis completed
+  [5] Competitor Analysis started -> [5] Competitor Analysis completed
+  ```
+
+---
+
+## 5. Frontend Architecture & User Interface
 
 The frontend is located in [`frontend/src/`](frontend/src/) and built with React 18 and Vite:
 
-### 📁 Component Hierarchy & Structure
 ```
 frontend/src/
 ├── components/
 │   ├── Header.jsx                 # Masthead hero banner & tagline
 │   ├── ExtractedMetadata.jsx      # Case-file stamped dossier card showing extracted metadata
-│   ├── ExtractedMetadata.css      # Warm charcoal-brown dossier styles & stamped badges
+│   ├── ExtractedMetadata.css      # Warm charcoal-brown dossier styles
+│   ├── WhiteSpaceAnalysis.jsx     # Centerpiece: Evidence-Backed Market White-Space Map
+│   ├── MarketOpportunity.jsx      # Market sizing, CAGR, and attractiveness scorecard
+│   ├── CustomerSegments.jsx       # Customer persona cards (End Users vs Decision Makers)
+│   ├── CompetitorAnalysis.jsx     # Competitor cards & comparison matrix
 │   ├── ResultsSummary.jsx         # Summary stats bar with animated count-up counter
-│   ├── CategorySection.jsx        # 3-column responsive category grid with collapsible items
-│   └── SourceCard.jsx             # Individual evidence card with snippet cleaner & pinned footer
-├── App.jsx                        # Main state orchestrator & form management
+│   ├── CategorySection.jsx        # Responsive category grid with collapsible items
+│   └── SourceCard.jsx             # Individual evidence card with cleaned snippets
+├── App.jsx                        # Main state orchestrator & form management (Unlimited Length)
 ├── App.css                        # Layout grid, animations, and typography tokens
 ├── index.css                      # Global theme variables, reset, and reduced-motion rules
 └── main.jsx                       # Application DOM root mount
 ```
 
-### 🎨 Key Frontend Features
-1. **Snippet Sanitizer & Sentence Truncation ([`SourceCard.jsx`](frontend/src/components/SourceCard.jsx)):**
-   - Strips markdown hashes (`###`), pipe-table lines (`| | |`), and bracket citations (`[...]`).
-   - Truncates text at sentence boundaries (`.`, `!`, `?`) within ~180–220 characters.
-   - Provides an inline `"Read more ↓"` / `"Read less ↑"` toggle for longer excerpts.
-2. **Equal-Height Grid & Pinned Footers ([`App.css`](frontend/src/App.css)):**
-   - `.category-grid` enforces `grid-auto-rows: 1fr` and `align-items: stretch`.
-   - `.source-footer` uses `margin-top: auto` to anchor hostname tags and relevance percentages to the bottom of each card.
-3. **Micro-Interactions & Accessibility:**
-   - Smooth animated count-up for "Sources Surfaced" (`ResultsSummary.jsx`).
-   - Gentle hover elevation on source cards (`transform: translateY(-3px)`).
-   - Full support for `@media (prefers-reduced-motion: reduce)`.
-
 ---
 
-## 5. Backend Architecture & API Endpoints
+## 6. Backend Architecture & Data Contracts
 
-The backend is located in [`backend/`](backend/) and powered by FastAPI and Uvicorn:
-
-### Endpoints
-- **`GET /api/health`**: Simple health check returning `{"status": "ok"}`.
-- **`POST /api/validate`**: Main research pipeline endpoint accepting `IdeaSubmission` and returning `ValidationResponse`.
-
----
-
-## 6. Data Contracts & Payload Specifications
-
-### Input Schema (`POST /api/validate`)
+### Full Response Schema (`ValidationResponse`)
 ```json
 {
-  "idea": "a marketplace that lets users find and book local fitness classes",
-  "product_name": null,
-  "industry": null,
-  "target_audience": null
-}
-```
-
-### Response Schema (`ValidationResponse`)
-```json
-{
-  "idea": "a marketplace that lets users find and book local fitness classes",
+  "idea": "...",
   "extracted_data": {
-    "product_name": "LocalFit Marketplace",
-    "industry": "Health & Fitness",
-    "target_audience": "Urban residents seeking flexible, local fitness options",
-    "core_problem": "Users struggle to discover and book diverse local fitness classes due to fragmented information and lack of a centralized booking system.",
-    "keywords": [
-      "fitness classes",
-      "local booking",
-      "wellness marketplace",
-      "class discovery"
-    ]
+    "product_name": "...",
+    "industry": "...",
+    "target_audience": "...",
+    "core_problem": "...",
+    "keywords": [...]
   },
   "sources": [
     {
-      "title": "Health and Fitness Club Market Growth & Trends Analysis, 2034",
-      "url": "https://www.fortunebusinessinsights.com/health-and-fitness-club-market-108652",
-      "snippet": "The global health and fitness club market size was valued at USD 104.05 billion in 2024 and is projected to grow to USD 202.92 billion by 2034, exhibiting a CAGR of 6.9%...",
-      "query": "fitness classes local booking wellness marketplace class discovery Health & Fitness market size growth forecast",
-      "category": "Market Size & Trends",
-      "score": 0.665
+      "title": "...",
+      "url": "...",
+      "snippet": "...",
+      "query": "...",
+      "category": "...",
+      "score": 0.92
     }
   ],
+  "market_analysis": {
+    "summary": "...",
+    "market_size": [
+      {
+        "figure": "$X.X Billion",
+        "market_type": "global",
+        "cagr": "X.X%",
+        "forecast_year": "2030",
+        "source_url": "https://...",
+        "evidence_snippet": "...",
+        "notes": "..."
+      }
+    ],
+    "growth_trends": [...],
+    "demand_signals": [...],
+    "customer_segments": [
+      {
+        "segment_name": "...",
+        "who_they_are": "...",
+        "end_users": "...",
+        "decision_makers": "...",
+        "primary_needs": [...],
+        "pain_points": [...],
+        "motivations": [...],
+        "buying_behavior": "...",
+        "industry_terminology": [...]
+      }
+    ],
+    "pain_points": [...],
+    "buying_behavior": [...],
+    "market_risks": [...],
+    "attractiveness": {
+      "demand_strength": "High",
+      "growth_strength": "High",
+      "customer_urgency": "High",
+      "market_accessibility": "Medium",
+      "major_barriers": [...],
+      "important_assumptions": [...]
+    },
+    "confidence": 0.88
+  },
+  "competitor_analysis": {
+    "competitors": [
+      {
+        "name": "...",
+        "classification": "direct",
+        "core_offering": "...",
+        "target_customer": "...",
+        "major_features": [...],
+        "pricing": "...",
+        "business_model": "...",
+        "positioning": "...",
+        "strengths": [...],
+        "weaknesses": [...],
+        "customer_complaints": [...]
+      }
+    ],
+    "comparison_matrix": [
+      {
+        "feature_or_dimension": "...",
+        "startup_approach": "...",
+        "competitor_approaches": { ... }
+      }
+    ],
+    "market_gaps": [...],
+    "pricing_insights": [...],
+    "business_models": [...]
+  },
+  "white_space_analysis": {
+    "opportunities": [
+      {
+        "opportunity_name": "...",
+        "segment": "...",
+        "pain_point": "...",
+        "demand_evidence": [...],
+        "competitor_coverage": [...],
+        "gap": "...",
+        "startup_fit": "...",
+        "differentiation_hypothesis": "...",
+        "evidence_strength": "High",
+        "confidence": 0.90,
+        "potential_risk": "...",
+        "evidence": [...]
+      }
+    ]
+  },
   "summary": {
     "total_sources": 24,
-    "sources_per_category": {
-      "Competitors": 6,
-      "Industry News": 6,
-      "Customer Demand": 6,
-      "Market Size & Trends": 6
-    },
+    "sources_per_category": { ... },
     "sources_by_category": { ... }
   }
 }
@@ -236,45 +289,17 @@ The backend is located in [`backend/`](backend/) and powered by FastAPI and Uvic
 
 ---
 
-## 7. Environment Variables & Configuration
+## 7. Testing, Benchmarking & 3-Industry Evaluation
 
-### Backend (`backend/.env`)
+The repository includes an automated 3-industry benchmark suite located in [`backend/scripts/test_milestone2_e2e.py`](backend/scripts/test_milestone2_e2e.py):
+
+### How to Run the 3-Industry End-to-End Suite:
 ```bash
-# Groq API key for LLM idea understanding (https://console.groq.com)
-GROQ_API_KEY=gsk_...
-
-# Tavily API key for AI web research (https://tavily.com)
-TAVILY_API_KEY=tvly-...
-
-# Allowed frontend origins for CORS
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+python backend/scripts/test_milestone2_e2e.py
 ```
+This tests three distinct startup prompts:
+1. **Healthcare**: `ClinicGuard AI` (Patient No-Show Predictor & Intervention System)
+2. **Climate / Agriculture**: `FarmOptima` (Smallholder Crop, Irrigation, and Market Pricing Decision Platform)
+3. **Fintech / Education**: `CampusFin` (Student Spending Analytics & Personalized Financial Literacy Platform)
 
-### Frontend (`frontend/.env`)
-```bash
-# Backend URL (do not include trailing slash)
-VITE_API_URL=http://127.0.0.1:8000
-```
-
----
-
-## 8. Testing, Benchmarking & Evaluation
-
-The repository includes an evaluation benchmark suite in [`backend/scripts/run_eval.py`](backend/scripts/run_eval.py).
-
-### How to Run the 10-Idea Evaluation Suite:
-```bash
-python backend/scripts/run_eval.py
-```
-This tests 10 diverse startup concepts across B2B SaaS, DevSecOps, EdTech, Pet Care, Personal Finance, Consumer Electronics, and Gig Economy verticals, logging LLM extraction status and verifying category source distributions.
-
----
-
-## 9. Deployment Architecture
-
-| Tier | Platform | Build Command | Start / Run Command | Required Environment Variables |
-| :--- | :--- | :--- | :--- | :--- |
-| **Backend** | **Render** (Web Service) | `pip install -r requirements.txt` | `uvicorn main:app --host 0.0.0.0 --port $PORT` | `GROQ_API_KEY`, `TAVILY_API_KEY`, `ALLOWED_ORIGINS` |
-| **Frontend** | **Vercel** (Static SPA) | `npm run build` | Serves `dist/` | `VITE_API_URL` (points to Render backend URL) |
-
-For complete step-by-step deployment instructions, see [**`DEPLOYMENT.md`**](DEPLOYMENT.md).
+All three prompts execute through the complete 5-agent sequential pipeline, verifying market sizing, customer personas, competitor classification, white-space synthesis, and source traceability.

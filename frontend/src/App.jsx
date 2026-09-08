@@ -1,17 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 import Header from "./components/Header";
+import ExtractedMetadata from "./components/ExtractedMetadata";
 import ResultsSummary from "./components/ResultsSummary";
 import CategorySection from "./components/CategorySection";
-import ExtractedMetadata from "./components/ExtractedMetadata";
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+import MarketOpportunity from "./components/MarketOpportunity";
+import CustomerSegments from "./components/CustomerSegments";
+import CompetitorAnalysis from "./components/CompetitorAnalysis";
+import WhiteSpaceAnalysis from "./components/WhiteSpaceAnalysis";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 const CATEGORIES = [
   { key: "Competitors", title: "COMPETITORS" },
   { key: "Industry News", title: "INDUSTRY NEWS" },
   { key: "Customer Demand", title: "CUSTOMER DEMAND" },
   { key: "Market Size & Trends", title: "MARKET SIZE & TRENDS" },
+];
+
+const RESEARCH_STAGES = [
+  { id: 1, label: "Extracting idea parameters & domain keywords" },
+  { id: 2, label: "Executing multi-vector live web research" },
+  { id: 3, label: "Synthesizing customer demand & market sizing" },
+  { id: 4, label: "Triangulating defensible market white-space" },
 ];
 
 export default function App() {
@@ -22,14 +33,45 @@ export default function App() {
   const [status, setStatus] = useState("idle"); // idle | loading | done | error
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeStage, setActiveStage] = useState(1);
+
+  // Animate research stages during loading state
+  useEffect(() => {
+    if (status !== "loading") {
+      setActiveStage(1);
+      return;
+    }
+
+    const stageInterval = setInterval(() => {
+      setActiveStage((prev) => (prev < RESEARCH_STAGES.length ? prev + 1 : prev));
+    }, 2800);
+
+    return () => clearInterval(stageInterval);
+  }, [status]);
+
+  function handleClearForm() {
+    setIdea("");
+    setProductName("");
+    setIndustry("");
+    setTargetAudience("");
+    setErrorMessage("");
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (idea.trim().length < 20) {
-      setErrorMessage("Please describe your startup idea in more detail (at least 20 characters) so we can extract accurate market signals.");
+    if (idea.trim().length < 15) {
+      setErrorMessage(
+        "Please describe your startup idea in a bit more detail (at least 15 characters) so we can extract accurate domain context and market signals."
+      );
       setStatus("error");
       return;
     }
+
+    // Strip accidental prompt label prefixes if user pasted structured template text
+    let cleanIdea = idea.trim().replace(/^(?:describe the startup concept|startup concept|idea|concept)\s*:\s*/i, "");
+    let cleanProductName = productName.trim().replace(/^(?:startup\s*\/?\s*product name|product name|name)\s*:\s*/i, "");
+    let cleanIndustry = industry.trim().replace(/^(?:industry or vertical|industry|vertical)\s*:\s*/i, "");
+    let cleanTargetAudience = targetAudience.trim().replace(/^(?:target customer profile|target audience|target customer)\s*:\s*/i, "");
 
     setStatus("loading");
     setErrorMessage("");
@@ -40,10 +82,10 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          idea,
-          product_name: productName.trim() || undefined,
-          industry: industry.trim() || undefined,
-          target_audience: targetAudience.trim() || undefined,
+          idea: cleanIdea,
+          product_name: cleanProductName || undefined,
+          industry: cleanIndustry || undefined,
+          target_audience: cleanTargetAudience || undefined,
         }),
       });
 
@@ -68,7 +110,7 @@ export default function App() {
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setErrorMessage(err.message || "Something went wrong. Try again.");
+      setErrorMessage(err.message || "Something went wrong during market analysis. Please check your backend connection and try again.");
       setStatus("error");
     }
   }
@@ -86,26 +128,33 @@ export default function App() {
     }
   }
 
+  const competitorCount = result?.competitor_analysis?.competitors?.length || 0;
+  const segmentCount = result?.market_analysis?.customer_segments?.length || 0;
+  const opportunityCount = result?.white_space_analysis?.opportunities?.length || 0;
+  const hasFormContent = Boolean(idea || productName || industry || targetAudience);
+
   return (
     <div className="page">
       <Header />
 
       <main className="dossier">
+        {/* Research Input Form */}
         <form className="submission-form" onSubmit={handleSubmit}>
           <div className="form-field main-idea-field">
             <label htmlFor="idea" className="field-label">
-              DESCRIBE THE IDEA <span className="label-required">*</span>
+              DESCRIBE THE STARTUP CONCEPT <span className="label-required">*</span>
             </label>
             <textarea
               id="idea"
               value={idea}
               onChange={(e) => setIdea(e.target.value)}
-              placeholder="e.g. A subscription box that delivers pre-portioned spices for weeknight recipes, sourced directly from small farms."
-              rows={4}
-              maxLength={1000}
+              placeholder="Describe your startup concept, target customer pain, core workflow, monetization mechanism, or key assumptions in detail."
+              rows={5}
             />
             <div className="form-meta-row">
-              <span className="char-count">{idea.length} {idea.length === 1 ? "character" : "characters"}</span>
+              <span className="char-count">
+                {idea.length.toLocaleString()} {idea.length === 1 ? "character" : "characters"}
+              </span>
             </div>
           </div>
 
@@ -119,13 +168,13 @@ export default function App() {
                 id="productName"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. SpiceBox, StudyPilot"
+                placeholder="e.g. StudyPilot, FarmOptima, ClinicGuard"
               />
             </div>
 
             <div className="form-field">
               <label htmlFor="industry" className="field-label">
-                INDUSTRY OR CATEGORY <span className="label-optional">(OPTIONAL)</span>
+                INDUSTRY OR VERTICAL <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
                 type="text"
@@ -133,64 +182,87 @@ export default function App() {
                 list="industry-options"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. EdTech / AI, Transportation"
+                placeholder="e.g. HealthTech, AgriTech, FinTech, DevTools"
               />
-              <p className="field-hint">
-                Adding a specific category like &quot;MusicTech&quot; or &quot;EdTech&quot; significantly improves search accuracy.
-              </p>
               <datalist id="industry-options">
-                <option value="EdTech / AI" />
-                <option value="Food & Beverage" />
-                <option value="Transportation & Mobility" />
                 <option value="Healthcare & HealthTech" />
+                <option value="Agriculture & AgriTech" />
                 <option value="Fintech & Financial Services" />
-                <option value="Artificial Intelligence & SaaS" />
-                <option value="E-Commerce & Retail" />
+                <option value="EdTech & Education" />
+                <option value="DevSecOps & Developer Tools" />
                 <option value="CleanTech & Sustainability" />
-                <option value="Real Estate & PropTech" />
                 <option value="Logistics & Supply Chain" />
-                <option value="Developer Tools & DevOps" />
-                <option value="Media & Entertainment" />
+                <option value="Enterprise SaaS & Automation" />
               </datalist>
             </div>
 
             <div className="form-field form-field-full">
               <label htmlFor="targetAudience" className="field-label">
-                TARGET AUDIENCE <span className="label-optional">(OPTIONAL)</span>
+                TARGET CUSTOMER PROFILE <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
                 type="text"
                 id="targetAudience"
-                list="audience-options"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. School and college students, Busy home cooks"
+                placeholder="e.g. Small and mid-sized clinics, Independent agronomists, University researchers"
               />
-              <datalist id="audience-options">
-                <option value="School and college students" />
-                <option value="Home cooks & busy families" />
-                <option value="Urban commuters & transit riders" />
-                <option value="Small business owners & founders" />
-                <option value="Software developers & engineering teams" />
-                <option value="Remote workers & freelancers" />
-                <option value="Healthcare professionals & clinics" />
-                <option value="E-commerce shoppers & consumers" />
-              </datalist>
             </div>
           </div>
 
           <div className="form-action-row">
+            {hasFormContent && (
+              <button
+                type="button"
+                className="btn-clear-form"
+                onClick={handleClearForm}
+                disabled={status === "loading"}
+              >
+                Clear
+              </button>
+            )}
             <button type="submit" disabled={status === "loading"}>
-              {status === "loading" ? "Analyzing & Validating…" : "Validate idea →"}
+              {status === "loading" ? "Analyzing market signals…" : "Validate startup idea →"}
             </button>
           </div>
         </form>
 
-        {status === "error" && <p className="error-banner">{errorMessage}</p>}
+        {status === "error" && (
+          <div className="error-banner" role="alert">
+            <span className="error-prefix">VALIDATION NOTICE:</span> {errorMessage}
+          </div>
+        )}
 
+        {/* Structured Research Loading State */}
         {status === "loading" && (
           <div className="loading-container">
-            <p className="loading-eyebrow">SYNTHESIZING MARKET INTELLIGENCE…</p>
+            <div className="loading-status-badge">
+              <span className="pulsing-dot" />
+              <span className="loading-eyebrow">
+                VALIDATING STARTUP CONCEPT ACROSS MARKET VECTORS…
+              </span>
+            </div>
+
+            {/* Research Progress Stages */}
+            <div className="research-stepper">
+              {RESEARCH_STAGES.map((stg) => {
+                const isDone = activeStage > stg.id;
+                const isActive = activeStage === stg.id;
+                return (
+                  <div
+                    key={stg.id}
+                    className={`stepper-item ${isDone ? "step-done" : ""} ${isActive ? "step-active" : ""}`}
+                  >
+                    <span className="step-indicator">
+                      {isDone ? "✓" : `0${stg.id}`}
+                    </span>
+                    <span className="step-text">{stg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Shimmering Skeleton Cards */}
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -208,22 +280,66 @@ export default function App() {
           </div>
         )}
 
+        {/* Results Presentation Dashboard */}
         {status === "done" && result && (
           <section className="results">
-            {/* Extracted LLM Understanding */}
+            {/* Quick-Jump Section Navigation Bar */}
+            <nav className="quick-jump-nav" aria-label="Report sections">
+              <span className="quick-jump-label">§ JUMP TO:</span>
+              <div className="quick-jump-links">
+                <a href="#section-overview" className="jump-link">Overview</a>
+                <a href="#section-context" className="jump-link">Idea Context</a>
+                <a href="#section-whitespace" className="jump-link highlight-jump">White-Space Map</a>
+                <a href="#section-market" className="jump-link">Market Sizing</a>
+                <a href="#section-personas" className="jump-link">Personas</a>
+                <a href="#section-competitors" className="jump-link">Competitors</a>
+                <a href="#section-sources" className="jump-link">Sources</a>
+              </div>
+            </nav>
+
+            {/* Top-Level Executive Summary & Real Metrics */}
+            <ResultsSummary
+              summary={result.summary}
+              sources={result.sources}
+              competitorCount={competitorCount}
+              segmentCount={segmentCount}
+              opportunityCount={opportunityCount}
+            />
+
+            {/* 1. Extracted Domain Context */}
             {result.extracted_data && <ExtractedMetadata data={result.extracted_data} />}
 
-            {/* 1. Sources Summary Bar */}
-            <div className="evidence-header-divider">
-              <span className="evidence-divider-label">SUPPORTING MARKET EVIDENCE & SIGNALS</span>
-            </div>
+            {/* 2. Visual Centerpiece: Evidence-Backed Market White-Space Map */}
+            {result.white_space_analysis && (
+              <WhiteSpaceAnalysis data={result.white_space_analysis} />
+            )}
 
-            <ResultsSummary summary={result.summary} sources={result.sources} />
+            {/* 3. Market Opportunity Sizing & Attractiveness */}
+            {result.market_analysis && (
+              <MarketOpportunity data={result.market_analysis} />
+            )}
+
+            {/* 4. Target Customer Segmentation */}
+            {result.market_analysis?.customer_segments && (
+              <CustomerSegments segments={result.market_analysis.customer_segments} />
+            )}
+
+            {/* 5. Competitor Discovery & Capability Matrix */}
+            {result.competitor_analysis && (
+              <CompetitorAnalysis data={result.competitor_analysis} />
+            )}
+
+            {/* 6. Supporting Research Sources */}
+            <div id="section-sources" className="evidence-header-divider">
+              <span className="evidence-divider-label">
+                § SUPPORTING RESEARCH EVIDENCE & SOURCE CITATIONS
+              </span>
+            </div>
 
             {result.sources.length === 0 ? (
               <p className="empty-state">
                 {result.summary?.message ||
-                  "No sources came back for this idea. Try rephrasing with a more specific product category, market segment, or customer workflow."}
+                  "No search sources returned. Try refining domain keywords or category terms."}
               </p>
             ) : (
               <div className="categorized-results-container">
