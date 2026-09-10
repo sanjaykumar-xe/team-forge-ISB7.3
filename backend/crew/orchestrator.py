@@ -72,6 +72,9 @@ class ValidationCrewOrchestrator:
         industry = submission.industry.strip() if submission.industry else None
         target_audience = submission.target_audience.strip() if submission.target_audience else None
 
+        # Reset per-request agent flags
+        self.web_searcher.reset_degraded_state()
+
         # 0. Nonsense / Gibberish Fast-Fail Check
         if not self.web_searcher.is_valid_idea(idea_text):
             _log("[Orchestrator] Input failed coherence/English density check.")

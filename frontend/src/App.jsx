@@ -34,6 +34,7 @@ export default function App() {
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeStage, setActiveStage] = useState(1);
+  const [activeSection, setActiveSection] = useState("section-overview");
 
   // Animate research stages during loading state
   useEffect(() => {
@@ -48,6 +49,61 @@ export default function App() {
 
     return () => clearInterval(stageInterval);
   }, [status]);
+
+  // Scroll spy to highlight the active section in the sticky nav
+  useEffect(() => {
+    if (status !== "done" || !result) return;
+
+    const sectionIds = [
+      "section-overview",
+      "section-context",
+      "section-whitespace",
+      "section-market",
+      "section-personas",
+      "section-competitors",
+      "section-sources",
+    ];
+
+    const handleScroll = () => {
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+      const navOffset = 110;
+
+      for (let i = sectionIds.length - 1; i >= 0; i--) {
+        const id = sectionIds[i];
+        const el = document.getElementById(id);
+        if (el) {
+          const top = el.getBoundingClientRect().top + scrollY - navOffset;
+          if (scrollY >= top - 20) {
+            setActiveSection(id);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [status, result]);
+
+  const handleJumpTo = (e, targetId) => {
+    e.preventDefault();
+    const el = document.getElementById(targetId);
+    if (el) {
+      const navEl = document.querySelector(".quick-jump-nav");
+      const navHeight = navEl ? navEl.offsetHeight + 18 : 80;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + (window.pageYOffset || document.documentElement.scrollTop) - navHeight;
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: "smooth",
+      });
+      setActiveSection(targetId);
+      if (window.history?.replaceState) {
+        window.history.replaceState(null, "", `#${targetId}`);
+      }
+    }
+  };
 
   function handleClearForm() {
     setIdea("");
@@ -287,13 +343,26 @@ export default function App() {
             <nav className="quick-jump-nav" aria-label="Report sections">
               <span className="quick-jump-label">§ JUMP TO:</span>
               <div className="quick-jump-links">
-                <a href="#section-overview" className="jump-link">Overview</a>
-                <a href="#section-context" className="jump-link">Idea Context</a>
-                <a href="#section-whitespace" className="jump-link highlight-jump">White-Space Map</a>
-                <a href="#section-market" className="jump-link">Market Sizing</a>
-                <a href="#section-personas" className="jump-link">Personas</a>
-                <a href="#section-competitors" className="jump-link">Competitors</a>
-                <a href="#section-sources" className="jump-link">Sources</a>
+                {[
+                  { id: "section-overview", label: "Overview", show: true },
+                  { id: "section-context", label: "Idea Context", show: Boolean(result.extracted_data) },
+                  { id: "section-whitespace", label: "White-Space Map", show: Boolean(result.white_space_analysis) },
+                  { id: "section-market", label: "Market Sizing", show: Boolean(result.market_analysis) },
+                  { id: "section-personas", label: "Personas", show: Boolean(result.market_analysis?.customer_segments?.length) },
+                  { id: "section-competitors", label: "Competitors", show: Boolean(result.competitor_analysis) },
+                  { id: "section-sources", label: "Sources", show: Boolean(result.sources && result.sources.length > 0) },
+                ]
+                  .filter((sec) => sec.show)
+                  .map((sec) => (
+                    <a
+                      key={sec.id}
+                      href={`#${sec.id}`}
+                      onClick={(e) => handleJumpTo(e, sec.id)}
+                      className={`jump-link ${activeSection === sec.id ? "active-jump" : ""}`}
+                    >
+                      {sec.label}
+                    </a>
+                  ))}
               </div>
             </nav>
 

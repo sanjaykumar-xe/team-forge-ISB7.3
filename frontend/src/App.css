@@ -424,14 +424,15 @@ button[type="submit"]:disabled {
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: #1B1712;
+  gap: 14px;
+  background: rgba(27, 23, 18, 0.95);
   border: 1px solid var(--panel-dark-border);
   border-left: 3px solid var(--accent-amber);
-  padding: 10px 16px;
-  box-shadow: 0 4px 20px rgba(10, 8, 5, 0.35);
-  margin-bottom: 2px;
-  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 20px rgba(10, 8, 5, 0.4);
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
 }
 
 .quick-jump-label {
@@ -447,27 +448,47 @@ button[type="submit"]:disabled {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 14px;
+  gap: 6px 10px;
 }
 
 .jump-link {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 600;
-  color: #E8E2D2;
+  color: #C8C0AF;
   letter-spacing: 0.04em;
-  transition: color 120ms ease;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 140ms ease;
   white-space: nowrap;
 }
 
 .jump-link:hover {
   color: var(--accent-amber);
-  text-decoration: underline;
+  background: rgba(255, 255, 255, 0.06);
+  text-decoration: none;
 }
 
+.jump-link.active-jump,
 .highlight-jump {
   color: var(--accent-amber);
+  background: rgba(217, 119, 6, 0.18);
   font-weight: 700;
+  border-bottom: 2px solid var(--accent-amber);
+}
+
+/* Scroll Offset Anchor Fix: prevents sticky nav from covering section headers */
+[id^="section-"],
+#section-overview,
+#section-context,
+#section-whitespace,
+#section-market,
+#section-personas,
+#section-competitors,
+#section-sources {
+  scroll-margin-top: 84px;
 }
 
 /* --------------------------------------------------------------------------

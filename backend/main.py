@@ -11,6 +11,16 @@ Orchestrates the 5-agent research pipeline via the CrewAI Orchestrator:
   + Evidence-Backed Market White-Space Engine
 """
 
+import sys
+
+# Ensure UTF-8 output encoding to avoid Windows charmap encoding errors with unicode/emojis
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
