@@ -35,6 +35,19 @@ def get_tavily_client():
 class WebSearchAgent:
     """Agent responsible for idea validation and category-specific market search via Tavily."""
 
+    def __init__(self):
+        self.search_provider_degraded: bool = False
+        self.degraded_reason: str = ""
+        self._tavily_auth_or_quota_failed: bool = False
+        self._tavily_auth_or_quota_reason: str = ""
+
+    def reset_degraded_state(self):
+        """Resets degraded state between validation runs if needed."""
+        self.search_provider_degraded = False
+        self.degraded_reason = ""
+        self._tavily_auth_or_quota_failed = False
+        self._tavily_auth_or_quota_reason = ""
+
     def is_valid_idea(self, text: str) -> bool:
         """
         Validates whether the idea text contains recognizable English words.
@@ -225,77 +238,102 @@ class WebSearchAgent:
         api_key = os.environ.get("TAVILY_API_KEY", "").strip()
         tavily_error = None
         tavily_attempted = False
+        is_quota_or_auth_error = False
 
-        if api_key:
-            tavily_attempted = True
-            try:
-                client = get_tavily_client()
-                topic = "news" if category == "Industry News" else "general"
-                kwargs = {
-                    "query": query,
-                    "search_depth": "advanced",
-                    "max_results": max_results,
-                }
-                if topic == "news":
-                    try:
-                        kwargs["topic"] = "news"
+        # If Tavily was previously confirmed dead in this process run (e.g. 401/402/403), skip re-hitting it
+        if getattr(self, "_tavily_auth_or_quota_failed", False):
+            tavily_attempted = False
+            should_fallback = True
+            is_quota_or_auth_error = True
+            self.search_provider_degraded = True
+            self.degraded_reason = getattr(self, "_tavily_auth_or_quota_reason", "Tavily API credits exhausted or invalid key.")
+        else:
+            if api_key:
+                tavily_attempted = True
+                try:
+                    client = get_tavily_client()
+                    topic = "news" if category == "Industry News" else "general"
+                    kwargs = {
+                        "query": query,
+                        "search_depth": "advanced",
+                        "max_results": max_results,
+                    }
+                    if topic == "news":
+                        try:
+                            kwargs["topic"] = "news"
+                            response = client.search(**kwargs)
+                        except Exception:
+                            kwargs.pop("topic", None)
+                            response = client.search(**kwargs)
+                    else:
                         response = client.search(**kwargs)
-                    except Exception:
-                        kwargs.pop("topic", None)
-                        response = client.search(**kwargs)
-                else:
-                    response = client.search(**kwargs)
 
-                raw_items = response.get("results", [])
-                for item in raw_items:
-                    results.append({
-                        "title": item.get("title", "").strip(),
-                        "url": item.get("url", "").strip(),
-                        "content": item.get("content", "").strip(),
-                        "score": float(item.get("score", 0.0) or 0.0),
-                        "category": category,
-                        "provider": "tavily",
-                    })
-            except Exception as exc:
-                tavily_error = exc
-                print(f"[WebSearchAgent] Tavily search error for '{category}' (query: '{query}'): {exc}")
+                    raw_items = response.get("results", [])
+                    for item in raw_items:
+                        results.append({
+                            "title": item.get("title", "").strip(),
+                            "url": item.get("url", "").strip(),
+                            "content": item.get("content", "").strip(),
+                            "score": float(item.get("score", 0.0) or 0.0),
+                            "category": category,
+                            "provider": "tavily",
+                        })
+                except Exception as exc:
+                    tavily_error = exc
+                    err_str = str(exc).lower()
+                    
+                    # Check specifically for permanent auth/quota/credit exhaustion (401, 402, 403)
+                    if any(code in err_str for code in ["401", "402", "403", "unauthorized", "quota", "credit", "payment", "rate limit"]):
+                        is_quota_or_auth_error = True
+                        self._tavily_auth_or_quota_failed = True
+                        self._tavily_auth_or_quota_reason = f"Tavily API quota/auth error: {exc}"
+                        self.search_provider_degraded = True
+                        self.degraded_reason = self._tavily_auth_or_quota_reason
+                        print(f"\n[CRITICAL] Tavily API key invalid or credits exhausted (HTTP 401/402/403) — falling back to degraded search. Details: {exc}\n")
+                    else:
+                        print(f"[WebSearchAgent] Tavily search error for '{category}' (query: '{query}'): {exc}")
 
-        # =========================================================================
-        # LAST-RESORT EMERGENCY FALLBACK (DuckDuckGo / Google News RSS)
-        # -------------------------------------------------------------------------
-        # Tavily is the PRIMARY verified search engine for the platform.
-        # This fallback ONLY fires if Tavily is unconfigured or raises an exception
-        # (e.g. API outage, HTTP error, rate limit). It must NEVER run as primary.
-        # =========================================================================
-        should_fallback = (not api_key) or (tavily_attempted and tavily_error is not None)
+            should_fallback = (not api_key) or (tavily_attempted and tavily_error is not None)
 
         if should_fallback:
-            reason = f"Tavily exception: {tavily_error}" if tavily_error else "TAVILY_API_KEY is not configured"
-            print(f"\n[WebSearchAgent] WARNING: Tavily failed or unavailable ({reason}).")
-            print(f"[WebSearchAgent] Falling back to DuckDuckGo / Google News RSS as a LAST-RESORT safety net for category '{category}'.\n")
+            if not self.search_provider_degraded:
+                self.search_provider_degraded = True
+                self.degraded_reason = f"Tavily exception: {tavily_error}" if tavily_error else "TAVILY_API_KEY is not configured"
+
+            # =========================================================================
+            # LAST-RESORT EMERGENCY FALLBACK (DuckDuckGo / Google News RSS)
+            # =========================================================================
             needed = max_results
             fallback_items = []
 
-            # 1. Attempt DDG Lite
-            ddg_items = self._ddg_lite_search(query, max_results=needed)
-            for it in ddg_items:
-                it["provider"] = "duckduckgo"
-            fallback_items.extend(ddg_items)
-
-            # 2. Attempt Google News RSS for news or if still under capacity
-            if len(fallback_items) < needed or category in ("Industry News", "Market Size & Trends"):
-                rem = max(3, needed - len(fallback_items))
-                gnews_items = self._google_news_rss(query, max_results=rem)
-                fallback_items.extend(gnews_items)
-
-            # 3. Third attempt: broader query if still under 3 results
-            if len(fallback_items) < 3:
-                words = [w for w in query.split() if len(w) > 2]
-                broad_query = f"{' '.join(words[:3])} {category.lower()}"
-                broader_ddg = self._ddg_lite_search(broad_query, max_results=needed)
-                for it in broader_ddg:
+            if is_quota_or_auth_error:
+                # FAST-FAIL PATH for 401/402/403: Run SINGLE fastest fallback (DDG Lite) without cascading 3 retries
+                ddg_items = self._ddg_lite_search(query, max_results=needed)
+                for it in ddg_items:
                     it["provider"] = "duckduckgo"
-                fallback_items.extend(broader_ddg)
+                fallback_items.extend(ddg_items)
+            else:
+                # Standard transient retry cascade (for timeouts/network blips)
+                # 1. Attempt DDG Lite
+                ddg_items = self._ddg_lite_search(query, max_results=needed)
+                for it in ddg_items:
+                    it["provider"] = "duckduckgo"
+                fallback_items.extend(ddg_items)
+
+                # 2. Attempt Google News RSS for news or if still under capacity
+                if len(fallback_items) < needed or category in ("Industry News", "Market Size & Trends"):
+                    rem = max(3, needed - len(fallback_items))
+                    gnews_items = self._google_news_rss(query, max_results=rem)
+                    fallback_items.extend(gnews_items)
+
+                # 3. Third attempt: broader query if still under 3 results
+                if len(fallback_items) < 3:
+                    words = [w for w in query.split() if len(w) > 2]
+                    broad_query = f"{' '.join(words[:3])} {category.lower()}"
+                    broader_ddg = self._ddg_lite_search(broad_query, max_results=needed)
+                    for it in broader_ddg:
+                        it["provider"] = "duckduckgo"
+                    fallback_items.extend(broader_ddg)
 
             existing_urls = {r.get("url") for r in results}
             for item in fallback_items:

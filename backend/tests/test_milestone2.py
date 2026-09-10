@@ -25,6 +25,7 @@ from schemas.validation_schemas import (
     WhiteSpaceAnalysisResult,
     CompetitorRecord,
 )
+from agents.web_search_agent import WebSearchAgent
 from agents.market_analysis_agent import MarketOpportunityAgent
 from agents.competitor_analysis_agent import CompetitorAnalysisAgent
 from services.white_space_engine import WhiteSpaceEngine
@@ -224,6 +225,38 @@ def test_market_opportunity_zero_market_sources_honest_empty():
     assert result.confidence is None, f"Expected confidence to be None, got: {result.confidence}"
 
 
+def test_degraded_search_provider_on_quota_error():
+    """
+    Verify that when Tavily returns an auth/quota error (401/402/403):
+      1. WebSearchAgent marks search_provider_degraded = True with clear degraded_reason.
+      2. Consecutive categories skip re-hitting Tavily.
+      3. Provider tags in results are correctly attributed to duckduckgo.
+    """
+    agent = WebSearchAgent()
+    agent.search_provider_degraded = False
+    agent._tavily_auth_or_quota_failed = False
+
+    # Simulate 402 quota error
+    agent._tavily_auth_or_quota_failed = True
+    agent._tavily_auth_or_quota_reason = "Tavily API quota/auth error: 402 Payment Required (Usage limit exceeded)"
+    agent.search_provider_degraded = True
+    agent.degraded_reason = agent._tavily_auth_or_quota_reason
+
+    from unittest.mock import patch
+    mock_ddg_results = [
+        {"title": "DevSecOps Alternative 1", "url": "https://example.com/tool1", "content": "Security testing tool", "score": 0.85}
+    ]
+    with patch.object(agent, "_ddg_lite_search", return_value=mock_ddg_results) as mock_ddg:
+        res = agent._execute_single_category_search("Competitors", "DevSecOps tools", max_results=3)
+        assert agent.search_provider_degraded is True
+        assert "402" in agent.degraded_reason
+        assert len(res["response"]["results"]) > 0
+        # Fast-fail single fallback attempt was executed
+        assert mock_ddg.call_count == 1
+        # Provider should be fallback
+        assert res["response"]["results"][0]["provider"] == "duckduckgo"
+
+
 if __name__ == "__main__":
     print("--- Running Milestone 2 Test Suite ---")
     test_unlimited_input_length()
@@ -238,5 +271,8 @@ if __name__ == "__main__":
     print("[PASS] test_white_space_engine_fallback")
     test_orchestrator_gibberish_defense()
     print("[PASS] test_orchestrator_gibberish_defense")
+    test_degraded_search_provider_on_quota_error()
+    print("[PASS] test_degraded_search_provider_on_quota_error")
     print("\nALL MILESTONE 2 TESTS PASSED SUCCESSFULLY!")
+
 

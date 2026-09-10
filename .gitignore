@@ -21,6 +21,8 @@ frontend/.env
 # Local team notes / scratch docs / test results
 *.jpg
 *.png
+!docs/*.jpg
+!docs/*.png
 backend/*_payload.json
 backend/*_results.json
 backend/*_response.json

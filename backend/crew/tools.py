@@ -99,6 +99,12 @@ class MarketResearchToolKit:
             self.budget_limit_reached = True
         summary["budget_limit_reached"] = self.budget_limit_reached
         summary["search_status"] = "budget_limited" if self.budget_limit_reached else "completed"
+        
+        # Surface degraded search provider state
+        summary["search_provider_degraded"] = getattr(self.search_agent, "search_provider_degraded", False)
+        if summary["search_provider_degraded"]:
+            summary["degraded_reason"] = getattr(self.search_agent, "degraded_reason", "Emergency search fallback used.")
+        
         if self.budget_limit_reached:
             summary["budget_notice"] = (
                 f"Search space was bounded by the query budget limit ({self.max_total_calls} queries). "

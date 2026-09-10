@@ -22,7 +22,7 @@ This documentation suite has been engineered for technical evaluators, mentors, 
 | **09** | [Deployment & DevOps](09_DEPLOYMENT_DOCUMENTATION.md) | Render backend containerization, Vercel frontend edge deployment, environment configurations, and CI/CD. |
 | **10** | [User Guide & Operations Manual](10_USER_GUIDE.md) | Step-by-step user walkthrough, pitch phrasing tips, dossier inspection, and evidence interpretation. |
 | **11** | [Final Project Report](11_FINAL_PROJECT_REPORT.md) | Comprehensive academic/internship capstone report, methodology, novelty, limitations, and future work. |
-| **12** | [Mermaid Diagrams Reference](12_MERMAID_DIAGRAMS.md) | Collection of all 13 professional, editable Mermaid diagrams (Architecture, DFDs, Sequence, ER, Class, etc.). |
+| **12** | [System Architecture & Diagrams Gallery](01_system_architecture_diagram.jpg) | Comprehensive suite of AI-generated architecture, use case, DFD, sequence, ER, deployment, and class diagrams. |
 
 ---
 
