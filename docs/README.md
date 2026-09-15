@@ -23,6 +23,7 @@ This documentation suite has been engineered for technical evaluators, mentors, 
 | **10** | [User Guide & Operations Manual](10_USER_GUIDE.md) | Step-by-step user walkthrough, pitch phrasing tips, dossier inspection, and evidence interpretation. |
 | **11** | [Final Project Report](11_FINAL_PROJECT_REPORT.md) | Comprehensive academic/internship capstone report, methodology, novelty, limitations, and future work. |
 | **12** | [System Architecture & Diagrams Gallery](01_system_architecture_diagram.jpg) | Comprehensive suite of AI-generated architecture, use case, DFD, sequence, ER, deployment, and class diagrams. |
+| **13** | [API Cost, Accuracy & System Metrics](13_API_COST_ACCURACY_AND_SYSTEM_METRICS.md) | Quantitative unit economics, Groq token costs, Tavily credit consumption, grounding accuracy, and latency benchmarks. |
 
 ---
 
