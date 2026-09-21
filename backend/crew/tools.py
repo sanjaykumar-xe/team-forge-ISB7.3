@@ -119,6 +119,7 @@ class MarketResearchToolKit:
         @tool("search_competitors")
         def search_competitors(query: str) -> str:
             """Searches verified web sources for direct competitors, alternative solutions, and rival brands.
+            QUERY GUIDANCE: Formulate queries that include terms like 'app', 'alternative', 'vs', 'software', or 'competitors' (e.g. 'medication adherence app alternatives' rather than generic market forecast reports).
             WHEN TO USE: Always use when an idea operates in a market with existing commercial products, substitutes, or legacy competitors.
             WHEN TO SKIP: Skip only if the idea is a novel foundational scientific breakthrough with literally zero existing market solutions or substitutes.
             REPETITION RULE: Review your past queries before calling. NEVER re-issue queries with similar keywords or repeat a query for the same brand.
@@ -173,8 +174,8 @@ class MarketResearchToolKit:
         @tool("search_customer_demand")
         def search_customer_demand(query: str) -> str:
             """Searches customer reviews, buyer complaints, community discussions, and unmet user demand signals.
-            WHEN TO USE: Use for B2C consumer products, eCommerce, mobile/web consumer apps, and user-facing SaaS where retail consumers voice feedback.
-            WHEN TO SKIP: Skip for pure enterprise B2B infrastructure, semiconductor manufacturing, industrial hardware, or deep-tech cleanroom tools where retail end-consumers do not exist.
+            WHEN TO USE: Use for B2C consumer products, eCommerce, mobile/web consumer apps, healthcare/patient tools, and consumer subscriptions where end-users voice feedback.
+            WHEN TO SKIP: Skip only for pure enterprise B2B back-office infrastructure, semiconductor manufacturing, industrial hardware, or deep-tech cleanroom tools where retail end-consumers do not exist.
             REPETITION RULE: Review your past queries before calling. NEVER re-issue queries with similar keywords or repeat a query for the same brand.
             """
             if len(toolkit.tool_call_trace) >= toolkit.max_total_calls:

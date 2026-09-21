@@ -1,167 +1,158 @@
-# Backend Service — Startup Idea Validator
+# Backend Service — Startup Idea Validator (Team Forge v3.0)
 
-The backend is a high-performance **FastAPI** service that manages autonomous multi-agent intelligence for startup market validation.
+The backend is a high-performance **FastAPI** service that coordinates an autonomous 9-stage multi-agent intelligence pipeline for early-stage startup market research, strategic positioning, and validation.
 
 ---
 
-## 🏗️ Architecture & Modules
+## 🏛️ Architecture & Directory Layout
 
 ```
 backend/
-├── agents/
-│   ├── __init__.py                  # Agent package exports
-│   ├── idea_extraction_agent.py     # Groq LLM semantic extraction & multi-model failover
-│   ├── web_search_agent.py          # Tavily search wrapper with query category routing
-│   ├── data_retrieval_agent.py      # Blocklist filtering, English check, dedup, & ranking
-│   ├── market_analysis_agent.py     # TAM/SAM sizing, CAGR estimation, & customer personas
-│   └── competitor_analysis_agent.py # Competitor mapping, feature matrix, & gap analysis
-├── crew/
-│   ├── agents.py                    # CrewAI Agent definitions
-│   ├── orchestrator.py              # CrewAI autonomous execution & milestone logging
-│   ├── tasks.py                     # CrewAI Task definitions & context handoffs
-│   └── tools.py                     # Search & retrieval tools exposed to the CrewAI Agent
-├── schemas/
-│   ├── __init__.py                  # Schema package exports
-│   └── validation.py                # Pydantic models & validation contracts
-├── services/
-│   ├── __init__.py                  # Service package exports
-│   ├── llm_service.py               # Resilient Groq LLM client with JSON validation & failover
-│   └── white_space_engine.py        # Triangulation engine: Customer Pain × Competitor Void × Startup
-├── scripts/
-│   ├── test_milestone2_e2e.py       # 3-industry end-to-end benchmark evaluation
-│   ├── run_5_regression_ideas.py    # Multi-idea regression test suite
-│   ├── run_eval.py                  # Evaluation harness
-│   └── smoke_test.py                # Single-idea smoke test script
-├── tests/
-│   ├── test_agents.py               # Unit tests for agents
-│   └── test_milestone2.py           # Milestone 2 regression & data integrity tests
-├── config.py                        # Environment loading & CORS policies
-├── main.py                          # FastAPI entrypoint, input validation, & router
-├── requirements.txt                 # Python dependencies (FastAPI, CrewAI, Groq, Tavily, etc.)
-└── .env.example                     # Environment configuration template
+├── agents/                       # Specialized domain intelligence agents
+│   ├── idea_extraction_agent.py  # Stage 1: Groq LLM semantic extraction & confidence scoring
+│   ├── web_search_agent.py       # Stage 2: Tavily search engine with category routing & fallbacks
+│   ├── data_retrieval_agent.py   # Stage 3: Deterministic URL dedup, sanitization & ranking
+│   ├── market_analysis_agent.py  # Stage 4: TAM/SAM sizing, CAGR, and customer personas
+│   ├── competitor_analysis_agent.py # Stage 5: Competitor mapping, feature matrix & gap analysis
+│   ├── swot_agent.py             # Stage 7: Evidence-backed SWOT matrix & strategic risk roadmap
+│   ├── mvp_agent.py              # Stage 8: Prioritized P0/P1/P2 MVP scoping with upstream grounding
+│   └── gtm_agent.py              # Stage 9: Idea-specific Go-To-Market strategy & launch phases
+├── crew/                         # CrewAI multi-agent orchestration layer
+│   ├── agents.py                 # Autonomous MarketResearchAgent definition
+│   ├── orchestrator.py           # 9-stage pipeline execution coordinator
+│   ├── tasks.py                  # Structured research task specifications
+│   └── tools.py                  # Custom tool suite (search_competitors, etc.) with budget cap
+├── prompts/                      # Externalized prompt templates (.md)
+│   ├── loader.py                 # Safe template interpolation utility
+│   ├── idea_extraction_system.md
+│   ├── web_search_system.md / web_search_task.md
+│   ├── market_analysis_system.md / market_analysis_task.md
+│   ├── competitor_analysis_system.md / competitor_analysis_task.md
+│   ├── white_space_system.md / white_space_task.md
+│   ├── swot_system.md / swot_task.md
+│   ├── mvp_system.md / mvp_task.md
+│   └── gtm_system.md / gtm_task.md
+├── schemas/                      # Strict Pydantic data contracts
+│   └── validation_schemas.py     # Request/response validation & serialization schemas
+├── services/                     # Standalone analytical engines & utilities
+│   ├── llm_service.py            # Resilient Groq LLM client with JSON validation & failover
+│   ├── text_utils.py             # Word-boundary truncation & string formatting
+│   └── white_space_engine.py     # Stage 6: Triangulates Customer Pain × Competitor Void × Solution Fit
+├── scripts/                      # Evaluation harnesses & benchmark runners
+│   ├── run_agentic_verification.py # 3-persona agentic verification suite
+│   ├── run_5_regression_ideas.py # 5-idea multi-domain regression suite
+│   ├── run_eval.py               # Grounding accuracy evaluation harness
+│   └── smoke_test.py             # Single-idea fast sanity test
+├── tests/                        # Automated unit & integration tests
+│   ├── test_agents.py            # Unit tests for individual agent classes
+│   └── test_milestone2.py        # Pipeline regression tests
+├── config.py                     # Environment variables & CORS settings
+├── main.py                       # FastAPI application entrypoint
+└── requirements.txt              # Production Python dependencies
 ```
 
 ---
 
-## 🔍 In-Process Agent Pipeline
+## ⚡ 9-Stage Validation Pipeline
 
-1. **`IdeaExtractionAgent`** ([`agents/idea_extraction_agent.py`](agents/idea_extraction_agent.py))
-   - Ingests raw conversational startup descriptions.
-   - Uses **Groq Cloud LLM** with automatic failover across models (`qwen/qwen3.8-27b`, `allam-2-7b`, `groq/compound-mini`) on rate limits.
-   - Extracts structured domain context: *Product Name*, *Industry Vertical*, *Target Audience*, *Core Problem*, and *Contextual Keywords*.
-
-2. **Autonomous `MarketResearchAgent` via CrewAI** ([`crew/orchestrator.py`](crew/orchestrator.py))
-   - Given the extracted domain context, the agent autonomously plans and issues targeted search queries across 4 dimensions:
-     1. *Competitors & Alternatives*
-     2. *Industry News & Trends*
-     3. *Customer Demand & User Pain Points*
-     4. *Market Size & Growth Forecasts*
-   - Interacts with **Tavily Search API** through discrete tool definitions, governed by a query repetition filter and budget cap.
-
-3. **`DataRetrievalAgent`** ([`agents/data_retrieval_agent.py`](agents/data_retrieval_agent.py))
-   - Strips non-commercial dictionary, encyclopedia, and forum domains (`BLOCKED_DOMAINS`).
-   - Validates English text coherence deterministically via seeded `langdetect`.
-   - Deduplicates identical canonical URLs across queries and category boundaries.
-   - Sorts records strictly by relevance score descending and computes summary distributions.
-
-4. **`MarketOpportunityAgent`** ([`agents/market_analysis_agent.py`](agents/market_analysis_agent.py))
-   - Synthesizes market sizing estimates (TAM/SAM), CAGR projections, and market attractiveness scores.
-   - Constructs detailed customer personas separating Daily End Users from Economic Decision Makers.
-   - Honest empty states: suppresses scorecards and nulls confidence when 0 market size sources exist.
-
-5. **`CompetitorAnalysisAgent`** ([`agents/competitor_analysis_agent.py`](agents/competitor_analysis_agent.py))
-   - Identifies direct competitors and indirect substitutes.
-   - Extracts business models, strengths, weaknesses, and customer complaints.
-   - Constructs a side-by-side comparison matrix evaluating the startup's approach against key rivals.
-
-6. **`WhiteSpaceEngine`** ([`services/white_space_engine.py`](services/white_space_engine.py))
-   - Computes deterministic opportunity gaps at the intersection:
-     $$\text{White-Space Opportunity} = \text{Customer Pain} \cap \text{Competitor Void} \cap \text{Startup Capability}$$
-   - Outputs 2–4 high-conviction opportunity gaps with evidence strength, confidence ratings, and source citations.
+```
+[User Input Pitch]
+         │
+         ▼
+[1] Idea Extraction Agent       ──> Parses problem, industry, audience, keywords
+         │
+         ▼
+[2] Autonomous Research Agent   ──> CrewAI agent selectively invokes Tavily search tools
+         │
+         ▼
+[3] Data Retrieval Agent        ──> Deterministic sanitization, URL dedup, categorizes sources
+         │
+         ▼
+[4] Market Opportunity Agent    ──> TAM/SAM/SOM, CAGR, End User vs Buyer personas
+         │
+         ▼
+[5] Competitor Discovery Agent  ──> Maps direct/indirect rivals, capability matrix, gaps
+         │
+         ▼
+[6] White-Space Engine          ──> Triangulates Pain × Coverage Voids × Defensibility
+         │
+         ▼
+[7] SWOT & Risk Agent           ──> 4-quadrant strategic matrix + risk mitigations
+         │
+         ▼
+[8] MVP Scoping Agent           ──> Prioritized P0/P1/P2 feature set + v2 deferrals
+         │
+         ▼
+[9] Go-To-Market Agent          ──> Channel fit rankings, positioning, launch phases
+         │
+         ▼
+[ValidationResponse JSON]
+```
 
 ---
 
-## 📡 API Reference
+## 🛡️ Anti-Hallucination & Honest Grounding Invariants
 
-### `GET /api/health`
-Health check endpoint.
-- **Response**: `{"status": "ok"}`
+1. **Deterministic Cleansing**: Raw search results are scrubbed, validated for English coherence, and deduplicated using pure Python algorithms (zero LLM hallucination risk).
+2. **Generous Excerpt Windows**: Source snippets are budgeted up to 1,500 characters so that specific product names, app store listings, and competitor matrices are never prematurely cut off.
+3. **Honest Empty Sizing**: If verified web sources contain no quantitative market size figures, the system returns an empty list (`market_size: []`) with `confidence: null` rather than fabricating figures.
+4. **Honest Customer Demand Notice**: If 0 direct customer demand/review sources are retrieved (e.g. in pure B2B verticals), the system surfaces an explicit `[HONEST GROUNDING NOTICE]` banner indicating personas are inferentially derived from market trends and competitor voids.
+5. **Selective Search Autonomy**: The autonomous research agent selectively skips irrelevant tools (e.g. skipping consumer review searches for pure B2B semiconductor cleanroom metrology).
+
+---
+
+## 🔌 API Endpoints
 
 ### `POST /api/validate`
-Validates a startup concept and returns structured market sources.
-- **Request Body (`IdeaSubmission`)**:
-  ```json
-  {
-    "idea": "A CI/CD tool that automatically checks for security vulnerabilities",
-    "product_name": "GuardrailCI",
-    "industry": null,
-    "target_audience": null
-  }
-  ```
-- **Response (200 OK — `ValidationResponse`)**:
-  ```json
-  {
-    "idea": "A CI/CD tool that automatically checks for security vulnerabilities",
-    "extracted_data": {
-      "product_name": "GuardrailCI",
-      "industry": "DevSecOps",
-      "target_audience": "Software development teams and DevOps engineers",
-      "core_problem": "Software development teams struggle to identify and remediate security vulnerabilities early in the CI/CD pipeline.",
-      "keywords": [
-        "continuous integration",
-        "vulnerability scanning",
-        "DevSecOps",
-        "security automation"
-      ]
-    },
-    "sources": [
-      {
-        "title": "DevSecOps Market Size, Share, Growth, Analysis, Report, 2034",
-        "url": "https://straitsresearch.com/report/devsecops-market",
-        "snippet": "The global DevSecOps market size was valued at USD 6.2 billion in 2024 and is projected to reach USD 37.32 billion by 2034...",
-        "query": "continuous integration vulnerability scanning DevSecOps security automation DevSecOps market size growth forecast",
-        "category": "Market Size & Trends",
-        "score": 0.9257
-      }
-    ],
-    "summary": {
-      "total_sources": 24,
-      "sources_per_category": {
-        "Competitors": 6,
-        "Industry News": 6,
-        "Customer Demand": 6,
-        "Market Size & Trends": 6
-      },
-      "sources_by_category": { ... }
-    }
-  }
-  ```
+Validates a natural language startup concept and returns a comprehensive Validation Dossier.
+
+**Request Payload (`IdeaSubmission`):**
+```json
+{
+  "idea": "In-situ wafer defect metrology API using high-speed multi-beam electron scanning...",
+  "product_name": "AuraSemicon",
+  "industry": "Semiconductor Manufacturing & Metrology",
+  "target_audience": "Semiconductor foundry process integration and yield engineering teams"
+}
+```
+
+**Response (`ValidationResponse`):**
+Returns extracted domain dossier, categorized sources, market opportunity analysis, competitor landscape, white-space map, SWOT matrix, MVP recommendation, and GTM strategy.
+
+### `GET /api/health`
+Returns service status and API version (`{"status": "ok", "version": "2.0.0"}`).
+
+### `GET /docs`
+Interactive Swagger OpenAPI documentation.
 
 ---
 
-## 🚀 Local Development
+## 🚀 Setup & Local Execution
 
-```bash
-# 1. Navigate to backend directory
-cd backend
+### 1. Prerequisites
+- Python 3.10+ (tested on Python 3.11)
+- Valid API keys for **Groq** and **Tavily**
 
-# 2. Create and activate virtual environment
-python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-source venv/bin/activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Configure environment variables in backend/.env:
-# GROQ_API_KEY=gsk_...
-# TAVILY_API_KEY=tvly-...
-
-# 5. Start local server
-uvicorn main:app --reload --port 8000
+### 2. Environment Configuration
+Create a `.env` file in the `backend/` directory:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+TAVILY_API_KEY=your_tavily_api_key_here
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-- Health check: `http://127.0.0.1:8000/api/health`
-- Interactive Swagger UI: `http://127.0.0.1:8000/docs`
+### 3. Installation
+```bash
+python -m venv venv
+# On Windows:
+venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 4. Running the Dev Server
+```bash
+uvicorn main:app --host 127.0.0.1 --port 8000 --reload
+```
