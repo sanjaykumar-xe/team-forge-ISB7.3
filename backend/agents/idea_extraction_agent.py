@@ -1,43 +1,33 @@
 """
 Idea Extraction Agent
 ----------------------
-Extracts structured information (product name, industry, target audience, core problem,
-and domain keywords) from unstructured startup idea submissions using Groq LLM.
-Includes explicit per-idea status logging (response received, JSON parsed, fallback status).
+Takes raw, messy startup pitch text and extracts a clean, structured JSON
+representation: product_name, industry, target_audience, core_problem, keywords,
+extraction_confidence, and confidence_reason.
 """
 
 import os
-import json
 import re
+import json
 import time
 from dotenv import load_dotenv
+from services.llm_service import get_groq_client
+from prompts.loader import load_prompt
 
 load_dotenv()
 
-_groq_client = None
-
-def get_groq_client():
-    global _groq_client
-    if _groq_client is None:
-        from groq import Groq
-        api_key = os.environ.get("GROQ_API_KEY", "")
-        _groq_client = Groq(api_key=api_key)
-    return _groq_client
-
-
-# Primary and backup model pool available on the Groq key
 MODELS_TO_TRY = [
     "qwen/qwen3.8-27b",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
     "allam-2-7b",
+    "groq/compound",
     "groq/compound-mini",
+    "qwen/qwen3.6-27b",
 ]
 
 
 def _groq_call_with_model_fallback(messages: list[dict], max_tokens: int = 512, temperature: float = 0.0) -> tuple[str, str]:
-    """
-    Attempts to call Groq using primary model with automatic fallback to secondary models
-    and exponential backoff on 429 rate limits. Returns (response_text, model_used).
-    """
     api_key = os.environ.get("GROQ_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError("GROQ_API_KEY is not configured in environment.")
@@ -68,24 +58,16 @@ def _groq_call_with_model_fallback(messages: list[dict], max_tokens: int = 512, 
     raise last_exc
 
 
-_EXTRACTION_SYSTEM_PROMPT = """\
-Extract structured information from a startup idea for market research purposes. Respond ONLY with valid JSON, no markdown fences: {"product_name": "..." (use provided name if given, else infer a short name), "industry": "...", "target_audience": "...", "core_problem": "one sentence describing the actual problem being solved", "keywords": ["...", "...", "..."] (3-5 specific domain terms, not generic words like 'app' or 'platform')}
-"""
-
-
 class IdeaExtractionAgent:
     """Agent responsible for understanding and structuring a startup idea."""
 
     def _clean_input_text(self, text: str) -> str:
-        """Strips accidental form labels, placeholder artifacts, and prompt prefixes."""
         if not text:
             return ""
-        # Strip common form labels and prompt prefixes
         cleaned = re.sub(
             r'^(describe(\s+the)?\s+(startup\s+)?(concept|idea)|startup(\s+/\s+product)?\s+name|industry(\s+or\s+vertical)?|target\s+customer(\s+profile)?|core\s+problem(\s+statement)?):\s*',
             '', text.strip(), flags=re.IGNORECASE
         )
-        # Strip common conversational starters
         cleaned = re.sub(
             r'^(i want to (build|create|make|launch|develop|start)\s+|'
             r'(a|an )?[a-z]+ (app|platform|tool|service|system|web app|website|marketplace|saas|startup|product|solution) (that|which|to|for|helping)\s+|'
@@ -102,7 +84,6 @@ class IdeaExtractionAgent:
         target_audience: str | None = None,
         reason: str = "Unknown error",
     ) -> dict:
-        """Deterministic fallback if Groq is unavailable or parsing fails."""
         cleaned = self._clean_input_text(idea)
         words = [w for w in re.findall(r'[a-zA-Z0-9]+', cleaned) if len(w) > 2]
         generic = {
@@ -131,6 +112,8 @@ class IdeaExtractionAgent:
             "target_audience": inferred_audience,
             "core_problem": cleaned or idea.strip(),
             "keywords": inferred_keywords,
+            "extraction_confidence": "low",
+            "confidence_reason": f"Fallback extraction used: {reason}",
         }
 
     def extract(
@@ -140,16 +123,6 @@ class IdeaExtractionAgent:
         industry: str | None = None,
         target_audience: str | None = None,
     ) -> dict:
-        """
-        Takes raw startup idea inputs and returns a structured dictionary:
-        {
-            "product_name": str,
-            "industry": str,
-            "target_audience": str,
-            "core_problem": str,
-            "keywords": list[str]
-        }
-        """
         clean_idea = self._clean_input_text(idea)
         clean_pname = self._clean_input_text(product_name) if product_name else None
         clean_ind = self._clean_input_text(industry) if industry else None
@@ -164,17 +137,18 @@ class IdeaExtractionAgent:
             user_parts.append(f"Explicit Target Audience: {clean_aud}")
         user_msg = "\n".join(user_parts)
 
+        system_prompt = load_prompt("idea_extraction_system")
+
         try:
             raw, model_used = _groq_call_with_model_fallback(
                 messages=[
-                    {"role": "system", "content": _EXTRACTION_SYSTEM_PROMPT},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_msg},
                 ],
                 max_tokens=512,
             )
             print(f"  [IdeaExtractionAgent] (a) Got Groq response from model: '{model_used}'")
 
-            # Clean markdown fences or think tags
             content = raw.strip()
             if "<think>" in content and "</think>" in content:
                 content = content.split("</think>")[-1].strip()
@@ -186,12 +160,25 @@ class IdeaExtractionAgent:
             print(f"  [IdeaExtractionAgent] (b) Parsed successfully as JSON: {list(parsed.keys())}")
             print("  [IdeaExtractionAgent] (c) Fallback triggered: NO (Groq LLM succeeded)")
 
+            # Extract autonomy confidence fields
+            confidence = str(parsed.get("extraction_confidence", "high")).lower().strip()
+            if confidence not in ["high", "low"]:
+                confidence = "high"
+            confidence_reason = parsed.get("confidence_reason", "")
+
+            # If input idea is excessively short (< 4 words) or vague without explicit details, flag low confidence
+            if len(clean_idea.split()) < 4 and not clean_pname:
+                confidence = "low"
+                confidence_reason = "Input description is too brief (< 4 words) to accurately infer target problem or differentiated positioning."
+
             result = {
                 "product_name": product_name.strip() if product_name and product_name.strip() else parsed.get("product_name", "Startup"),
                 "industry": industry.strip() if industry and industry.strip() else parsed.get("industry", "Software"),
                 "target_audience": target_audience.strip() if target_audience and target_audience.strip() else parsed.get("target_audience", "Target Market"),
                 "core_problem": parsed.get("core_problem", idea),
                 "keywords": parsed.get("keywords", []),
+                "extraction_confidence": confidence,
+                "confidence_reason": confidence_reason,
             }
 
             if not isinstance(result["keywords"], list) or not result["keywords"]:

@@ -1,213 +1,105 @@
-# System Architecture — Startup Idea Validator (Milestone 2)
+# System Architecture — Startup Idea Validator (v3.0 / Milestone 3)
 
 ## 1. Executive Summary & Overview
 
-The **Startup Idea Validator** is an autonomous multi-agent research platform designed to evaluate early-stage startup concepts against real-time market data. The platform transforms natural language startup pitches of arbitrary length into structured intelligence across market opportunity sizing, customer persona segmentation, competitive positioning matrices, and defensible white-space opportunity maps.
+The **Startup Idea Validator (Team Forge v3.0)** is an enterprise-grade autonomous multi-agent validation engine that transforms natural language startup pitches of arbitrary length into structured, verified market intelligence. It replaces subjective assumptions and superficial LLM summaries with an evidence-grounded, multi-quadrant analytical dossier backed by live search tool-calling.
 
-Milestone 2 delivers:
-- **Frontend**: A fast, responsive editorial Single Page Application built with **React 18 + Vite** (Vanilla CSS) featuring:
-  - Natural language submission with **Zero artificial character limit**.
-  - Interactive **Evidence-Backed Market White-Space Map** displaying 4-vector triangulation.
-  - **Market Opportunity & Sizing** scorecard with cited TAM/SAM and CAGR figures.
-  - **Granular Customer Segmentation** cards contrasting End Users vs. Decision Makers.
-  - **Competitor Discovery & Comparison Matrix** evaluating direct rivals and indirect substitutes.
-  - **Sanitized Source Evidence Grid** with sentence-boundary truncation and relevance scoring.
-- **Backend API**: A high-performance REST service built with **FastAPI (Python 3.12)**.
-- **CrewAI Orchestration Layer**: Sequential multi-agent workflow using CrewAI concepts (`Agent`, `Task`, `Crew`, `Process.sequential`) with strict step-by-step progress logging.
-- **5 Autonomous Research & Intelligence Agents**:
-  1. `IdeaExtractionAgent`: Extracts domain semantics, industry vertical, audience profile, core problem statement, and contextual keywords using Groq LLMs with cascading failover.
-  2. `MarketResearchAgent` / `WebSearchAgent`: Autonomous research agent invoking discrete CrewAI search tools (`search_competitors`, `search_industry_news`, `search_customer_demand`, `search_market_size`) powered by the **Tavily Search API** with query deduplication, budget cap, and deterministic fallback.
-  3. `DataRetrievalAgent`: Sanitization and verification engine filtering blocked domains, verifying English language, deduplicating URLs, and computing relevance metrics.
-  4. `MarketOpportunityAgent`: Analyzes empirical search data to produce market size estimates (global/regional/niche), CAGR growth drivers, customer personas, and market attractiveness scorecards without hallucinating numbers.
-  5. `CompetitorAnalysisAgent`: Discovers direct, indirect, and emerging competitors, maps feature comparisons, and identifies pricing/business-model voids.
-- **Evidence-Backed Market White-Space Engine**: Proprietary novelty mechanism triangulating Customer Pain, Competitor Omissions, and Startup Capabilities into high-conviction opportunity gaps with traceable source citations.
+### Key Milestones & Capabilities Delivered in v3.0:
+- **Full 9-Stage Validation Pipeline**:
+  1. `IdeaExtractionAgent`: Extracts core problem, solution, target audience, revenue model, and industry vertical.
+  2. `MarketResearchAgent`: CrewAI autonomous agent invoking discrete Tavily search tools (`search_market_data`, `search_competitors`, `search_customer_demand`) with selective autonomy.
+  3. `MarketAnalysisAgent`: Derives TAM, SAM, SOM, CAGR, growth drivers, and market entry barriers with zero numerical hallucination.
+  4. `CompetitorAnalysisAgent`: Identifies direct and indirect competitors, positioning vectors, feature matrices, and source citations using snippet budgeting (1,500 chars/source).
+  5. `WhiteSpaceEngine`: Deterministic 2x2 opportunity gap analysis triangulating customer pain points, competitor voids, and startup core capabilities.
+  6. `SWOTAgent`: 4-quadrant strategic matrix (Strengths, Weaknesses, Opportunities, Threats) synthesizing empirical market and competitor findings.
+  7. `MVPAgent`: Disciplined 3-phase product roadmap (Phase 1 MVP, Phase 2, Phase 3), feature prioritization, and technical risk mitigation.
+  8. `GTMAgent`: Comprehensive go-to-market plan covering customer acquisition channels, conversion funnels, CAC strategy, and launch milestones.
+  9. `ValidationReportBuilder`: Assembles complete Pydantic contract with composite viability scoring and honest grounding indicators.
+- **Externalized Prompt Architecture**: System prompts (`*_system.md`) and task instructions (`*_task.md`) externalized in `backend/prompts/` with runtime template variable interpolation.
+- **Modern Editorial Frontend**: React 18 + Vite dashboard with fluid 4-column responsive grid, jump-navigation bar (`§ JUMP TO:`), dynamic 9-stage pipeline visualizer, and live `[HONEST GROUNDING NOTICE]` alerts.
+- **Ultra-Fast LPU Inference**: Powered by Groq LPUs utilizing open-weights models (`qwen-2.5-32b` / `llama-3.3-70b-versatile`).
 
 ---
 
 ## 2. End-to-End System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       Client Presentation Tier (React 18 + Vite)                        │
-│   - Natural language submission (Unlimited Input Length)                                                │
-│   - AI Domain Extraction dossier card with case-file badge                                              │
-│   - Evidence-Backed Market White-Space Engine (4-Vector Strategy Flow)                                  │
-│   - Market Opportunity & Sizing Scorecard (TAM/SAM, CAGR, Attractiveness)                               │
-│   - Customer Segmentation (End Users vs Decision Makers, Pain Points, Buying Behavior)                  │
-│   - Competitor Comparison Matrix (Direct, Indirect, Emerging Rivals)                                    │
-│   - 4-Category Supporting Source Evidence Grid (Tavily Native Relevance)                                │
-└────────────────────────────────────────────────────┬────────────────────────────────────────────────────┘
-                                                     │
-                                                     │ HTTP POST /api/validate (JSON)
-                                                     ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                           FastAPI Gateway Layer                                         │
-│                                             (backend/main.py)                                           │
-│   1. English Coherence & Gibberish Filter (`is_valid_idea` via wordfreq >= 0.45)                        │
-│   2. Invokes ValidationCrewOrchestrator                                                                 │
-│   3. Serializes Pydantic ValidationResponse                                                             │
-└────────────────────────────────────────────────────┬────────────────────────────────────────────────────┘
-                                                     │
-                                                     ▼
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                  CrewAI Sequential Orchestrator Layer                                   │
-│                                    (backend/crew/orchestrator.py)                                       │
-│                                                                                                         │
-│   [1] Idea Extraction Agent       ──> Extracts product_name, vertical, audience, core_problem, keywords │
-│              ↓                                                                                          │
-│   [2] Market Research Agent       ──> Autonomous tool calling via crew.kickoff()                        │
-│       (MarketResearchToolKit)         • search_competitors     • search_industry_news                   │
-│                                       • search_customer_demand • search_market_size                     │
-│                                       (Query deduplication, budget cap & direct failover)                │
-│              ↓                                                                                          │
-│   [3] Data Retrieval Agent        ──> Domain blocklist, langdetect English check, deduplication, ranks  │
-│              ↓                                                                                          │
-│   [4] Market Opportunity Agent    ──> Market sizing (global/regional/niche), CAGR, customer personas    │
-│              ↓                                                                                          │
-│   [5] Competitor Analysis Agent   ──> Direct/indirect/emerging rivals, comparison matrix, market gaps    │
-│              ↓                                                                                          │
-│   Evidence-Backed White-Space Engine ──> Customer Pain ∩ Competitor Weakness ∩ Startup Fit             │
-│              ↓                                                                                          │
-│   Structured Validation Response (JSON)                                                                 │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   Client Presentation Tier (React 18 + Vite)                      │
+│   - Editorial Light Theme • Fluid 4-Column Layout • Zero Margin Waste                             │
+│   - Real-time 9-Stage Pipeline Visualizer                                                         │
+│   - Structured Metadata & Industry Decomposition Card                                             │
+│   - Evidence-Backed White-Space Map (2x2 Matrix)                                                  │
+│   - Market Sizing Scorecard (TAM/SAM/SOM, CAGR, Growth Drivers, Barriers)                        │
+│   - Competitor Discovery & Positioning Matrix (Direct & Indirect Rivals)                          │
+│   - Customer Segmentation & ICP Personas (with [HONEST GROUNDING NOTICE] banner)                  │
+│   - Strategic SWOT Analysis Matrix (Strengths, Weaknesses, Opportunities, Threats)                │
+│   - MVP Product Recommendation (Phased Roadmap, Feature Priorities, Risk Mitigation)             │
+│   - Go-To-Market (GTM) Strategy (Acquisition Channels, Funnels, Milestones)                       │
+│   - Verified Web Citations Drawer & Printable PDF Dossier Generator                              │
+└─────────────────────────────────┬─────────────────────────────────────────────────────────────────┘
+                                  │ HTTP POST /api/validate
+                                  ▼
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       FastAPI Backend Engine                                      │
+├───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  API Gateway & Routers (/api/health, /api/validate)                                               │
+│  Schema Validation Layer (Pydantic v2 Models: ValidationRequest / ValidationResponse)             │
+│                                                                                                   │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────┐  │
+│  │ 9-Stage Multi-Agent Validation Pipeline                                                     │  │
+│  │                                                                                             │  │
+│  │ 1. IdeaExtractionAgent ───► Structured Pitch Extraction (Problem, Solution, Audience)     │  │
+│  │                                                                                             │  │
+│  │ 2. ValidationCrewOrchestrator (CrewAI)                                                      │  │
+│  │    └─► MarketResearchAgent ──► Autonomous Tool-Calling via Tavily Search API               │  │
+│  │        ├── search_market_data()                                                             │  │
+│  │        ├── search_competitors()                                                             │  │
+│  │        └── search_customer_demand() (Selective Autonomy: B2C vs B2B)                       │  │
+│  │                                                                                             │  │
+│  │ 3. MarketAnalysisAgent ────► TAM/SAM/SOM, CAGR, Market Drivers & Barriers                  │  │
+│  │                                                                                             │  │
+│  │ 4. CompetitorAnalysisAgent ─► Direct & Indirect Rivals (1500 char snippet budgeting)        │  │
+│  │                                                                                             │  │
+│  │ 5. WhiteSpaceEngine ───────► Deterministic 2x2 Opportunity Gap Mapping                     │  │
+│  │                                                                                             │  │
+│  │ 6. SWOTAgent ──────────────► 4-Quadrant Strategic Synthesis Matrix                          │  │
+│  │                                                                                             │  │
+│  │ 7. MVPAgent ───────────────► 3-Phase Product Roadmap & Technical Risk Mitigation            │  │
+│  │                                                                                             │  │
+│  │ 8. GTMAgent ───────────────► Channel Strategy, Conversion Funnels, Launch Milestones        │  │
+│  │                                                                                             │  │
+│  │ 9. Response Synthesizer ───► Composite Scoring (0-100), Citation Mapping & Packaging       │  │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────┘  │
+│                                                                                                   │
+│  Shared Infrastructure & Services:                                                                │
+│  ├── PromptLoader (backend/prompts/*.md)                                                          │
+│  ├── LLMService (Groq LPU API: Qwen 2.5 32B / Llama 3.3 70B)                                    │
+│  ├── WhiteSpaceEngine (Deterministic scoring & triangulation)                                     │
+│  └── TextUtils (Sanitization, JSON extraction, character budgeting)                               │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 3. Multi-Agent Pipeline & Data Handoffs
+## 3. Core Agent Specifications
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Founder / Browser
-    participant App as React Frontend (App.jsx)
-    participant API as FastAPI (main.py)
-    participant Orch as CrewAI Orchestrator
-    participant IEA as [1] IdeaExtractionAgent
-    participant WSA as [2] WebSearchAgent
-    participant Tavily as Tavily Search API
-    participant DRA as [3] DataRetrievalAgent
-    participant MOA as [4] MarketOpportunityAgent
-    participant CAA as [5] CompetitorAnalysisAgent
-    participant WSE as White-Space Engine
-    participant Groq as Groq Cloud Inference
-
-    User->>App: Submits startup idea (unlimited text)
-    App->>API: POST /api/validate { idea, product_name?, industry?, target_audience? }
-    API->>Orch: validate_idea(submission)
-
-    Note over Orch: [1] Idea Extraction started
-    Orch->>IEA: extract(idea, product_name, industry, target_audience)
-    IEA->>Groq: ChatCompletion (qwen/qwen3.8-27b with cascading failover)
-    Groq-->>IEA: Structured JSON { product_name, industry, keywords, core_problem }
-    Note over Orch: [1] Idea Extraction completed
-
-    Note over Orch: [2] Web Search started
-    Orch->>WSA: search(structured_idea)
-    par 4 Category Searches (ThreadPoolExecutor max_workers=4)
-        WSA->>Tavily: Competitors query (depth="advanced")
-        WSA->>Tavily: Industry News query (topic="news")
-        WSA->>Tavily: Customer Demand query (depth="advanced")
-        WSA->>Tavily: Market Size query (depth="advanced")
-    end
-    Tavily-->>WSA: 4 raw category result batches
-    Note over Orch: [2] Web Search completed
-
-    Note over Orch: [3] Data Retrieval started
-    Orch->>DRA: structure(raw_batches)
-    DRA->>DRA: Filter BLOCKED_DOMAINS & lyric spam
-    DRA->>DRA: Validate English via langdetect
-    DRA->>DRA: Deduplicate canonical URLs & rank by score
-    DRA-->>Orch: Structured SourceRecords + summary counts
-    Note over Orch: [3] Data Retrieval completed
-
-    Note over Orch: [4] Market Opportunity Analysis started
-    Orch->>MOA: analyze(idea, structured_idea, sources)
-    MOA->>Groq: Evaluate TAM/SAM estimates, CAGR, customer personas & attractiveness
-    Groq-->>MOA: MarketAnalysisResult (with cited URLs)
-    Note over Orch: [4] Market Opportunity Analysis completed
-
-    Note over Orch: [5] Competitor Analysis started
-    Orch->>CAA: analyze(idea, structured_idea, sources, market_analysis)
-    CAA->>Groq: Map direct/indirect rivals, comparison matrix & market gaps
-    Groq-->>CAA: CompetitorAnalysisResult
-    Note over Orch: [5] Competitor Analysis completed
-
-    Note over Orch: [WhiteSpaceEngine] Triangulating 3 Evidence Layers
-    Orch->>WSE: discover(idea, structured_idea, sources, market_analysis, competitor_analysis)
-    WSE->>Groq: Correlate Customer Pain × Competitor Omission × Startup Capability
-    Groq-->>WSE: WhiteSpaceAnalysisResult
-    Note over Orch: White-space opportunities synthesized
-
-    Orch-->>API: ValidationResponse
-    API-->>App: HTTP 200 JSON Response
-    App->>User: Renders Dossier + White-Space Map + Market Sizing + Personas + Competitors + Sources
-```
+| Agent | Responsibility | Prompt Template | Primary LLM Model |
+| :--- | :--- | :--- | :--- |
+| **`IdeaExtractionAgent`** | Converts raw pitch text into clean semantic entities: problem, solution, ICP, revenue model, industry vertical. | `idea_extraction_system.md` | `qwen-2.5-32b` |
+| **`MarketResearchAgent`** | Autonomous CrewAI research agent invoking Tavily search tools. Dynamically forms queries and iterates based on context. | CrewAI Task Prompt | `qwen-2.5-32b` |
+| **`MarketAnalysisAgent`** | Extracts empirical market size figures (TAM/SAM/SOM), growth CAGR, drivers, and barriers from search citations. | `market_analysis_system.md`<br>`market_analysis_task.md` | `qwen-2.5-32b` |
+| **`CompetitorAnalysisAgent`** | Discovers named direct and indirect market competitors, extracting strengths, weaknesses, and differentiation. | `competitor_analysis_system.md`<br>`competitor_analysis_task.md` | `qwen-2.5-32b` |
+| **`WhiteSpaceEngine`** | Deterministic algorithmic triangulation of customer pain vs competitor omissions vs pitch capabilities. | Algorithmic Service | Pure Python Service |
+| **`SWOTAgent`** | Synthesizes Strengths, Weaknesses, Opportunities, and Threats from empirical market and competitor findings. | `swot_system.md`<br>`swot_task.md` | `qwen-2.5-32b` |
+| **`MVPAgent`** | Translates validated white-space gaps into an actionable 3-phase product development roadmap with risk mitigation. | `mvp_system.md`<br>`mvp_task.md` | `qwen-2.5-32b` |
+| **`GTMAgent`** | Formulates go-to-market acquisition channels, conversion funnels, CAC optimization, and launch milestones. | `gtm_system.md`<br>`gtm_task.md` | `qwen-2.5-32b` |
 
 ---
 
-## 4. Proprietary Novelty: Evidence-Backed Market White-Space Engine
+## 4. Anti-Hallucination & Data Integrity Invariants
 
-The **Evidence-Backed Market White-Space Engine** addresses the core challenge of startup validation: founders do not just need to know if a market is large; they need to know **where specifically the opportunity exists and why the evidence proves competitors have left it open**.
-
-### The 4-Stage Triangulation Vector:
-$$\text{White-Space Gap} = \text{Empirical Customer Pain} \cap \text{Competitor Weakness / Void} \cap \text{Startup Capability}$$
-
-```
-[VECTOR 1: CUSTOMER PAIN]
-Empirical pain points and demand signals extracted from customer reviews and demand search sources.
-          ↓
-[VECTOR 2: COMPETITOR OMISSIONS]
-Unaddressed feature gaps, high enterprise pricing barriers, and documented customer complaints from competitor research.
-          ↓
-[VECTOR 3: DISCOVERED MARKET GAP]
-Precise structural market void left open by incumbents.
-          ↓
-[VECTOR 4: STARTUP FIT & DIFFERENTIATION]
-Specific architectural or operational mechanism of the proposed startup that solves the gap, backed by a testable differentiation hypothesis and traceable citations.
-```
-
----
-
-## 5. Strict Anti-Hallucination & Reliability Architecture
-
-1. **Grounded Sizing Metrics**: Every quantitative market estimate must cite the source URL and snippet where the figure was retrieved.
-2. **Conflicting Evidence Transparency**: When research sources disagree (e.g. diverging TAM estimates), the disparity is explicitly documented in the output rather than inventing an artificial average.
-3. **Disclosed vs. Undisclosed Pricing**: Competitor pricing and business models not present in search sources are strictly designated as `"not disclosed in sources"` rather than fabricated.
-4. **Cascading Model Failover**: Groq LLM inference utilizes a cascading priority queue (`qwen/qwen3.8-27b` $\rightarrow$ `openai/gpt-oss-120b` $\rightarrow$ `openai/gpt-oss-20b` $\rightarrow$ `allam-2-7b` $\rightarrow$ `groq/compound` $\rightarrow$ `groq/compound-mini`) with exponential backoff on HTTP 429.
-5. **Partial-Failure Fault Tolerance**: If an upstream search or LLM agent returns partial data, downstream agents gracefully preserve all available context and synthesize structured fallback findings without crashing the API.
-
----
-
-## 6. Data Contracts & Pydantic Schemas
-
-### `POST /api/validate` Request Contract: `IdeaSubmission`
-```python
-class IdeaSubmission(BaseModel):
-    idea: str = Field(..., min_length=3, description="Startup description (arbitrary length).")
-    product_name: Optional[str] = Field(default=None)
-    industry: Optional[str] = Field(default=None)
-    target_audience: Optional[str] = Field(default=None)
-```
-
-### Full Response Contract: `ValidationResponse`
-```python
-class ValidationResponse(BaseModel):
-    idea: str
-    extracted_data: Optional[Dict[str, Any]]
-    sources: List[SourceRecord]
-    market_analysis: Optional[MarketAnalysisResult]
-    competitor_analysis: Optional[CompetitorAnalysisResult]
-    white_space_analysis: Optional[WhiteSpaceAnalysisResult]
-    summary: Dict[str, Any]
-```
-
----
-
-## 7. Verification & Automated Test Suite
-
-- **Unit & Regression Suite**: `python backend/tests/test_agents.py` and `python backend/tests/test_milestone2.py`
-- **3-Industry End-to-End Benchmark Suite**: `python backend/scripts/test_milestone2_e2e.py`
-  - **Test 1 — Healthcare**: Clinic patient no-show predictor with scheduling interventions (`ClinicGuard AI`).
-  - **Test 2 — Climate / Agriculture**: Smallholder farmer decision platform combining weather, soil, crop data, and market pricing (`FarmOptima`).
-  - **Test 3 — Fintech / Education**: University student financial literacy platform connecting spending data to budgeting guidance (`CampusFin`).
+1. **Strict Snippet Budgeting**: Raw search snippets from Tavily are allocated 1,500 characters per source, preventing premature context truncation while preserving token economy on Groq LPUs.
+2. **Selective Autonomy Guard**: B2C and hybrid consumer concepts automatically trigger consumer demand exploration, while pure B2B/enterprise concepts skip consumer demand searches to avoid generic consumer noise.
+3. **Honest Grounding Notice**: When search tools return 0 valid sources for a category (e.g., emerging consumer niche), the frontend displays a prominent amber disclaimer banner (`[HONEST GROUNDING NOTICE]`) and marks personas as theoretical rather than asserting empirical validation.
+4. **Deterministic White-Space Triangulation**: White-space scoring is computed mathematically through vector alignment rather than single-shot LLM guesswork.

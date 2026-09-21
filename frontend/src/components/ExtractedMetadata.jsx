@@ -4,6 +4,8 @@ import "./ExtractedMetadata.css";
 export default function ExtractedMetadata({ data }) {
   if (!data) return null;
 
+  const isLowConfidence = data.extraction_confidence === "low";
+
   return (
     <div id="section-context" className="extracted-dossier-card">
       <div className="extracted-header">
@@ -11,8 +13,25 @@ export default function ExtractedMetadata({ data }) {
           <span className="extracted-badge">§ IDEA CONTEXT</span>
           <span className="extracted-dossier-id">SECTION 01 — DOMAIN PARAMETERS</span>
         </div>
-        <h3 className="extracted-title">{data.product_name || "Synthesized Concept"}</h3>
+        <div className="extracted-title-row">
+          <h3 className="extracted-title">{data.product_name || "Synthesized Concept"}</h3>
+          {data.extraction_confidence && (
+            <span className={`extraction-conf-badge conf-${data.extraction_confidence}`}>
+              EXTRACTION CONFIDENCE: {data.extraction_confidence.toUpperCase()}
+            </span>
+          )}
+        </div>
       </div>
+
+      {isLowConfidence && (
+        <div className="extraction-warning-banner">
+          <span className="warning-icon">⚠️</span>
+          <div className="warning-content">
+            <strong>EXTRACTION AMBIGUITY NOTICE:</strong>
+            <p>{data.confidence_reason || "The concept description was brief or underspecified. Validation results may be broader than intended."}</p>
+          </div>
+        </div>
+      )}
 
       <div className="extracted-grid">
         <div className="extracted-item">

@@ -1,58 +1,58 @@
 :root {
-  /* Warm Canvas & Paper Palette */
-  --bg-canvas: #EBE3CC;
-  --surface-card: #F3EDE0;
-  --surface-card-hover: #F8F4EC;
-  --surface-elevated: #FAF6EF;
-  --border-line: #C5BBA2;
-  --border-subtle: #D8CFB8;
-  --border-strong: #A89E84;
+  /* Warm Canvas & Paper Palette - Soft, clean off-white cream base */
+  --bg-canvas: #FAF8F5;
+  --surface-card: #FFFFFF;
+  --surface-card-hover: #FBF9F5;
+  --surface-elevated: #F4F1EA;
+  --border-line: #E2DDD5;
+  --border-subtle: #ECE7DF;
+  --border-strong: #222222;
 
   /* Ink Hierarchy - High Contrast Legibility */
-  --ink-primary: #12100B;
-  --ink-secondary: #242017;
-  --ink-muted: #3D382B;
-  --ink-subtle: #4E4738;
-  --ink-faint: #6A6250;
+  --ink-primary: #111111;
+  --ink-secondary: #2B2620;
+  --ink-muted: #555555;
+  --ink-subtle: #777777;
+  --ink-faint: #999999;
 
-  /* Amber Accent System */
-  --accent-amber: #D99B26;
-  --accent-amber-hover: #C48A1E;
-  --accent-amber-subtle: rgba(217, 155, 38, 0.14);
-  --accent-amber-border: rgba(217, 155, 38, 0.45);
+  /* Gold / Amber Accent System - tuned for WCAG AA contrast on light cream */
+  --accent-amber: #B8860B;
+  --accent-amber-hover: #996F00;
+  --accent-amber-subtle: rgba(184, 134, 11, 0.10);
+  --accent-amber-border: rgba(184, 134, 11, 0.35);
 
-  /* Charcoal Ink Dossier Theme - Ultra High Contrast */
-  --panel-dark-bg: #1B1712;
-  --panel-dark-surface: #241F18;
-  --panel-dark-surface-elevated: #2E271F;
-  --panel-dark-border: #443B2E;
-  --panel-dark-border-subtle: rgba(235, 227, 204, 0.18);
-  --panel-dark-text: #FFFDF8;
-  --panel-dark-text-secondary: #EAE3D2;
-  --panel-dark-muted: #C8C1B0;
-  --panel-dark-subtle: #A39B88;
+  /* Light Editorial Panels (Replacing heavy dark blocks) */
+  --panel-dark-bg: #FFFFFF;
+  --panel-dark-surface: #F8F6F0;
+  --panel-dark-surface-elevated: #F1ECE2;
+  --panel-dark-border: #222222;
+  --panel-dark-border-subtle: #E2DDD5;
+  --panel-dark-text: #111111;
+  --panel-dark-text-secondary: #2B2620;
+  --panel-dark-muted: #555555;
+  --panel-dark-subtle: #777777;
 
   /* Strategic Classification Tags */
-  --tag-blue-bg: #CFDFE5;
-  --tag-blue-text: #0E2A36;
-  --tag-blue-border: #9CB7C2;
+  --tag-blue-bg: #E0F2FE;
+  --tag-blue-text: #0369A1;
+  --tag-blue-border: #BAE6FD;
 
-  --tag-green-bg: #D0E0CE;
-  --tag-green-text: #133317;
-  --tag-green-border: #A3C4A0;
+  --tag-green-bg: #DCFCE7;
+  --tag-green-text: #15803D;
+  --tag-green-border: #BBF7D0;
 
-  --tag-rose-bg: #E8D5CE;
-  --tag-rose-text: #3D1C17;
-  --tag-rose-border: #CBA59B;
+  --tag-rose-bg: #FEE2E2;
+  --tag-rose-text: #B91C1C;
+  --tag-rose-border: #FECACA;
 
-  --tag-amber-bg: #FCECBD;
-  --tag-amber-text: #5C3D00;
-  --tag-amber-border: #DEC072;
+  --tag-amber-bg: #FEF3C7;
+  --tag-amber-text: #92400E;
+  --tag-amber-border: #FDE68A;
 
   /* System States */
-  --error-bg: #F8E3DF;
-  --error-border: #C8695C;
-  --error-text: #5A1910;
+  --error-bg: #FEE2E2;
+  --error-border: #EF4444;
+  --error-text: #991B1B;
 
   /* Typography */
   --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
@@ -60,10 +60,10 @@
   --font-mono: "Space Mono", "SF Mono", "Roboto Mono", Consolas, monospace;
 
   /* Elevation Shadows */
-  --shadow-subtle: 0 1px 3px rgba(23, 21, 15, 0.06);
-  --shadow-card: 0 2px 8px rgba(23, 21, 15, 0.08);
-  --shadow-card-hover: 0 6px 18px rgba(23, 21, 15, 0.12);
-  --shadow-panel-dark: 0 8px 28px rgba(10, 8, 5, 0.28);
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 6px 18px rgba(0, 0, 0, 0.08);
+  --shadow-panel-dark: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -73,7 +73,7 @@
 html {
   font-size: 16px;
   scroll-behavior: smooth;
-  scroll-padding-top: 84px;
+  scroll-padding-top: 96px;
 }
 
 body {
@@ -82,8 +82,8 @@ body {
   background-color: var(--bg-canvas);
   color: var(--ink-primary);
   font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: clamp(15.5px, 0.95rem + 0.2vw, 17px);
+  line-height: 1.68;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -91,13 +91,12 @@ body {
 }
 
 ::selection {
-  background-color: #E2C98D;
-  color: #12100B;
+  background-color: #FDE68A;
+  color: #111111;
 }
 
-/* Accessible focus outlines */
 *:focus-visible {
-  outline: 2px solid var(--ink-primary);
+  outline: 2px solid var(--accent-amber);
   outline-offset: 2px;
 }
 

@@ -1,197 +1,192 @@
-# Startup Idea Validator (Milestone 2)
+# Team Forge — Autonomous Startup Idea Validator (v3.0)
 
-> An autonomous multi-agent platform for validating early-stage startup concepts against real-time market data, competitive intelligence, customer segmentation, and evidence-backed white-space discovery.
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-009688.svg)](https://fastapi.tiangolo.com/)
+[![React 18](https://img.shields.io/badge/React-18.3+-61DAFB.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.4+-646CFF.svg)](https://vitejs.dev/)
+[![CrewAI](https://img.shields.io/badge/CrewAI-Orchestration-orange.svg)](https://crewai.com)
+[![Groq LPU](https://img.shields.io/badge/Groq-LPU%20Inference-f55036.svg)](https://groq.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Developed as part of the **Team Forge (ISB7.3)** project.
+> **Team Forge (ISB7.3)**: An autonomous multi-agent validation engine that transforms raw, unvetted startup ideas into comprehensive, evidence-grounded venture dossiers in under 60 seconds.
 
 ---
 
 ## 📌 System Architecture & Pipeline
 
-The platform utilizes a **CrewAI sequential multi-agent orchestration layer** to transform raw startup pitches into comprehensive market validation intelligence:
+Team Forge v3.0 replaces superficial LLM wrappers with an **autonomous 9-stage sequential validation pipeline** combining agentic search tool-calling, deterministic mathematical scoring, and multi-quadrant strategic reasoning:
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   React + Vite UI                                      │
-│   (Unlimited Submission, Dossier, White-Space Map, Market Sizing, Competitors Grid)   │
-└───────────────────────────────────────────┬────────────────────────────────────────────┘
-                                            │ POST /api/validate (JSON)
-                                            ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    FastAPI Backend                                     │
-│                              (/api/health, /api/validate)                              │
-└───────────────────────────────────────────┬────────────────────────────────────────────┘
-                                            │
-                                            ▼
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│                              CrewAI Sequential Orchestrator                            │
-│                                                                                        │
-│  [1] Idea Extraction Agent       ──> Product identity, vertical, problem & keywords    │
-│            ↓                                                                           │
-│  [2] Market Research Agent       ──> Autonomous tool calling via crew.kickoff()        │
-│      (MarketResearchToolKit)         • search_competitors     • search_industry_news   │
-│                                      • search_customer_demand • search_market_size     │
-│                                      (Query deduplication, budget cap & direct failover)│
-│            ↓                                                                           │
-│  [3] Data Retrieval Agent        ──> Domain blocklist, langdetect English check, rank  │
-│            ↓                                                                           │
-│  [4] Market Opportunity Agent    ──> TAM/SAM estimates, CAGR, customer persona breakdown│
-│            ↓                                                                           │
-│  [5] Competitor Analysis Agent   ──> Direct/indirect rivals, comparison matrix, gaps   │
-│            ↓                                                                           │
-│  Evidence-Backed White-Space Engine ──> Customer Pain ∩ Competitor Void ∩ Startup Fit  │
-└────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   React 18 + Vite Frontend                                        │
+│  (Editorial Light Theme • Fluid 4-Col Grid • § Jump Navigation • 12 Analytical Modules • PDF Dossier)│
+└─────────────────────────────────┬─────────────────────────────────────────────────────────────────┘
+                                  │ POST /api/validate (JSON)
+                                  ▼
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     FastAPI Backend Engine                                        │
+├───────────────────────────────────────────────────────────────────────────────────────────────────┤
+│  Stage 1: IdeaExtractionAgent      ── Extract structured problem, solution, ICP, revenue model   │
+│  Stage 2: MarketResearchAgent      ── Autonomous Tavily search tool-calling (Market, Comp, Demand)│
+│  Stage 3: MarketAnalysisAgent      ── TAM/SAM/SOM sizing, CAGR, drivers, and barriers             │
+│  Stage 4: CompetitorAnalysisAgent  ── Direct/indirect competitors, positioning, differentiation   │
+│  Stage 5: WhiteSpaceEngine         ── Deterministic 2x2 opportunity gap scoring                   │
+│  Stage 6: SWOTAgent                ── 4-quadrant strategic matrix synthesized from real evidence  │
+│  Stage 7: MVPAgent                 ── 3-phase product roadmap, core features & risk mitigation    │
+│  Stage 8: GTMAgent                 ── Multi-channel acquisition strategy & launch milestones      │
+│  Stage 9: ValidationReport Builder ── Schema validation, composite scoring & honest grounding     │
+└─────────────────────────────────┬─────────────────────────────────────────────────────────────────┘
+                                  │ Groq LPUs (Qwen 2.5 32B / Llama 3.3 70B)
+                                  ▼
+┌───────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                         Verified Market Intelligence & Venture Dossier                            │
+└───────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
-
-For complete technical specifications, data contracts, and design diagrams, see [**ARCHITECTURE.md**](ARCHITECTURE.md), [**SYSTEM_ARCHITECTURE.md**](SYSTEM_ARCHITECTURE.md), and [**PROJECT_EXPLANATION.md**](PROJECT_EXPLANATION.md).
 
 ---
 
-## 📁 Repository Structure
+## 🚀 Key Innovations & Engineering Highlights
+
+1. **Autonomous Tool-Calling via CrewAI**:
+   - `MarketResearchAgent` autonomously decides query syntax, evaluation criteria, and search iterations across 3 dedicated tools: `search_market_data`, `search_competitors`, and `search_customer_demand`.
+   - Built-in **Selective Autonomy**: Automatically executes consumer demand searches for B2C/hybrid concepts while bypassing irrelevant B2C queries for pure enterprise/B2B ideas.
+
+2. **Strict Anti-Hallucination & Snippet Budgeting**:
+   - Compiles raw search findings into a rich 1,500-character context budget per source, preventing premature context truncation and guaranteeing named competitors (e.g., Medisafe, MyTherapy, Livongo) are accurately extracted.
+   - Dynamic **`[HONEST GROUNDING NOTICE]`**: When web evidence returns 0 citations for a category, the system transparently renders an amber disclaimer banner rather than fabricating synthetic data.
+
+3. **Strategic Synthesis Layer (Milestone 3)**:
+   - **`SWOTAgent`**: Transforms empirical market and competitor signals into actionable Strengths, Weaknesses, Opportunities, and Threats.
+   - **`MVPAgent`**: Produces a disciplined 3-phase product roadmap (Phase 1 MVP, Phase 2, Phase 3) tied directly to validated market gaps.
+   - **`GTMAgent`**: Delivers a concrete go-to-market plan covering customer acquisition channels, funnel strategies, and launch milestones.
+
+4. **Externalized Prompt Architecture**:
+   - Modular prompt system (`backend/prompts/*.md`) separating system roles and task instructions with clean template interpolation via `loader.py`.
+
+5. **Ultra-Low Latency Inference**:
+   - Powered by **Groq LPUs** serving open-weights foundation models (`qwen-2.5-32b` / `llama-3.3-70b-versatile`) achieving high tokens-per-second generation speeds.
+
+---
+
+## 📁 Repository Organization
 
 ```
 team-forge/
-├── backend/                      # Python / FastAPI backend service
-│   ├── agents/                   # Autonomous research & intelligence agents
-│   │   ├── __init__.py           # Agent module exports
-│   │   ├── idea_extraction_agent.py # Groq LLM semantic extraction & failover
-│   │   ├── web_search_agent.py   # Multi-category parallel search via Tavily
-│   │   ├── data_retrieval_agent.py # Sanitization, deduplication, & scoring
-│   │   ├── market_analysis_agent.py # TAM/SAM sizing, CAGR, customer personas
-│   │   └── competitor_analysis_agent.py # Direct/indirect rivals, matrix, gaps
-│   ├── crew/                     # CrewAI orchestration layer
-│   │   ├── __init__.py
-│   │   ├── agents.py             # CrewAI Agent factories
-│   │   ├── tasks.py              # CrewAI Task definitions
-│   │   ├── tools.py              # Custom CrewAI tools
-│   │   └── orchestrator.py       # Sequential pipeline orchestrator
-│   ├── schemas/                  # Pydantic data contracts
-│   │   ├── __init__.py
-│   │   └── validation_schemas.py # Request/response typed schemas
-│   ├── services/                 # Core analytical services
-│   │   ├── __init__.py
-│   │   ├── llm_service.py        # Centralized Groq inference with model failover
-│   │   └── white_space_engine.py # Evidence-Backed Market White-Space Engine
-│   ├── scripts/                  # Evaluation & benchmark runners
-│   │   ├── test_milestone2_e2e.py # 3-Industry end-to-end test suite
-│   │   ├── run_eval.py           # 10-idea automated benchmark runner
-│   │   └── smoke_test.py         # Fast sanity test
-│   ├── tests/                    # Unit tests
-│   │   ├── __init__.py
-│   │   ├── test_agents.py        # Milestone 1 agent tests
-│   │   └── test_milestone2.py    # Milestone 2 agent & schema tests
-│   ├── config.py                 # Environment variables & CORS settings
-│   ├── main.py                   # FastAPI application gateway
-│   └── requirements.txt          # Python dependencies (CrewAI, FastAPI, Groq, Tavily, etc.)
-│
-├── frontend/                     # React / Vite SPA frontend
+├── backend/                    # FastAPI backend & multi-agent pipeline
+│   ├── agents/                 # 8 Specialized analytical agents (Extraction, Market, SWOT, MVP, etc.)
+│   ├── crew/                   # CrewAI orchestration layer, tasks, and Tavily search tools
+│   ├── prompts/                # Externalized Markdown prompt templates (*_system.md, *_task.md)
+│   ├── schemas/                # Pydantic data models & request/response contracts
+│   ├── scripts/                # Benchmark suites, regression scripts, and e2e tests
+│   ├── services/               # White-Space Engine, LLM service, and text sanitizers
+│   ├── tests/                  # Pytest unit and integration test suites
+│   ├── config.py               # Central environment configuration
+│   ├── main.py                 # FastAPI application routes & CORS setup
+│   └── requirements.txt        # Python dependency manifest
+├── frontend/                   # React 18 + Vite frontend application
 │   ├── src/
-│   │   ├── components/           # UI components
-│   │   │   ├── Header.jsx        # Masthead headline & value proposition
-│   │   │   ├── ExtractedMetadata.jsx # Stamped AI Dossier metadata card
-│   │   │   ├── ExtractedMetadata.css  # Dossier card styling
-│   │   │   ├── WhiteSpaceAnalysis.jsx # Centerpiece White-Space Map & Strategy Flow
-│   │   │   ├── MarketOpportunity.jsx # Market sizing, CAGR & attractiveness
-│   │   │   ├── CustomerSegments.jsx  # Customer persona breakdown (End Users vs Decision Makers)
-│   │   │   ├── CompetitorAnalysis.jsx# Direct/indirect rivals & comparison matrix
-│   │   │   ├── ResultsSummary.jsx# Summary panel with animated count-up
-│   │   │   ├── CategorySection.jsx# 3-column responsive category grid
-│   │   │   └── SourceCard.jsx    # Evidence card with snippet cleaner & pinned footer
-│   │   ├── App.jsx               # Main state orchestrator (Unlimited Input Length)
-│   │   ├── App.css / index.css   # Editorial styling, design tokens & typography
-│   │   └── main.jsx              # React mounting root
-│   ├── vercel.json               # Vercel SPA routing configuration
-│   ├── vite.config.js            # Vite configuration
-│   └── README.md                 # Frontend technical documentation
-│
-├── ARCHITECTURE.md               # Detailed system architecture document
-├── SYSTEM_ARCHITECTURE.md        # Comprehensive multi-agent specification & diagrams
-├── PROJECT_EXPLANATION.md        # Complete technical guide & mentor walkthrough
-├── DEPLOYMENT.md                 # Production deployment guide
-├── render.yaml                   # Infrastructure as Code (Render Web Service)
-└── README.md                     # Project overview (this file)
+│   │   ├── components/         # 12 Modular analytical presentation components
+│   │   ├── App.css             # Global editorial styling rules
+│   │   ├── App.jsx             # Core application controller & validation state
+│   │   ├── index.css           # Tailwind base rules & CSS variables
+│   │   └── main.jsx            # React root mount
+│   ├── package.json            # Node.js dependencies
+│   ├── tailwind.config.js      # Tailwind design configuration
+│   └── vite.config.js          # Vite bundler configuration
+└── docs/                       # 14 Comprehensive technical & academic documentation files
+    ├── 01_PROJECT_OVERVIEW.md
+    ├── 04_SYSTEM_DESIGN.md
+    ├── 05_AI_ML_ARCHITECTURE.md
+    ├── 13_API_COST_ACCURACY_AND_SYSTEM_METRICS.md
+    ├── 14_AI_MODELS_ARCHITECTURE_AND_SELECTION_GUIDE.md
+    └── ... (Full suite of architecture diagrams and specs)
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## ⚡ Quickstart Guide
 
-| Layer | Technologies & Dependencies | Purpose |
-| :--- | :--- | :--- |
-| **Backend Framework** | `fastapi==0.115.0`, `uvicorn[standard]>=0.30.6`, `pydantic>=2.9.2` | REST API Gateway & typed data serialization |
-| **Agent Orchestration** | `crewai>=1.15.0` (`Agent`, `Task`, `Crew`, `Process.sequential`) | Multi-agent coordination and task handoffs |
-| **LLM Inference** | `groq>=0.9.0` (`qwen/qwen3.8-27b`, `openai/gpt-oss-120b`, `allam-2-7b`) | Domain extraction, market sizing, competitive analysis, white space |
-| **Search Engine** | `tavily-python>=0.3.0` | 4-category AI-native search with calibrated relevance scoring |
-| **Sanitization** | `langdetect>=1.0.9`, `wordfreq>=3.1.0`, `lxml>=5.0.0` | Language check, gibberish filter, HTML processing |
-| **Frontend** | React 18, Vite `5.4.x`, Vanilla CSS | Fast, responsive editorial SPA |
-| **Typography** | Instrument Serif, Inter, Space Mono | High-contrast editorial aesthetic |
-| **Deployment** | Render (Backend Web Service), Vercel (Frontend SPA) | Cloud hosting & continuous deployment |
+### 1. Prerequisites
+- **Python**: 3.11 or higher
+- **Node.js**: 18.0.0 or higher
+- **API Keys**:
+  - `GROQ_API_KEY` ([console.groq.com](https://console.groq.com))
+  - `TAVILY_API_KEY` ([tavily.com](https://tavily.com))
 
----
-
-## 🚀 Quickstart: Running Locally
-
-### 1. Backend Setup
-
+### 2. Backend Setup
 ```bash
+# Navigate to backend
 cd backend
 
-# Create & activate virtual environment
+# Create and activate virtual environment
 python -m venv venv
 # Windows:
 venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
-# Install dependencies & run
+# Install dependencies
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+
+# Configure environment
+cp .env.example .env
+# Edit .env and paste your GROQ_API_KEY and TAVILY_API_KEY
+
+# Launch FastAPI server
+uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
-- **Health Check**: `http://127.0.0.1:8000/api/health`
-- **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
+Backend API interactive docs: `http://127.0.0.1:8000/docs`
 
-### 2. Frontend Setup
-
+### 3. Frontend Setup
 ```bash
+# In a separate terminal, navigate to frontend
 cd frontend
 
 # Install dependencies
 npm install
 
-# Start development server
+# Start Vite development server
 npm run dev
 ```
-- **Frontend UI**: `http://localhost:5173`
+Open your browser at `http://localhost:5173`.
 
 ---
 
-## 🧪 Running Automated Tests
+## 🧪 Testing & Benchmark Verification
 
 ```bash
-# Run Milestone 1 Agent tests
-python backend/tests/test_agents.py
+# Run backend unit & integration tests
+pytest backend/tests -v
 
-# Run Milestone 2 Unit tests
-python backend/tests/test_milestone2.py
+# Run smoke test
+python backend/scripts/smoke_test.py
 
-# Run the 3-Industry End-to-End Benchmark Suite
-python backend/scripts/test_milestone2_e2e.py
+# Run agentic tool-calling verification
+python backend/scripts/run_agentic_verification.py
+
+# Run 5-idea multi-domain regression suite
+python backend/scripts/run_5_regression_ideas.py
+
+# Run frontend production build check
+cd frontend && npm run build
 ```
 
 ---
 
-## ⚠️ Known Limitations
+## 📚 Technical Documentation Suite
 
-1. **Search Space Bounded by Query Budget**:
-   The autonomous research agent operates under a strict tool-calling budget cap (default 8 queries). While this prevents runaway query loops and latency spikes, specialized or ultra-niche domains may experience bounded discovery if 8 queries cannot fully exhaust the search space. When the cap is reached, the system marks the search status as `budget_limited` and provides explicit transparency in the summary payload.
-2. **Niche Market Sizing & Analyst Coverage**:
-   For novel, artisanal, or hyper-niche startup concepts where institutional market analysts have published zero quantitative reports, the platform strictly avoids fabricating TAM/SAM figures. In these cases, the response honestly sets `market_size: []`, `confidence: null`, and suppresses ungrounded attractiveness scorecards, displaying an amber empty-state disclaimer instead.
-3. **LLM Provider Daily Rate Limits**:
-   Multi-agent reasoning loops consume multiple LLM calls per validation. Under high traffic or free/developer service tiers on Groq (`openai/gpt-oss-120b`, `qwen/qwen3.8-27b`), daily token limits (TPD) can occasionally be reached. The pipeline incorporates automatic failover to deterministic direct search so the user always receives valid research evidence without application crashes.
-4. **Language Scope**:
-   The validation pipeline is optimized for English-language inputs. Inputs submitted in non-English or random character strings are screened at the API gateway via dictionary density checks (`wordfreq >= 0.45`) and deterministic language detection (`langdetect`).
+For complete architectural specifications, UML diagrams, academic reports, and cost analyses, visit the [`docs/`](docs/) directory:
+
+| Document | Title | Focus Area |
+| :--- | :--- | :--- |
+| **`docs/01_PROJECT_OVERVIEW.md`** | Project Overview | Problem statement, value proposition, and user personas. |
+| **`docs/04_SYSTEM_DESIGN.md`** | System Design | Detailed component architecture, sequence flows, and contracts. |
+| **`docs/05_AI_ML_ARCHITECTURE.md`** | AI/ML Architecture | CrewAI agent configuration, prompt templates, and reasoning chains. |
+| **`docs/13_API_COST_ACCURACY_AND_SYSTEM_METRICS.md`** | Cost & Metrics | Token economics, Tavily search costs, latency, and grounding metrics. |
+| **`docs/14_AI_MODELS_ARCHITECTURE_AND_SELECTION_GUIDE.md`** | AI Models Guide | LLM selection matrix, Groq LPU benchmark comparisons, and prompt engineering. |
 
 ---
 
 ## 📄 License
+
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.

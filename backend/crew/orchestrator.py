@@ -1,35 +1,29 @@
 """
-Team Forge — CrewAI Sequential Orchestrator
--------------------------------------------
-Controls end-to-end execution of the multi-agent startup validation pipeline using
-genuine CrewAI orchestration concepts (Agent, Task, Crew, Process.sequential).
-
-Execution Pipeline Flow:
-  [1] Idea Extraction Agent
-          ↓
-  [2] Web Search Agent (Tavily 4-Category Search)
-          ↓
-  [3] Data Retrieval Agent (Sanitization, Deduplication, Verification)
-          ↓
-  [4] Market Opportunity & Customer Segmentation Agent
-          ↓
-  [5] Competitor Discovery & Comparison Agent
-          ↓
-  Evidence-Backed Market White-Space Engine
-          ↓
-  Final Structured Validation Result
-
-Enforces exact milestone logging and robust error resilience:
-  - If upstream data is partial or LLM quota limits are encountered, agents failover
-    gracefully to maintain pipeline continuity without crashing the API.
+Team Forge — CrewAI Orchestration Engine (Milestone 3)
+-------------------------------------------------------
+End-to-end multi-agent execution pipeline with 9 sequential stages:
+  [1] Idea Extraction Agent (extracts structured metadata + extraction confidence)
+  [2] Autonomous Market Research Agent (CrewAI Agent with tool calling & crew.kickoff())
+  [3] Data Retrieval Agent (Deterministic sanitization, deduplication, categorization)
+  [4] Market Opportunity & Customer Segmentation Agent (Market sizing, customer segments, attractiveness)
+  [5] Competitor Discovery & Comparison Agent (Competitor profiling, capability matrix, gaps)
+  [6] Evidence-Backed Market White-Space Engine (Triangulates pain, coverage, and capability)
+  [7] SWOT & Risk Analysis Agent (Synthesizes judgment-driven SWOT matrix & risks)
+  [8] MVP Recommendation Agent (Prioritized features with upstream justifications)
+  [9] Go-To-Market Strategy Agent (Idea-specific channels, positioning, launch phases)
 """
 
-from typing import Any, List
-
+import logging
+from typing import Dict, Any, List, Optional, Callable
 from schemas.validation_schemas import (
-    IdeaSubmission,
     ValidationResponse,
     SourceRecord,
+    MarketAnalysisResult,
+    CompetitorAnalysisResult,
+    WhiteSpaceAnalysisResult,
+    SWOTAnalysisResult,
+    MVPRecommendation,
+    GTMStrategy,
 )
 from agents.idea_extraction_agent import IdeaExtractionAgent
 from agents.web_search_agent import WebSearchAgent
@@ -37,57 +31,102 @@ from agents.data_retrieval_agent import DataRetrievalAgent
 from agents.market_analysis_agent import MarketOpportunityAgent
 from agents.competitor_analysis_agent import CompetitorAnalysisAgent
 from services.white_space_engine import WhiteSpaceEngine
-
+from agents.swot_agent import SWOTAgent
+from agents.mvp_agent import MVPAgent
+from agents.gtm_agent import GTMAgent
 from .agents import ValidationAgentFactory
 from .tasks import ValidationTaskFactory
 
-
-def _log(msg: str):
-    """Outputs standardized pipeline logging to stdout."""
-    print(msg, flush=True)
+logger = logging.getLogger("team_forge.orchestrator")
 
 
 class ValidationCrewOrchestrator:
-    """
-    CrewAI Orchestrator governing agent instantiation, sequential task execution,
-    context handoffs, step logging, and final validation assembly.
-    """
+    """Coordinates the 9-stage validation pipeline."""
 
     def __init__(self):
-        # Underlying research & intelligence engines
         self.idea_extractor = IdeaExtractionAgent()
         self.web_searcher = WebSearchAgent()
         self.data_retriever = DataRetrievalAgent()
         self.market_analyst = MarketOpportunityAgent()
         self.competitor_analyst = CompetitorAnalysisAgent()
         self.white_space_engine = WhiteSpaceEngine()
+        self.swot_agent = SWOTAgent()
+        self.mvp_agent = MVPAgent()
+        self.gtm_agent = GTMAgent()
 
-    def validate_idea(self, submission: IdeaSubmission) -> ValidationResponse:
-        """
-        Executes the full 5-agent sequential validation pipeline.
-        Logs explicit progress markers for every stage.
-        """
-        idea_text = submission.idea.strip()
-        product_name = submission.product_name.strip() if submission.product_name else None
-        industry = submission.industry.strip() if submission.industry else None
-        target_audience = submission.target_audience.strip() if submission.target_audience else None
+    def validate_idea(self, submission: Any) -> ValidationResponse:
+        return self.run(
+            idea_text=submission.idea,
+            product_name=getattr(submission, 'product_name', None),
+            industry=getattr(submission, 'industry', None),
+            target_audience=getattr(submission, 'target_audience', None),
+        )
 
-        # Reset per-request agent flags
-        self.web_searcher.reset_degraded_state()
+    def run(
+        self,
+        idea_text: str,
+        product_name: Optional[str] = None,
+        industry: Optional[str] = None,
+        target_audience: Optional[str] = None,
+        log_callback: Optional[Callable[[str], None]] = None,
+    ) -> ValidationResponse:
+        def _log(msg: str):
+            logger.info(msg)
+            if log_callback:
+                try:
+                    log_callback(msg)
+                except Exception:
+                    pass
 
-        # 0. Nonsense / Gibberish Fast-Fail Check
-        if not self.web_searcher.is_valid_idea(idea_text):
-            _log("[Orchestrator] Input failed coherence/English density check.")
+        _log("=== Starting Team Forge Startup Validation Pipeline (Milestone 3) ===")
+
+        # Fast heuristic check for non-idea input
+        if len(idea_text.split()) < 3 and not product_name and not industry:
+            _log("  Input contains too few words (< 3). Returning graceful empty response.")
             return ValidationResponse(
                 idea=idea_text,
-                extracted_data=None,
+                extracted_data={
+                    "product_name": "Unknown",
+                    "industry": "Unknown",
+                    "target_audience": "Unknown",
+                    "core_problem": idea_text,
+                    "keywords": [],
+                    "extraction_confidence": "low",
+                    "confidence_reason": "Idea text contains fewer than 3 words and no supplementary details were provided.",
+                },
                 sources=[],
-                market_analysis=None,
-                competitor_analysis=None,
-                white_space_analysis=None,
+                market_analysis=MarketAnalysisResult(
+                    summary="Input text does not contain a discernible startup idea.",
+                    analysis_status="completed",
+                    message="Please provide a more detailed startup pitch.",
+                ),
+                competitor_analysis=CompetitorAnalysisResult(
+                    summary="No competitors analyzed for uninterpretable input.",
+                    analysis_status="completed",
+                    message="Please provide a more detailed startup pitch.",
+                ),
+                white_space_analysis=WhiteSpaceAnalysisResult(
+                    opportunities=[],
+                    analysis_status="completed",
+                    message="No white space opportunities can be synthesized from incomplete input.",
+                ),
+                swot_analysis=SWOTAnalysisResult(
+                    strategic_recommendation="Cannot formulate SWOT analysis for uninterpretable input.",
+                    analysis_status="completed",
+                ),
+                mvp_recommendation=MVPRecommendation(
+                    mvp_thesis="Input too brief to recommend MVP features.",
+                    analysis_status="completed",
+                ),
+                gtm_strategy=GTMStrategy(
+                    positioning_statement="Input too brief to define GTM strategy.",
+                    analysis_status="completed",
+                ),
                 summary={
                     "total_sources": 0,
-                    "sources_per_category": {
+                    "categories_searched": 0,
+                    "tool_call_trace": [],
+                    "counts": {
                         "Competitors": 0,
                         "Industry News": 0,
                         "Customer Demand": 0,
@@ -115,8 +154,10 @@ class ValidationCrewOrchestrator:
                 "target_audience": target_audience or "General Target Audience",
                 "core_problem": idea_text,
                 "keywords": [w for w in idea_text.split()[:4]],
+                "extraction_confidence": "low",
+                "confidence_reason": f"Exception occurred during extraction: {exc}",
             }
-        _log("[1] Idea Extraction completed")
+        _log(f"[1] Idea Extraction completed (confidence: {extracted_data.get('extraction_confidence')})")
 
         # [2] Autonomous Market Research Agent (CrewAI Agent with tool calling & crew.kickoff())
         _log("\n[2] CrewAI Market Research Agent started (Autonomous Tool-Calling via crew.kickoff())")
@@ -185,6 +226,8 @@ class ValidationCrewOrchestrator:
                 idea=idea_text,
                 structured_idea=extracted_data,
                 sources=structured_sources_raw,
+                search_agent=self.web_searcher,
+                tool_call_trace=toolkit.tool_call_trace,
             )
         except Exception as exc:
             _log(f"  [4] Market Opportunity Analysis error: {exc}")
@@ -204,6 +247,8 @@ class ValidationCrewOrchestrator:
                 structured_idea=extracted_data,
                 sources=structured_sources_raw,
                 market_analysis=market_analysis,
+                search_agent=self.web_searcher,
+                tool_call_trace=toolkit.tool_call_trace,
             )
         except Exception as exc:
             _log(f"  [5] Competitor Analysis error: {exc}")
@@ -216,11 +261,10 @@ class ValidationCrewOrchestrator:
             )
         _log("[5] Competitor Analysis completed")
 
-        # Explicit budget-limit annotation to distinguish capped runs from naturally concluded searches
+        # Budget-limit annotations
         if toolkit.budget_limit_reached:
             _log("  [Orchestrator Notice] Flagging downstream results as budget-limited.")
             if market_analysis:
-                # Bounded confidence: an incomplete/budget-limited search cannot claim high confidence
                 if market_analysis.confidence and market_analysis.confidence > 0.60:
                     market_analysis.confidence = 0.60
                 if hasattr(market_analysis, "growth_trends") and isinstance(market_analysis.growth_trends, list):
@@ -235,7 +279,7 @@ class ValidationCrewOrchestrator:
                 )
 
         # [6] Evidence-Backed Market White-Space Engine
-        _log("\n[WhiteSpaceEngine] Correlating customer pain, competitor coverage, and startup capabilities...")
+        _log("\n[6] WhiteSpaceEngine started")
         try:
             white_space_analysis = self.white_space_engine.discover(
                 idea=idea_text,
@@ -253,7 +297,55 @@ class ValidationCrewOrchestrator:
                 market_analysis=market_analysis,
                 competitor_analysis=competitor_analysis,
             )
-        _log("[WhiteSpaceEngine] White-space opportunities synthesized successfully.")
+        _log("[6] White-space opportunities synthesized successfully.")
+
+        # [7] SWOT & Risk Analysis Agent (Milestone 3)
+        _log("\n[7] SWOT & Risk Analysis started")
+        try:
+            swot_analysis = self.swot_agent.analyze(
+                structured_idea=extracted_data,
+                market_analysis=market_analysis,
+                competitor_analysis=competitor_analysis,
+                white_space_analysis=white_space_analysis,
+            )
+        except Exception as exc:
+            _log(f"  [7] SWOT Analysis error: {exc}")
+            swot_analysis = self.swot_agent._fallback_analysis(str(exc))
+        _log("[7] SWOT & Risk Analysis completed.")
+
+        # [8] MVP Recommendation Agent (Milestone 3)
+        _log("\n[8] MVP Feature Recommendation started")
+        try:
+            mvp_recommendation = self.mvp_agent.recommend(
+                structured_idea=extracted_data,
+                market_analysis=market_analysis,
+                competitor_analysis=competitor_analysis,
+                white_space_analysis=white_space_analysis,
+                swot_analysis=swot_analysis,
+            )
+        except Exception as exc:
+            _log(f"  [8] MVP Recommendation error: {exc}")
+            mvp_recommendation = self.mvp_agent._fallback_recommendation(str(exc))
+        _log("[8] MVP Feature Recommendation completed.")
+
+        # [9] Go-To-Market Strategy Agent (Milestone 3)
+        _log("\n[9] Go-To-Market Strategy started")
+        try:
+            gtm_strategy = self.gtm_agent.strategize(
+                structured_idea=extracted_data,
+                market_analysis=market_analysis,
+                competitor_analysis=competitor_analysis,
+                white_space_analysis=white_space_analysis,
+                swot_analysis=swot_analysis,
+                mvp_recommendation=mvp_recommendation,
+            )
+        except Exception as exc:
+            _log(f"  [9] Go-To-Market Strategy error: {exc}")
+            gtm_strategy = self.gtm_agent._fallback_strategy(str(exc))
+        _log("[9] Go-To-Market Strategy completed.")
+
+        # Update summary with any additional tool calls made by downstream agents
+        summary["tool_call_trace"] = toolkit.tool_call_trace
 
         # Assemble unified response object
         return ValidationResponse(
@@ -263,5 +355,8 @@ class ValidationCrewOrchestrator:
             market_analysis=market_analysis,
             competitor_analysis=competitor_analysis,
             white_space_analysis=white_space_analysis,
+            swot_analysis=swot_analysis,
+            mvp_recommendation=mvp_recommendation,
+            gtm_strategy=gtm_strategy,
             summary=summary,
         )

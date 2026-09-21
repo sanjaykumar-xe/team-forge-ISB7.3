@@ -5,7 +5,7 @@ import React from "react";
  * Renders multidimensional customer persona cards with distinct End User vs Decision Maker roles,
  * acute pain points, buying behaviors, and domain terminology.
  */
-export default function CustomerSegments({ segments = [] }) {
+export default function CustomerSegments({ segments = [], demandSourceCount = null }) {
   if (!segments || segments.length === 0) return null;
 
   return (
@@ -16,6 +16,11 @@ export default function CustomerSegments({ segments = [] }) {
           <span className="section-count">[{segments.length} {segments.length === 1 ? "SEGMENT" : "SEGMENTS"} PROFILED]</span>
         </div>
         <h3 className="section-headline">Granular Persona Breakdown & Buying Dynamics</h3>
+        {demandSourceCount === 0 && (
+          <div className="honest-grounding-notice" style={{ marginTop: "14px", padding: "10px 14px", background: "#FEF3C7", border: "1px solid #FDE68A", borderLeft: "4px solid #D97706", borderRadius: "3px", fontSize: "12.5px", color: "#92400E", lineHeight: "1.5" }}>
+            <strong>[HONEST GROUNDING NOTICE]:</strong> 0 direct customer demand / review sources were collected for this run. The personas and pain points below are inferentially synthesized from market sizing trends and competitor coverage gaps rather than primary voice-of-customer interviews.
+          </div>
+        )}
       </div>
 
       <div className="segments-grid">

@@ -8,6 +8,9 @@ import MarketOpportunity from "./components/MarketOpportunity";
 import CustomerSegments from "./components/CustomerSegments";
 import CompetitorAnalysis from "./components/CompetitorAnalysis";
 import WhiteSpaceAnalysis from "./components/WhiteSpaceAnalysis";
+import SWOTAnalysis from "./components/SWOTAnalysis";
+import MVPRecommendation from "./components/MVPRecommendation";
+import GTMStrategy from "./components/GTMStrategy";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -23,6 +26,8 @@ const RESEARCH_STAGES = [
   { id: 2, label: "Executing multi-vector live web research" },
   { id: 3, label: "Synthesizing customer demand & market sizing" },
   { id: 4, label: "Triangulating defensible market white-space" },
+  { id: 5, label: "Synthesizing SWOT matrix & strategic risk roadmap" },
+  { id: 6, label: "Scoping evidence-grounded MVP & go-to-market blueprint" },
 ];
 
 export default function App() {
@@ -36,7 +41,6 @@ export default function App() {
   const [activeStage, setActiveStage] = useState(1);
   const [activeSection, setActiveSection] = useState("section-overview");
 
-  // Animate research stages during loading state
   useEffect(() => {
     if (status !== "loading") {
       setActiveStage(1);
@@ -50,9 +54,8 @@ export default function App() {
     return () => clearInterval(stageInterval);
   }, [status]);
 
-  // Scroll spy to highlight the active section in the sticky nav
   useEffect(() => {
-    if (status !== "done" || !result) return;
+    if (status !== "done") return;
 
     const sectionIds = [
       "section-overview",
@@ -61,41 +64,37 @@ export default function App() {
       "section-market",
       "section-personas",
       "section-competitors",
+      "section-swot",
+      "section-mvp",
+      "section-gtm",
       "section-sources",
     ];
 
     const handleScroll = () => {
-      const scrollY = window.pageYOffset || document.documentElement.scrollTop;
-      const navOffset = 110;
+      const scrollY = window.scrollY;
+      const offset = 180;
 
       for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const id = sectionIds[i];
-        const el = document.getElementById(id);
-        if (el) {
-          const top = el.getBoundingClientRect().top + scrollY - navOffset;
-          if (scrollY >= top - 20) {
-            setActiveSection(id);
-            break;
-          }
+        const el = document.getElementById(sectionIds[i]);
+        if (el && el.offsetTop - offset <= scrollY) {
+          setActiveSection(sectionIds[i]);
+          break;
         }
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [status, result]);
+  }, [status]);
 
   const handleJumpTo = (e, targetId) => {
     e.preventDefault();
     const el = document.getElementById(targetId);
     if (el) {
-      const navEl = document.querySelector(".quick-jump-nav");
-      const navHeight = navEl ? navEl.offsetHeight + 18 : 80;
-      const elementPosition = el.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + (window.pageYOffset || document.documentElement.scrollTop) - navHeight;
+      const navOffset = 70;
+      const elPosition = el.getBoundingClientRect().top + window.pageYOffset;
       window.scrollTo({
-        top: Math.max(0, offsetPosition),
+        top: elPosition - navOffset,
         behavior: "smooth",
       });
       setActiveSection(targetId);
@@ -123,7 +122,6 @@ export default function App() {
       return;
     }
 
-    // Strip accidental prompt label prefixes if user pasted structured template text
     let cleanIdea = idea.trim().replace(/^(?:describe the startup concept|startup concept|idea|concept)\s*:\s*/i, "");
     let cleanProductName = productName.trim().replace(/^(?:startup\s*\/?\s*product name|product name|name)\s*:\s*/i, "");
     let cleanIndustry = industry.trim().replace(/^(?:industry or vertical|industry|vertical)\s*:\s*/i, "");
@@ -171,7 +169,6 @@ export default function App() {
     }
   }
 
-  // Group sources by category for rendering
   const sourcesByCategory = result?.summary?.sources_by_category || {};
   if (result?.sources && Object.keys(sourcesByCategory).length === 0) {
     for (const cat of CATEGORIES) {
@@ -194,7 +191,6 @@ export default function App() {
       <Header />
 
       <main className="dossier">
-        {/* Research Input Form */}
         <form className="submission-form" onSubmit={handleSubmit}>
           <div className="form-field main-idea-field">
             <label htmlFor="idea" className="field-label">
@@ -220,11 +216,11 @@ export default function App() {
                 STARTUP / PRODUCT NAME <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
-                type="text"
                 id="productName"
+                type="text"
                 value={productName}
                 onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. StudyPilot, FarmOptima, ClinicGuard"
+                placeholder="e.g. LegalMind AI"
               />
             </div>
 
@@ -233,51 +229,44 @@ export default function App() {
                 INDUSTRY OR VERTICAL <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
-                type="text"
                 id="industry"
-                list="industry-options"
+                type="text"
                 value={industry}
                 onChange={(e) => setIndustry(e.target.value)}
-                placeholder="e.g. HealthTech, AgriTech, FinTech, DevTools"
+                placeholder="e.g. LegalTech / Contract Automation"
               />
-              <datalist id="industry-options">
-                <option value="Healthcare & HealthTech" />
-                <option value="Agriculture & AgriTech" />
-                <option value="Fintech & Financial Services" />
-                <option value="EdTech & Education" />
-                <option value="DevSecOps & Developer Tools" />
-                <option value="CleanTech & Sustainability" />
-                <option value="Logistics & Supply Chain" />
-                <option value="Enterprise SaaS & Automation" />
-              </datalist>
             </div>
 
-            <div className="form-field form-field-full">
+            <div className="form-field">
               <label htmlFor="targetAudience" className="field-label">
                 TARGET CUSTOMER PROFILE <span className="label-optional">(OPTIONAL)</span>
               </label>
               <input
-                type="text"
                 id="targetAudience"
+                type="text"
                 value={targetAudience}
                 onChange={(e) => setTargetAudience(e.target.value)}
-                placeholder="e.g. Small and mid-sized clinics, Independent agronomists, University researchers"
+                placeholder="e.g. In-house General Counsels at mid-market SaaS"
               />
             </div>
           </div>
 
-          <div className="form-action-row">
+          <div className="form-actions">
             {hasFormContent && (
               <button
                 type="button"
-                className="btn-clear-form"
+                className="btn btn-secondary btn-clear"
                 onClick={handleClearForm}
                 disabled={status === "loading"}
               >
-                Clear
+                Clear Form
               </button>
             )}
-            <button type="submit" disabled={status === "loading"}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={status === "loading" || idea.trim().length === 0}
+            >
               {status === "loading" ? "Analyzing market signals…" : "Validate startup idea →"}
             </button>
           </div>
@@ -289,17 +278,15 @@ export default function App() {
           </div>
         )}
 
-        {/* Structured Research Loading State */}
         {status === "loading" && (
           <div className="loading-container">
             <div className="loading-status-badge">
               <span className="pulsing-dot" />
               <span className="loading-eyebrow">
-                VALIDATING STARTUP CONCEPT ACROSS MARKET VECTORS…
+                VALIDATING STARTUP CONCEPT ACROSS 9 INTELLIGENCE STAGES…
               </span>
             </div>
 
-            {/* Research Progress Stages */}
             <div className="research-stepper">
               {RESEARCH_STAGES.map((stg) => {
                 const isDone = activeStage > stg.id;
@@ -318,7 +305,6 @@ export default function App() {
               })}
             </div>
 
-            {/* Shimmering Skeleton Cards */}
             <div className="skeleton-list">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="skeleton-card">
@@ -336,10 +322,8 @@ export default function App() {
           </div>
         )}
 
-        {/* Results Presentation Dashboard */}
         {status === "done" && result && (
           <section className="results">
-            {/* Quick-Jump Section Navigation Bar */}
             <nav className="quick-jump-nav" aria-label="Report sections">
               <span className="quick-jump-label">§ JUMP TO:</span>
               <div className="quick-jump-links">
@@ -350,6 +334,9 @@ export default function App() {
                   { id: "section-market", label: "Market Sizing", show: Boolean(result.market_analysis) },
                   { id: "section-personas", label: "Personas", show: Boolean(result.market_analysis?.customer_segments?.length) },
                   { id: "section-competitors", label: "Competitors", show: Boolean(result.competitor_analysis) },
+                  { id: "section-swot", label: "SWOT & Risks", show: Boolean(result.swot_analysis) },
+                  { id: "section-mvp", label: "MVP Scope", show: Boolean(result.mvp_recommendation) },
+                  { id: "section-gtm", label: "GTM Strategy", show: Boolean(result.gtm_strategy) },
                   { id: "section-sources", label: "Sources", show: Boolean(result.sources && result.sources.length > 0) },
                 ]
                   .filter((sec) => sec.show)
@@ -366,7 +353,6 @@ export default function App() {
               </div>
             </nav>
 
-            {/* Top-Level Executive Summary & Real Metrics */}
             <ResultsSummary
               summary={result.summary}
               sources={result.sources}
@@ -375,30 +361,36 @@ export default function App() {
               opportunityCount={opportunityCount}
             />
 
-            {/* 1. Extracted Domain Context */}
             {result.extracted_data && <ExtractedMetadata data={result.extracted_data} />}
 
-            {/* 2. Visual Centerpiece: Evidence-Backed Market White-Space Map */}
             {result.white_space_analysis && (
               <WhiteSpaceAnalysis data={result.white_space_analysis} />
             )}
 
-            {/* 3. Market Opportunity Sizing & Attractiveness */}
             {result.market_analysis && (
               <MarketOpportunity data={result.market_analysis} />
             )}
 
-            {/* 4. Target Customer Segmentation */}
             {result.market_analysis?.customer_segments && (
-              <CustomerSegments segments={result.market_analysis.customer_segments} />
+              <CustomerSegments segments={result.market_analysis.customer_segments} demandSourceCount={result.summary?.counts?.["Customer Demand"] ?? 0} />
             )}
 
-            {/* 5. Competitor Discovery & Capability Matrix */}
             {result.competitor_analysis && (
               <CompetitorAnalysis data={result.competitor_analysis} />
             )}
 
-            {/* 6. Supporting Research Sources */}
+            {result.swot_analysis && (
+              <SWOTAnalysis data={result.swot_analysis} />
+            )}
+
+            {result.mvp_recommendation && (
+              <MVPRecommendation data={result.mvp_recommendation} />
+            )}
+
+            {result.gtm_strategy && (
+              <GTMStrategy data={result.gtm_strategy} />
+            )}
+
             <div id="section-sources" className="evidence-header-divider">
               <span className="evidence-divider-label">
                 § SUPPORTING RESEARCH EVIDENCE & SOURCE CITATIONS
