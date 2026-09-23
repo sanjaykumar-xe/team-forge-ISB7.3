@@ -232,8 +232,29 @@ class GTMStrategy(BaseModel):
     message: Optional[str] = Field(default=None)
 
 
+class ChatMessage(BaseModel):
+    """Single turn in a conversational advisor session."""
+    role: str = Field(..., description="'user' or 'advisor'")
+    content: str = Field(..., description="Message text")
+
+
+class AdvisorChatRequest(BaseModel):
+    """Request schema for conversational advisor endpoint."""
+    idea_id: str = Field(..., description="Identifies which validated idea this conversation is about")
+    message: str = Field(..., description="The user's question")
+    current_view: Optional[str] = Field(default=None, description="Current report section in view, e.g. 'competitors', 'market_sizing'")
+    conversation_history: Optional[List[ChatMessage]] = Field(default_factory=list, description="Prior turns in this session")
+
+
+class AdvisorChatResponse(BaseModel):
+    """Response schema for conversational advisor endpoint."""
+    reply: str = Field(..., description="Advisor answer text")
+    grounded_in: List[str] = Field(default_factory=list, description="List of report sections referenced for this answer")
+
+
 class ValidationResponse(BaseModel):
     """Full unified validation response combining Milestone 1, 2, and 3 intelligence."""
+    idea_id: Optional[str] = Field(default=None, description="Unique identifier for conversational advisor session.")
     idea: str
     extracted_data: Optional[Dict[str, Any]] = Field(default=None, description="Structured extraction output from LLM.")
     sources: List[SourceRecord] = Field(default_factory=list, description="Sanitized and verified search evidence.")
@@ -244,3 +265,33 @@ class ValidationResponse(BaseModel):
     mvp_recommendation: Optional[MVPRecommendation] = Field(default=None, description="MVP Recommendation (Milestone 3).")
     gtm_strategy: Optional[GTMStrategy] = Field(default=None, description="Go-To-Market Strategy (Milestone 3).")
     summary: Dict[str, Any] = Field(default_factory=dict, description="Source counts and category summaries.")
+
+# =============================================================================
+# AUTHENTICATION & ASYNC EMAIL AUTOMATION SCHEMAS
+# =============================================================================
+
+class GoogleAuthRequest(BaseModel):
+    """Request schema for Google OAuth verification."""
+    credential: str = Field(..., description="Google ID Token from @react-oauth/google")
+
+
+class AuthResponse(BaseModel):
+    """Response schema returning JWT token and user profile."""
+    token: str
+    user: Dict[str, Any]
+
+
+class AsyncValidationRequest(BaseModel):
+    """Request schema for asynchronous background validation with email delivery."""
+    idea: str = Field(..., description="Raw natural language startup pitch")
+    email: str = Field(..., description="Founder email address for notification & report delivery")
+    user_id: Optional[str] = Field(default=None, description="Optional logged-in user identifier")
+
+
+class AsyncValidationResponse(BaseModel):
+    """Immediate response schema returned when validation job is queued in background."""
+    job_id: str
+    status: str
+    message: str
+    eta: Optional[str] = "45-60s"
+

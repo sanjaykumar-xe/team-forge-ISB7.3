@@ -34,9 +34,6 @@ GROQ_MODELS = [
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
     "allam-2-7b",
-    "groq/compound",
-    "groq/compound-mini",
-    "qwen/qwen3.6-27b",
 ]
 
 
