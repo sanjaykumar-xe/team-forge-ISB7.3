@@ -661,6 +661,59 @@ export default function App() {
               </div>
             </nav>
 
+            {/* Dossier Executive Actions Toolbar */}
+            <div className="dossier-actions-bar">
+              <div className="dossier-meta-group">
+                <span className="dossier-pill-badge">CONFIDENTIAL FOUNDER DOSSIER</span>
+                <span className="dossier-id-badge">ID: #{result.idea_id || "TF-DOSSIER"}</span>
+              </div>
+              <div className="dossier-btn-group">
+                <button
+                  type="button"
+                  className="dossier-action-btn pdf-download-btn"
+                  onClick={() => window.print()}
+                  id="btn-download-pdf"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>Download as PDF</span>
+                </button>
+
+                {result.idea_id && (
+                  <a
+                    href={`${API_URL}/api/jobs/${result.idea_id}/email-preview`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="dossier-action-btn email-preview-link-btn"
+                    id="btn-view-email"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    <span>View Email Report</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Email report delivery notice */}
+            <div className="email-status-banner">
+              <span className="email-status-icon">✉️</span>
+              <span className="email-status-text">
+                <strong>Executive Email Generated:</strong> An autonomous HTML summary report was created for this dossier.{" "}
+                {result.idea_id && (
+                  <a href={`${API_URL}/api/jobs/${result.idea_id}/email-preview`} target="_blank" rel="noreferrer" className="email-status-link">
+                    Open / Preview Email Report &rarr;
+                  </a>
+                )}
+                {" "}<span className="email-note">(To send directly to your actual Gmail inbox, add your Gmail App Password to <code>backend/.env</code>).</span>
+              </span>
+            </div>
+
             <ResultsSummary
               summary={result.summary}
               sources={result.sources}

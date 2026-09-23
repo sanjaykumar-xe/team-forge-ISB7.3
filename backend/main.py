@@ -29,6 +29,7 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import ALLOWED_ORIGINS
@@ -224,3 +225,30 @@ def get_user_validation_history(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid session token")
     jobs = get_jobs_by_user(payload["user_id"])
     return {"jobs": jobs}
+
+@app.get("/api/email/status")
+def get_email_status():
+    """Checks whether live SMTP credentials are configured in backend/.env."""
+    from services.email_service import SMTP_USER, SMTP_PASSWORD, SMTP_SERVER, SMTP_PORT
+    is_configured = bool(SMTP_USER and SMTP_PASSWORD)
+    return {
+        "smtp_configured": is_configured,
+        "smtp_server": SMTP_SERVER if is_configured else None,
+        "smtp_user": SMTP_USER if is_configured else None,
+        "message": "Live Gmail SMTP active" if is_configured else "Live SMTP credentials not set; emails saved locally as HTML previews in backend/data/emails/"
+    }
+
+
+@app.get("/api/jobs/{job_id}/email-preview", response_class=HTMLResponse)
+def get_job_email_preview(job_id: str):
+    """Returns the rendered responsive HTML email preview for a validation job."""
+    from services.email_service import build_email_html
+    email_path = os.path.join(os.path.dirname(__file__), "data", "emails", f"{job_id}.html")
+    if os.path.exists(email_path):
+        with open(email_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    job = get_job_by_id(job_id)
+    if job and job.get("result"):
+        html = build_email_html(job["result"], job_id)
+        return HTMLResponse(content=html)
+    raise HTTPException(status_code=404, detail="Email preview not found for this job ID")
