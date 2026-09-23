@@ -25,7 +25,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import ALLOWED_ORIGINS
-from schemas.validation_schemas import IdeaSubmission, ValidationResponse
+import uuid
+from schemas.validation_schemas import (
+    IdeaSubmission,
+    ValidationResponse,
+    AdvisorChatRequest,
+    AdvisorChatResponse,
+)
+from services.advisor_service import store_validation_result, generate_advisor_reply
 from crew.orchestrator import ValidationCrewOrchestrator
 
 app = FastAPI(
@@ -64,7 +71,38 @@ def validate_idea(submission: IdeaSubmission):
     """
     try:
         response = orchestrator.validate_idea(submission)
+        if not response.idea_id:
+            response.idea_id = f"idea-{uuid.uuid4().hex[:8]}"
+        store_validation_result(response.idea_id, response.model_dump())
         return response
     except Exception as exc:
         print(f"[main.py] Validation error: {exc}", flush=True)
         raise HTTPException(status_code=500, detail=f"Validation error: {str(exc)}")
+
+@app.post("/api/advisor/chat", response_model=AdvisorChatResponse)
+def advisor_chat(request: AdvisorChatRequest):
+    """
+    Conversational Startup Advisor Endpoint (Milestone 3):
+    Provides multi-turn, context-aware interactive venture advice
+    grounded strictly in the validated idea dossier.
+    """
+    try:
+        client_history = (
+            [m.model_dump() for m in request.conversation_history]
+            if request.conversation_history
+            else None
+        )
+        reply_data = generate_advisor_reply(
+            idea_id=request.idea_id,
+            message=request.message,
+            current_view=request.current_view,
+            client_history=client_history,
+        )
+        return AdvisorChatResponse(
+            reply=reply_data["reply"],
+            grounded_in=reply_data.get("grounded_in", []),
+        )
+    except Exception as exc:
+        print(f"[main.py] Advisor chat error: {exc}", flush=True)
+        raise HTTPException(status_code=500, detail=f"Advisor chat error: {str(exc)}")
+

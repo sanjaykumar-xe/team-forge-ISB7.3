@@ -11,6 +11,7 @@ import WhiteSpaceAnalysis from "./components/WhiteSpaceAnalysis";
 import SWOTAnalysis from "./components/SWOTAnalysis";
 import MVPRecommendation from "./components/MVPRecommendation";
 import GTMStrategy from "./components/GTMStrategy";
+import StartupAdvisorChat from "./components/StartupAdvisorChat";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -68,6 +69,7 @@ export default function App() {
       "section-mvp",
       "section-gtm",
       "section-sources",
+      "section-advisor",
     ];
 
     const handleScroll = () => {
@@ -338,6 +340,7 @@ export default function App() {
                   { id: "section-mvp", label: "MVP Scope", show: Boolean(result.mvp_recommendation) },
                   { id: "section-gtm", label: "GTM Strategy", show: Boolean(result.gtm_strategy) },
                   { id: "section-sources", label: "Sources", show: Boolean(result.sources && result.sources.length > 0) },
+                { id: "section-advisor", label: "Advisor Chat", show: true },
                 ]
                   .filter((sec) => sec.show)
                   .map((sec) => (
@@ -417,6 +420,12 @@ export default function App() {
                 })}
               </div>
             )}
+
+            <StartupAdvisorChat
+              ideaId={result.idea_id}
+              currentView={activeSection}
+              apiUrl={API_URL}
+            />
           </section>
         )}
       </main>

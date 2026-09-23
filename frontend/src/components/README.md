@@ -20,6 +20,7 @@ This directory contains the modular React presentation components for the Startu
 | `GTMStrategy.jsx` | Go-To-Market Plan | Idea-specific positioning statement, customer acquisition channels with fit scores, and launch timeline. |
 | `CategorySection.jsx` | Sources Section | Grouped accordion view of all collected research evidence across categories. |
 | `SourceCard.jsx` | Individual Citation Card | Displays verified article title, URL, snippet, and category badge. |
+| `StartupAdvisorChat.jsx` | Interactive Advisor | Conversational venture partner chat drawer with real-time viewport synchronizer, anti-hallucination banner, and grounded_in tags. |
 
 ---
 

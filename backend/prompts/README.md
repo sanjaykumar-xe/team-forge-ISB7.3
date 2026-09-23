@@ -20,6 +20,7 @@ Each reasoning stage has dedicated pair files:
 | `swot_system.md` / `swot_task.md` | SWOT Analysis & Risk Assessment Agent |
 | `mvp_system.md` / `mvp_task.md` | MVP Recommendation & Feature Scoping Agent |
 | `gtm_system.md` / `gtm_task.md` | Go-To-Market Strategy Agent |
+| `advisor_chat_system.md` | Conversational Startup Advisor (Milestone 3) |
 
 ---
 
