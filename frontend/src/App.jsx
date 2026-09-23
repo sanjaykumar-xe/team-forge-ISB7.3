@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 import Header from "./components/Header";
+import UserAuthHeader from "./components/UserAuthHeader";
+import UserReportsModal from "./components/UserReportsModal";
 import ExtractedMetadata from "./components/ExtractedMetadata";
 import ResultsSummary from "./components/ResultsSummary";
 import CategorySection from "./components/CategorySection";
@@ -36,25 +38,155 @@ export default function App() {
   const [productName, setProductName] = useState("");
   const [industry, setIndustry] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | loading | done | error
+  const [status, setStatus] = useState("idle"); // idle | loading | async_running | done | error
   const [result, setResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeStage, setActiveStage] = useState(1);
   const [activeSection, setActiveSection] = useState("section-overview");
 
+  // Auth State
+  const [user, setUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("teamforge_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [token, setToken] = useState(() => localStorage.getItem("teamforge_token") || null);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+
+  // Email Delivery State
+  const [sendEmailNotification, setSendEmailNotification] = useState(true);
+  const [deliveryEmail, setDeliveryEmail] = useState(() => {
+    try {
+      const saved = localStorage.getItem("teamforge_user");
+      return saved ? JSON.parse(saved)?.email || "" : "";
+    } catch {
+      return "";
+    }
+  });
+  const [asyncJobInfo, setAsyncJobInfo] = useState(null);
+  const [asyncElapsed, setAsyncElapsed] = useState(0);
+
+  const pollingRef = useRef(null);
+
+  // Sync email when user signs in
   useEffect(() => {
-    if (status !== "loading") {
+    if (user?.email && !deliveryEmail) {
+      setDeliveryEmail(user.email);
+    }
+  }, [user]);
+
+  // Check URL params for shared or emailed job_id
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const jobId = params.get("job_id");
+    if (jobId) {
+      fetch(`${API_URL}/api/jobs/${jobId}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Job not found");
+          return res.json();
+        })
+        .then((job) => {
+          if (job.status === "completed" && job.result) {
+            setResult(job.result);
+            setStatus("done");
+          } else if (job.status === "running" || job.status === "queued") {
+            setAsyncJobInfo({
+              jobId: job.job_id,
+              email: job.email,
+              status: job.status,
+            });
+            setStatus("async_running");
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load job from URL param:", err);
+        });
+    }
+  }, []);
+
+  // Verify auth token on initial load
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Token expired");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.user) {
+          setUser(data.user);
+          localStorage.setItem("teamforge_user", JSON.stringify(data.user));
+        }
+      })
+      .catch(() => {
+        // Expired or invalid token
+        handleLogout();
+      });
+  }, [token]);
+
+  // Dynamic step progression for loading or async_running
+  useEffect(() => {
+    if (status !== "loading" && status !== "async_running") {
       setActiveStage(1);
       return;
     }
 
     const stageInterval = setInterval(() => {
       setActiveStage((prev) => (prev < RESEARCH_STAGES.length ? prev + 1 : prev));
-    }, 2800);
+    }, 3200);
 
     return () => clearInterval(stageInterval);
   }, [status]);
 
+  // Async polling timer
+  useEffect(() => {
+    if (status !== "async_running" || !asyncJobInfo?.jobId) {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setAsyncElapsed((prev) => prev + 1);
+    }, 1000);
+
+    const pollJob = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/jobs/${asyncJobInfo.jobId}`);
+        if (!res.ok) return;
+        const jobData = await res.json();
+
+        if (jobData.status === "completed" && jobData.result) {
+          clearInterval(timer);
+          clearInterval(pollingRef.current);
+          setResult(jobData.result);
+          setStatus("done");
+          setAsyncJobInfo(null);
+        } else if (jobData.status === "failed") {
+          clearInterval(timer);
+          clearInterval(pollingRef.current);
+          setErrorMessage(jobData.error_message || "Async validation failed.");
+          setStatus("error");
+          setAsyncJobInfo(null);
+        }
+      } catch (e) {
+        console.warn("Async polling error:", e);
+      }
+    };
+
+    pollingRef.current = setInterval(pollJob, 4000);
+
+    return () => {
+      clearInterval(timer);
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [status, asyncJobInfo]);
+
+  // Section observer for quick-jump navigation
   useEffect(() => {
     if (status !== "done") return;
 
@@ -106,6 +238,36 @@ export default function App() {
     }
   };
 
+  const handleLogin = async (credential) => {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      if (!res.ok) {
+        throw new Error("Authentication failed");
+      }
+      const data = await res.json();
+      setUser(data.user);
+      setToken(data.token);
+      localStorage.setItem("teamforge_user", JSON.stringify(data.user));
+      localStorage.setItem("teamforge_token", data.token);
+      if (data.user?.email) {
+        setDeliveryEmail(data.user.email);
+      }
+    } catch (err) {
+      alert("Sign-in error: " + err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem("teamforge_user");
+    localStorage.removeItem("teamforge_token");
+  };
+
   function handleClearForm() {
     setIdea("");
     setProductName("");
@@ -124,15 +286,61 @@ export default function App() {
       return;
     }
 
+    if (sendEmailNotification && (!deliveryEmail || !deliveryEmail.includes("@"))) {
+      setErrorMessage("Please enter a valid Gmail / Email address to receive your validation dossier.");
+      setStatus("error");
+      return;
+    }
+
     let cleanIdea = idea.trim().replace(/^(?:describe the startup concept|startup concept|idea|concept)\s*:\s*/i, "");
     let cleanProductName = productName.trim().replace(/^(?:startup\s*\/?\s*product name|product name|name)\s*:\s*/i, "");
     let cleanIndustry = industry.trim().replace(/^(?:industry or vertical|industry|vertical)\s*:\s*/i, "");
     let cleanTargetAudience = targetAudience.trim().replace(/^(?:target customer profile|target audience|target customer)\s*:\s*/i, "");
 
-    setStatus("loading");
     setErrorMessage("");
     setResult(null);
 
+    // If email delivery requested -> Async execution with background worker
+    if (sendEmailNotification && deliveryEmail) {
+      setStatus("async_running");
+      setAsyncElapsed(0);
+      try {
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`${API_URL}/api/validate/async`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            idea: cleanIdea,
+            product_name: cleanProductName || undefined,
+            industry: cleanIndustry || undefined,
+            target_audience: cleanTargetAudience || undefined,
+            email: deliveryEmail.trim(),
+          }),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.detail || `Async submission failed (${res.status})`);
+        }
+
+        const data = await res.json();
+        setAsyncJobInfo({
+          jobId: data.job_id,
+          email: deliveryEmail.trim(),
+          status: "queued",
+          message: data.message,
+        });
+      } catch (err) {
+        setErrorMessage(err.message || "Failed to submit async validation job.");
+        setStatus("error");
+      }
+      return;
+    }
+
+    // Synchronous execution (traditional flow)
+    setStatus("loading");
     try {
       const res = await fetch(`${API_URL}/api/validate`, {
         method: "POST",
@@ -166,7 +374,9 @@ export default function App() {
       setResult(data);
       setStatus("done");
     } catch (err) {
-      setErrorMessage(err.message || "Something went wrong during market analysis. Please check your backend connection and try again.");
+      setErrorMessage(
+        err.message || "Something went wrong during market analysis. Please check your backend connection and try again."
+      );
       setStatus("error");
     }
   }
@@ -190,6 +400,16 @@ export default function App() {
 
   return (
     <div className="page">
+      <div className="top-navigation-bar">
+        <UserAuthHeader
+          user={user}
+          token={token}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+          onOpenReports={() => setShowReportsModal(true)}
+        />
+      </div>
+
       <Header />
 
       <main className="dossier">
@@ -253,13 +473,50 @@ export default function App() {
             </div>
           </div>
 
+          {/* Email Automation Feature */}
+          <div className="email-automation-card">
+            <label className="email-checkbox-label">
+              <input
+                type="checkbox"
+                checked={sendEmailNotification}
+                onChange={(e) => setSendEmailNotification(e.target.checked)}
+                className="email-checkbox"
+              />
+              <span className="email-checkbox-custom" />
+              <div className="email-checkbox-text">
+                <span className="email-checkbox-title">
+                  ⚡ Asynchronous Research & Gmail Delivery <span className="free-tag">100% FREE</span>
+                </span>
+                <span className="email-checkbox-desc">
+                  Don't want to wait on this screen? We'll run the multi-agent validation in the background and email the full intelligence report to your Gmail automatically.
+                </span>
+              </div>
+            </label>
+
+            {sendEmailNotification && (
+              <div className="email-input-wrapper">
+                <input
+                  type="email"
+                  className="email-delivery-input"
+                  placeholder="Enter your Gmail address (e.g. founder@gmail.com)"
+                  value={deliveryEmail}
+                  onChange={(e) => setDeliveryEmail(e.target.value)}
+                  required={sendEmailNotification}
+                />
+                <span className="email-delivery-hint">
+                  ✉️ You can safely navigate away or close this browser tab anytime after starting.
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="form-actions">
             {hasFormContent && (
               <button
                 type="button"
                 className="btn btn-secondary btn-clear"
                 onClick={handleClearForm}
-                disabled={status === "loading"}
+                disabled={status === "loading" || status === "async_running"}
               >
                 Clear Form
               </button>
@@ -267,9 +524,13 @@ export default function App() {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={status === "loading" || idea.trim().length === 0}
+              disabled={status === "loading" || status === "async_running" || idea.trim().length === 0}
             >
-              {status === "loading" ? "Analyzing market signals…" : "Validate startup idea →"}
+              {status === "loading" || status === "async_running"
+                ? "Analyzing market signals…"
+                : sendEmailNotification
+                ? "Launch Async Validation & Email Report →"
+                : "Validate startup idea →"}
             </button>
           </div>
         </form>
@@ -280,6 +541,50 @@ export default function App() {
           </div>
         )}
 
+        {/* Async Background Validation Notification Card */}
+        {status === "async_running" && asyncJobInfo && (
+          <div className="async-status-card">
+            <div className="async-card-header">
+              <div className="async-badge">
+                <span className="pulsing-dot" />
+                <span>BACKGROUND RESEARCH ACTIVE ({asyncElapsed}s)</span>
+              </div>
+              <span className="async-job-id">Job: #{asyncJobInfo.jobId}</span>
+            </div>
+
+            <div className="async-card-body">
+              <h4 className="async-headline">
+                Your Startup Dossier is being synthesized across 9 intelligence vectors
+              </h4>
+              <p className="async-subtext">
+                Validation takes ~45-60 seconds. You do <strong>not</strong> need to stay on this page — we will deliver the executive dossier directly to <strong>{asyncJobInfo.email}</strong>.
+              </p>
+              <div className="async-callout">
+                <span>💡 Feel free to close this tab or check your email shortly. Or stay right here — this view will automatically open the report the moment research completes!</span>
+              </div>
+            </div>
+
+            <div className="research-stepper">
+              {RESEARCH_STAGES.map((stg) => {
+                const isDone = activeStage > stg.id;
+                const isActive = activeStage === stg.id;
+                return (
+                  <div
+                    key={stg.id}
+                    className={`stepper-item ${isDone ? "step-done" : ""} ${isActive ? "step-active" : ""}`}
+                  >
+                    <span className="step-indicator">
+                      {isDone ? "✓" : `0${stg.id}`}
+                    </span>
+                    <span className="step-text">{stg.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Synchronous Loading State */}
         {status === "loading" && (
           <div className="loading-container">
             <div className="loading-status-badge">
@@ -340,7 +645,7 @@ export default function App() {
                   { id: "section-mvp", label: "MVP Scope", show: Boolean(result.mvp_recommendation) },
                   { id: "section-gtm", label: "GTM Strategy", show: Boolean(result.gtm_strategy) },
                   { id: "section-sources", label: "Sources", show: Boolean(result.sources && result.sources.length > 0) },
-                { id: "section-advisor", label: "Advisor Chat", show: true },
+                  { id: "section-advisor", label: "Advisor Chat", show: true },
                 ]
                   .filter((sec) => sec.show)
                   .map((sec) => (
@@ -375,7 +680,10 @@ export default function App() {
             )}
 
             {result.market_analysis?.customer_segments && (
-              <CustomerSegments segments={result.market_analysis.customer_segments} demandSourceCount={result.summary?.counts?.["Customer Demand"] ?? 0} />
+              <CustomerSegments
+                segments={result.market_analysis.customer_segments}
+                demandSourceCount={result.summary?.counts?.["Customer Demand"] ?? 0}
+              />
             )}
 
             {result.competitor_analysis && (
@@ -429,6 +737,18 @@ export default function App() {
           </section>
         )}
       </main>
+
+      {/* User Saved Reports History Drawer */}
+      <UserReportsModal
+        token={token}
+        apiUrl={API_URL}
+        isOpen={showReportsModal}
+        onClose={() => setShowReportsModal(false)}
+        onSelectReport={(selectedReport) => {
+          setResult(selectedReport);
+          setStatus("done");
+        }}
+      />
     </div>
   );
 }

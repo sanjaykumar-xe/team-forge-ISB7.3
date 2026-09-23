@@ -265,3 +265,33 @@ class ValidationResponse(BaseModel):
     mvp_recommendation: Optional[MVPRecommendation] = Field(default=None, description="MVP Recommendation (Milestone 3).")
     gtm_strategy: Optional[GTMStrategy] = Field(default=None, description="Go-To-Market Strategy (Milestone 3).")
     summary: Dict[str, Any] = Field(default_factory=dict, description="Source counts and category summaries.")
+
+# =============================================================================
+# AUTHENTICATION & ASYNC EMAIL AUTOMATION SCHEMAS
+# =============================================================================
+
+class GoogleAuthRequest(BaseModel):
+    """Request schema for Google OAuth verification."""
+    credential: str = Field(..., description="Google ID Token from @react-oauth/google")
+
+
+class AuthResponse(BaseModel):
+    """Response schema returning JWT token and user profile."""
+    token: str
+    user: Dict[str, Any]
+
+
+class AsyncValidationRequest(BaseModel):
+    """Request schema for asynchronous background validation with email delivery."""
+    idea: str = Field(..., description="Raw natural language startup pitch")
+    email: str = Field(..., description="Founder email address for notification & report delivery")
+    user_id: Optional[str] = Field(default=None, description="Optional logged-in user identifier")
+
+
+class AsyncValidationResponse(BaseModel):
+    """Immediate response schema returned when validation job is queued in background."""
+    job_id: str
+    status: str
+    message: str
+    eta: Optional[str] = "45-60s"
+

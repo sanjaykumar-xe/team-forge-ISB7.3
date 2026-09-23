@@ -152,6 +152,23 @@ Open your browser at `http://localhost:5173`.
 
 ---
 
+
+---
+
+## ⚡ Asynchronous Validation & Email Automation ($0 Stack)
+
+Founders no longer need to wait on the browser tab while the 9-stage multi-agent pipeline synthesizes live web research:
+
+1. **Google OAuth 2.0 & Session Management**:
+   - Zero-friction Google / Gmail sign-in with 7-day signed JWT tokens.
+   - User profile and validated dossier histories stored securely in zero-config local SQLite (`backend/data/team_forge.db`).
+2. **Background Multi-Agent Execution**:
+   - Asynchronous job execution (`POST /api/validate/async`) powered by native FastAPI `BackgroundTasks`.
+   - Real-time job polling endpoint (`GET /api/jobs/{job_id}`) so active users can see instantaneous transitions to the completed dossier.
+3. **Automated Gmail Executive Delivery**:
+   - Built-in responsive HTML email generator (`backend/services/email_service.py`) delivering executive summaries, market sizing, competitor breakdowns, and direct dashboard deep links directly to the founder's inbox.
+   - 100% Free architecture: Uses standard Gmail TLS SMTP (or automatic local HTML preview storage when SMTP credentials are not configured).
+
 ## 🧪 Testing & Benchmark Verification
 
 ```bash
