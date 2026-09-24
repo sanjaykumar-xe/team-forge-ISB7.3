@@ -696,6 +696,42 @@ export default function App() {
                 </button>
 
                 {result.idea_id && (
+                  <button
+                    type="button"
+                    className="dossier-action-btn email-send-action-btn"
+                    style={{ background: "#2563eb", color: "#ffffff", borderColor: "#1d4ed8" }}
+                    onClick={async () => {
+                      const emailTarget = user?.email || deliveryEmail || prompt("Enter email address to send report to:");
+                      if (!emailTarget || !emailTarget.includes("@")) return;
+                      try {
+                        const headers = { "Content-Type": "application/json" };
+                        if (token) headers["Authorization"] = `Bearer ${token}`;
+                        const res = await fetch(`${API_URL}/api/jobs/${result.idea_id}/send-email`, {
+                          method: "POST",
+                          headers,
+                          body: JSON.stringify({ email: emailTarget.trim() }),
+                        });
+                        const data = await res.json();
+                        if (res.ok) {
+                          alert(`Validation dossier successfully sent to ${data.email || emailTarget}!`);
+                        } else {
+                          alert(`Could not send email: ${data.detail || "Server error"}`);
+                        }
+                      } catch (e) {
+                        alert(`Failed to send email: ${e.message}`);
+                      }
+                    }}
+                    id="btn-dispatch-email"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect width="20" height="16" x="2" y="4" rx="2" />
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                    </svg>
+                    <span>Email Dossier to Me</span>
+                  </button>
+                )}
+
+                {result.idea_id && (
                   <a
                     href={`${API_URL}/api/jobs/${result.idea_id}/email-preview`}
                     target="_blank"
@@ -807,6 +843,7 @@ export default function App() {
       {/* User Saved Reports History Drawer */}
       <UserReportsModal
         token={token}
+        user={user}
         apiUrl={API_URL}
         isOpen={showReportsModal}
         onClose={() => setShowReportsModal(false)}

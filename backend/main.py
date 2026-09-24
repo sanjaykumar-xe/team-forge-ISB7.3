@@ -28,7 +28,7 @@ if hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Header
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Header, Body
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -49,7 +49,7 @@ from services.auth_service import (
     create_access_token,
     verify_access_token,
 )
-from services.email_service import send_validation_email
+from services.email_service import send_validation_email, test_smtp_connection
 from db.database import (
     get_user_by_email,
     create_or_get_user,
@@ -103,7 +103,11 @@ def health_check():
 
 
 @app.post("/api/validate", response_model=ValidationResponse)
-def validate_idea(submission: IdeaSubmission, authorization: Optional[str] = Header(None)):
+def validate_idea(
+    submission: IdeaSubmission,
+    background_tasks: BackgroundTasks,
+    authorization: Optional[str] = Header(None),
+):
     """
     Synchronous multi-agent validation pipeline endpoint:
       1. Validates English coherence / gibberish check.
@@ -111,6 +115,7 @@ def validate_idea(submission: IdeaSubmission, authorization: Optional[str] = Hea
       3. Discovers high-conviction white-space opportunities.
       4. Synthesizes SWOT, MVP recommendation, and GTM strategy.
       5. Returns comprehensive intelligence and caches dossier by idea_id.
+      6. Automatically emails executive dossier to user if authenticated.
     """
     try:
         response = orchestrator.validate_idea(submission)
@@ -131,6 +136,12 @@ def validate_idea(submission: IdeaSubmission, authorization: Optional[str] = Hea
         if user_id:
             create_validation_job(response.idea_id, submission.idea, user_email, user_id)
             update_job_status(response.idea_id, "completed", result_dict=res_dict)
+
+        # Automatically dispatch email dossier to authenticated user or recipient email
+        target_email = user_email
+        if target_email and "@" in target_email:
+            background_tasks.add_task(send_validation_email, target_email, res_dict, response.idea_id)
+            print(f"[main.py] Queued automatic validation email to {target_email} in background.", flush=True)
 
         return response
     except Exception as exc:
@@ -278,3 +289,51 @@ def get_job_email_preview(job_id: str):
         html = build_email_html(job["result"], job_id)
         return HTMLResponse(content=html)
     raise HTTPException(status_code=404, detail="Email preview not found for this job ID")
+
+@app.post("/api/jobs/{job_id}/send-email")
+def send_job_email_endpoint(
+    job_id: str,
+    payload: Dict[str, Any] = Body(default={}),
+    authorization: Optional[str] = Header(None),
+):
+    """
+    Direct endpoint to dispatch or re-send the validation dossier to an email address.
+    """
+    job = get_job_by_id(job_id)
+    report_dict = None
+    email = payload.get("email", "").strip()
+
+    if job and job.get("result"):
+        report_dict = job["result"]
+        if not email:
+            email = job.get("email", "")
+
+    if not report_dict:
+        cached = get_validation_result(job_id)
+        if cached:
+            report_dict = cached
+
+    if not report_dict:
+        raise HTTPException(status_code=404, detail="Validation dossier not found for this ID")
+
+    if not email and authorization and authorization.startswith("Bearer "):
+        token_payload = verify_access_token(authorization.split(" ")[1])
+        if token_payload:
+            email = token_payload.get("email", "")
+
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid recipient email address is required.")
+
+    success = send_validation_email(email, report_dict, job_id)
+    return {
+        "success": success,
+        "email": email,
+        "job_id": job_id,
+        "message": f"Validation dossier dispatched to {email}" if success else "Email saved locally as preview.",
+    }
+
+
+@app.get("/api/email/test")
+def test_email_endpoint(to_email: str = "sanjaykumar.mxe@gmail.com"):
+    """Tests live SMTP connectivity and dispatches a test email."""
+    return test_smtp_connection(to_email)

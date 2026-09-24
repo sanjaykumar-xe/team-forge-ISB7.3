@@ -11,6 +11,7 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.header import Header
 from typing import Any, Dict, Optional
 
 SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
@@ -163,33 +164,45 @@ def build_email_html(report_data: Dict[str, Any], job_id: str) -> str:
 def send_validation_email(to_email: str, report_data: Dict[str, Any], job_id: str) -> bool:
     """
     Sends the completed validation report to the user's Gmail.
+    Supports dual-port delivery: tries Port 587 (STARTTLS), then fails over to Port 465 (SSL).
     If SMTP credentials are not configured, saves a local HTML preview to backend/data/emails/.
     """
     extracted = report_data.get("extracted_data") or {}
     product_name = extracted.get("product_name") or "Your Startup Pitch"
-    subject = f"🚀 Team Forge Validation Report: {product_name}"
+    subject = f"[Team Forge] Validation Dossier: {product_name}"
     html_content = build_email_html(report_data, job_id)
 
-    # If live SMTP credentials are configured, send via TLS SMTP
+    # If live SMTP credentials are configured, send via TLS or SSL SMTP
     if SMTP_USER and SMTP_PASSWORD:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = Header(subject, "utf-8")
+        msg["From"] = f"Team Forge AI <{SMTP_USER}>"
+        msg["To"] = to_email
+        part = MIMEText(html_content, "html", "utf-8")
+        msg.attach(part)
+
+        # Attempt 1: Port 587 STARTTLS
         try:
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = subject
-            msg["From"] = f"Team Forge AI <{SMTP_USER}>"
-            msg["To"] = to_email
-
-            part = MIMEText(html_content, "html")
-            msg.attach(part)
-
-            server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+            server = smtplib.SMTP(SMTP_SERVER, 587, timeout=15)
             server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_USER, [to_email], msg.as_string())
             server.quit()
-            print(f"[email_service] Successfully sent validation email to {to_email}")
+            print(f"[email_service] Successfully sent validation email to {to_email} via Port 587 STARTTLS", flush=True)
             return True
-        except Exception as exc:
-            print(f"[email_service] SMTP sending failed: {exc}. Saving local preview instead.")
+        except Exception as exc587:
+            print(f"[email_service] Port 587 failed: {exc587}. Retrying via Port 465 SSL...", flush=True)
+
+        # Attempt 2: Port 465 SSL Fallback
+        try:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, 465, timeout=15)
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, [to_email], msg.as_string())
+            server.quit()
+            print(f"[email_service] Successfully sent validation email to {to_email} via Port 465 SSL", flush=True)
+            return True
+        except Exception as exc465:
+            print(f"[email_service] Port 465 SSL failed: {exc465}. Falling back to preview.", flush=True)
 
     # Local development preview fallback
     email_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "emails")
@@ -198,6 +211,35 @@ def send_validation_email(to_email: str, report_data: Dict[str, Any], job_id: st
     with open(preview_file, "w", encoding="utf-8") as f:
         f.write(html_content)
 
-    print(f"[email_service] Live SMTP not active (set SMTP_USER and SMTP_PASSWORD in backend/.env).")
-    print(f"[email_service] Saved responsive HTML email preview to: {preview_file}")
-    return True
+    print(f"[email_service] Live SMTP not active or failed. Saved responsive HTML email preview to: {preview_file}", flush=True)
+    return False
+
+
+def test_smtp_connection(to_email: str) -> Dict[str, Any]:
+    """Tests live Gmail SMTP connection and dispatches a verification email."""
+    if not SMTP_USER or not SMTP_PASSWORD:
+        return {"success": False, "error": "SMTP_USER or SMTP_PASSWORD not configured in environment"}
+
+    subject = "[Team Forge] Live SMTP Diagnostic Test"
+    body = "Team Forge live email delivery is verified and fully functional."
+    msg = MIMEText(body, "plain", "utf-8")
+    msg["Subject"] = Header(subject, "utf-8")
+    msg["From"] = f"Team Forge AI <{SMTP_USER}>"
+    msg["To"] = to_email
+
+    try:
+        server = smtplib.SMTP(SMTP_SERVER, 587, timeout=12)
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.sendmail(SMTP_USER, [to_email], msg.as_string())
+        server.quit()
+        return {"success": True, "method": "Port 587 STARTTLS", "recipient": to_email}
+    except Exception as e587:
+        try:
+            server = smtplib.SMTP_SSL(SMTP_SERVER, 465, timeout=12)
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, [to_email], msg.as_string())
+            server.quit()
+            return {"success": True, "method": "Port 465 SSL", "recipient": to_email, "error_587": str(e587)}
+        except Exception as e465:
+            return {"success": False, "error_587": str(e587), "error_465": str(e465)}
