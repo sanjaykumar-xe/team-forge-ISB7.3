@@ -326,6 +326,7 @@ export default function App() {
             industry: cleanIndustry || undefined,
             target_audience: cleanTargetAudience || undefined,
             email: deliveryEmail.trim(),
+            user_id: user?.id || undefined,
           }),
         });
 
@@ -351,9 +352,12 @@ export default function App() {
     // Synchronous execution (traditional flow)
     setStatus("loading");
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch(`${API_URL}/api/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           idea: cleanIdea,
           product_name: cleanProductName || undefined,
