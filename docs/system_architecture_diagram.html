@@ -1,15 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Team Forge — Startup Idea Validator System Architecture</title>
+  <title>Team Forge — Full System Architecture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       box-sizing: border-box;
@@ -19,112 +16,167 @@
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f1f5fa;
+      background-color: #f8fafc;
       background-image:
-        linear-gradient(to right, rgba(180, 202, 230, 0.4) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(180, 202, 230, 0.4) 1px, transparent 1px);
-      background-size: 24px 24px;
+        linear-gradient(to right, rgba(203, 213, 225, 0.4) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(203, 213, 225, 0.4) 1px, transparent 1px);
+      background-size: 20px 20px;
       color: #0f172a;
-      padding: 32px 20px;
-      min-width: 1360px;
+      padding: 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      min-width: 1560px;
     }
 
     .canvas-container {
-      width: 1380px;
+      width: 1520px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 32px 28px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
       position: relative;
-      margin: 0 auto;
     }
 
-    /* Header */
-    .main-title {
+    /* Top Logo & Header */
+    .header-section {
       text-align: center;
-      font-size: 34px;
-      font-weight: 800;
-      letter-spacing: -0.025em;
-      color: #0a192f;
       margin-bottom: 24px;
     }
 
-    .main-title span {
-      color: #2563eb;
+    .brand-logo-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
     }
 
-    /* Common Box Styles */
-    .tier-card {
-      border-radius: 12px;
-      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
-      background: #ffffff;
-      position: relative;
-      border: 1.5px solid #cbd5e1;
+    .bulb-icon {
+      width: 38px;
+      height: 38px;
     }
 
-    .tier-header {
-      padding: 8px 16px;
-      font-weight: 700;
-      font-size: 15px;
-      text-align: center;
-      border-top-left-radius: 10px;
-      border-top-right-radius: 10px;
+    .brand-title {
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: #0f172a;
+    }
+
+    .brand-title span {
+      color: #3b82f6;
+    }
+
+    .brand-tagline {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .arch-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e3a8a;
       letter-spacing: -0.01em;
+    }
+
+    /* Common Card Styles */
+    .section-card {
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    .section-header {
+      padding: 9px 18px;
+      font-weight: 700;
+      font-size: 13.5px;
       color: #ffffff;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      justify-content: space-between;
     }
 
-    /* Left Floating Labels */
-    .tier-side-label {
-      position: absolute;
-      left: -210px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 190px;
-      text-align: right;
+    /* TOP ROW: User + Frontend */
+    .top-tier-row {
+      display: flex;
+      align-items: stretch;
+      gap: 16px;
+      margin-bottom: 18px;
     }
 
-    .tier-side-label .name {
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      color: #0f172a;
-      line-height: 1.25;
-    }
-
-    .tier-side-label .cloud {
-      font-size: 12px;
-      font-weight: 600;
-      color: #475569;
-      display: inline-flex;
+    .user-block {
+      width: 170px;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: 12px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 5px;
-      margin-top: 4px;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
-    /* Tier 1: Client */
-    .client-tier {
-      width: 860px;
-      margin: 0 auto;
-      border-color: #3b82f6;
-      background: #eef6ff;
+    .user-avatar-circle {
+      width: 48px;
+      height: 48px;
+      background: #f59e0b;
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
     }
 
-    .client-tier .tier-header {
+    .user-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #92400e;
+    }
+
+    .user-desc {
+      font-size: 11px;
+      color: #b45309;
+      line-height: 1.35;
+    }
+
+    .flow-arrow-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 20px;
+    }
+
+    .frontend-block {
+      flex: 1;
+      background: #f0f7ff;
+      border-color: #93c5fd;
+    }
+
+    .frontend-header {
       background: #2563eb;
     }
 
-    .client-inner {
-      padding: 14px 16px;
+    .frontend-grid {
+      padding: 12px 16px;
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr) 130px;
       gap: 10px;
     }
 
-    .client-component {
+    .fe-item {
       background: #ffffff;
       border: 1.5px solid #bfdbfe;
       border-radius: 8px;
@@ -132,397 +184,380 @@
       text-align: center;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      gap: 4px;
       min-height: 72px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
-    .client-component .title {
-      font-size: 12px;
+    .fe-item.device-item {
+      background: #eff6ff;
+      border: 1.5px dashed #60a5fa;
+    }
+
+    .fe-icon {
+      font-size: 18px;
+    }
+
+    .fe-title {
+      font-size: 11.5px;
       font-weight: 700;
       color: #1e3a8a;
-      line-height: 1.25;
-    }
-
-    .client-component .desc {
-      font-size: 10px;
-      color: #64748b;
-      margin-top: 3px;
       line-height: 1.2;
     }
 
-    /* Flow Connectors Row 1 */
-    .connector-row-1 {
-      width: 860px;
-      height: 48px;
-      margin: 0 auto;
-      position: relative;
+    .fe-desc {
+      font-size: 9.5px;
+      color: #64748b;
     }
 
-    .arrow-badge {
-      background: #e0f2fe;
-      border: 1.5px solid #7dd3fc;
-      border-radius: 6px;
-      padding: 3px 10px;
-      font-size: 11px;
-      font-weight: 600;
-      font-family: 'JetBrains Mono', monospace;
-      color: #0369a1;
-      position: absolute;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-      white-space: nowrap;
-    }
-
-    /* Tier 2: API Gateway */
-    .backend-tier {
-      width: 680px;
-      margin: 0 auto;
-      border-color: #f97316;
-      background: #fff7ed;
-    }
-
-    .backend-tier .tier-header {
-      background: #ea580c;
-    }
-
-    .backend-inner {
-      padding: 12px 16px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-
-    .backend-component {
-      background: #ffffff;
-      border: 1.5px solid #fed7aa;
-      border-radius: 8px;
-      padding: 10px 12px;
-      text-align: center;
-    }
-
-    .backend-component .title {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #9a3412;
-    }
-
-    .backend-component .desc {
-      font-size: 11px;
-      color: #7c2d12;
-      font-family: 'JetBrains Mono', monospace;
-      margin-top: 3px;
-      background: #ffedd5;
-      padding: 2px 6px;
-      border-radius: 4px;
-      display: inline-block;
-    }
-
-    /* Flow Connectors Row 2 */
-    .connector-row-2 {
-      height: 42px;
+    /* COMMUNICATION BUS */
+    .bus-divider {
       display: flex;
-      justify-content: center;
+      justify-content: space-around;
       align-items: center;
-      position: relative;
+      margin: 8px 0 16px 0;
+      padding: 0 40px;
     }
 
-    /* Tier 3: Agent Pipeline */
-    .agent-tier {
-      width: 1120px;
-      margin: 0 auto;
-      border: 2px solid #0f172a;
-      border-radius: 14px;
-      background: #ffffff;
-      padding: 18px 22px 22px;
-      position: relative;
-      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
-    }
-
-    .agent-tier-title {
-      text-align: center;
-      font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #0f172a;
-      margin-bottom: 18px;
-    }
-
-    /* Left / Right Cloud Badges */
-    .cloud-badge {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 140px;
-      background: #ffffff;
-      border: 2px solid #cbd5e1;
-      border-radius: 40px;
-      padding: 16px 12px;
-      text-align: center;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-      display: flex;
-      flex-direction: column;
+    .bus-pill {
+      background: #f1f5f9;
+      border: 1px dashed #94a3b8;
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: #334155;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
-      z-index: 10;
     }
 
-    .cloud-badge.left {
-      left: -170px;
+    .bus-pill .arrow {
+      color: #2563eb;
+      font-weight: 900;
     }
 
-    .cloud-badge.right {
-      right: -170px;
-    }
-
-    .cloud-icon {
-      width: 38px;
-      height: 38px;
-    }
-
-    .cloud-name {
-      font-size: 12px;
-      font-weight: 700;
-      color: #0f172a;
-      line-height: 1.2;
-    }
-
-    .cloud-sub {
-      font-size: 9.5px;
-      font-weight: 600;
-      color: #64748b;
-      line-height: 1.15;
-    }
-
-    /* Top Row in Agent Tier: Agents 1, 2, and 4 Tools */
-    .agent-pipeline-top {
+    /* MIDDLE MAIN ROW: 3 COLUMNS */
+    .middle-tier-row {
       display: grid;
-      grid-template-columns: 210px 240px 360px;
+      grid-template-columns: 240px 1fr 240px;
       gap: 16px;
+      margin-bottom: 20px;
       align-items: stretch;
-      margin-bottom: 18px;
     }
 
-    .agent-box {
-      border-radius: 10px;
-      padding: 14px 12px;
-      color: #ffffff;
+    /* Side Boxes */
+    .side-column {
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-    }
-
-    .agent-box.agent1 {
-      background: #1d4ed8;
-      border: 2px solid #1e40af;
-    }
-
-    .agent-box.agent2 {
-      background: #6d28d9;
-      border: 2px solid #5b21b6;
-    }
-
-    .agent-tag {
-      font-size: 10.5px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      opacity: 0.85;
-      margin-bottom: 2px;
-    }
-
-    .agent-name {
-      font-size: 13.5px;
-      font-weight: 700;
-      line-height: 1.25;
-      margin-bottom: 6px;
-    }
-
-    .agent-desc {
-      font-size: 11px;
-      opacity: 0.9;
-      line-height: 1.35;
-    }
-
-    .agent-meta-badge {
-      margin-top: 8px;
-      background: rgba(255, 255, 255, 0.18);
-      border-radius: 5px;
-      padding: 4px 6px;
-      font-size: 9.5px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-
-    /* 4 Vector Tools */
-    .tools-column {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      justify-content: center;
-    }
-
-    .tool-pill {
-      border-radius: 6px;
-      padding: 6px 10px;
-      color: #ffffff;
-      font-size: 11px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    }
-
-    .tool-pill.comp {
-      background: #0284c7;
-    }
-
-    .tool-pill.news {
-      background: #ea580c;
-    }
-
-    .tool-pill.demand {
-      background: #7c3aed;
-    }
-
-    .tool-pill.size {
-      background: #16a34a;
-    }
-
-    .tool-pill .cat {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      opacity: 0.9;
-    }
-
-    /* Agent 3: DataRetrievalAgent Pipeline */
-    .retrieval-container {
-      background: #f0fdfa;
-      border: 1.5px solid #5eead4;
-      border-radius: 10px;
-      padding: 10px 14px;
-      display: flex;
-      align-items: center;
       gap: 12px;
-      margin-bottom: 18px;
     }
 
-    .retrieval-lead {
-      background: #0d9488;
-      color: #ffffff;
-      padding: 8px 12px;
-      border-radius: 8px;
+    .side-card {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .side-card-title {
       font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-      text-align: center;
-    }
-
-    .retrieval-lead .sub {
-      font-size: 9.5px;
-      font-weight: 500;
-      opacity: 0.9;
-    }
-
-    .retrieval-steps {
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #0f172a;
+      padding-bottom: 6px;
+      border-bottom: 1.5px solid #e2e8f0;
       display: flex;
       align-items: center;
-      gap: 8px;
-      flex: 1;
+      gap: 6px;
     }
 
-    .pipe-step {
+    .side-item {
       background: #ffffff;
-      border: 1px solid #99f6e4;
+      border: 1px solid #e2e8f0;
       border-radius: 6px;
-      padding: 6px 10px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .side-item-head {
       font-size: 11px;
-      font-weight: 600;
-      color: #0f766e;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .side-item-desc {
+      font-size: 9.5px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* Center Orchestrator Card */
+    .backend-card {
+      background: #ffffff;
+      border: 1.5px solid #94a3b8;
+    }
+
+    .backend-header {
+      background: #0f172a;
+    }
+
+    .backend-body {
+      padding: 14px;
+    }
+
+    .backend-sub-lead {
       text-align: center;
-      flex: 1;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+      font-size: 11.5px;
+      color: #475569;
+      margin-bottom: 14px;
     }
 
-    .pipe-arrow {
-      color: #0d9488;
-      font-weight: 800;
-      font-size: 13px;
-    }
-
-    /* Bottom Row: Agents 4, 5 and White-Space Engine */
-    .agent-pipeline-bottom {
+    /* Pipeline 10 Agents Grid */
+    .pipeline-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1.3fr;
-      gap: 16px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
     }
 
-    .agent-box.agent4 {
-      background: #1e3a8a;
-      border: 2px solid #172554;
+    .pipeline-grid-row2 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
     }
 
-    .agent-box.agent5 {
-      background: #9f1239;
-      border: 2px solid #881337;
+    .agent-card {
+      border-radius: 8px;
+      border: 1.5px solid;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 116px;
     }
 
-    .agent-box.core-novelty {
-      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-      border: 2px solid #78350f;
-      box-shadow: 0 4px 14px rgba(180, 83, 9, 0.25);
-    }
-
-    .core-novelty .badge-novelty {
-      background: #fef3c7;
-      color: #92400e;
-      padding: 2px 7px;
-      border-radius: 4px;
-      font-size: 9px;
+    .agent-card .agent-num {
+      font-size: 9.5px;
       font-weight: 800;
-      letter-spacing: 0.05em;
       text-transform: uppercase;
-      display: inline-block;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
+    }
+
+    .agent-card .agent-title {
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.2;
       margin-bottom: 4px;
     }
 
-    /* SVG Connecting Arrows */
-    .arrow-svg {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 5;
+    .agent-card .agent-bullets {
+      font-size: 9.5px;
+      line-height: 1.35;
+      margin-bottom: 6px;
     }
 
-    /* Legend / Footer */
-    .footer-bar {
-      margin-top: 28px;
+    .agent-card .agent-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      align-self: flex-start;
+      letter-spacing: 0.02em;
+    }
+
+    /* Color variations for agents */
+    .card-purple {
+      background: #faf5ff;
+      border-color: #d8b4fe;
+      color: #581c87;
+    }
+    .card-purple .agent-badge { background: #e9d5ff; color: #6b21a8; }
+
+    .card-blue {
+      background: #eff6ff;
+      border-color: #93c5fd;
+      color: #1e3a8a;
+    }
+    .card-blue .agent-badge { background: #dbeafe; color: #1d4ed8; }
+
+    .card-teal {
+      background: #f0fdfa;
+      border-color: #99f6e4;
+      color: #134e4a;
+    }
+    .card-teal .agent-badge { background: #ccfbf1; color: #0f766e; }
+
+    .card-amber {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #78350f;
+    }
+    .card-amber .agent-badge { background: #fef3c7; color: #b45309; }
+
+    .card-indigo {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+      color: #312e81;
+    }
+    .card-indigo .agent-badge { background: #e0e7ff; color: #4338ca; }
+
+    .card-emerald {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #064e3b;
+    }
+    .card-emerald .agent-badge { background: #d1fae5; color: #047857; }
+
+    .card-orange {
+      background: #fff7ed;
+      border-color: #fed7aa;
+      color: #7c2d12;
+    }
+    .card-orange .agent-badge { background: #ffedd5; color: #c2410c; }
+
+    .card-rose {
+      background: #fff1f2;
+      border-color: #fecdd3;
+      color: #881337;
+    }
+    .card-rose .agent-badge { background: #ffe4e6; color: #be123c; }
+
+    .card-cyan {
+      background: #ecfeff;
+      border-color: #a5f3fc;
+      color: #164e63;
+    }
+    .card-cyan .agent-badge { background: #cffafe; color: #0e7490; }
+
+    .card-slate {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+    .card-slate .agent-badge { background: #e2e8f0; color: #334155; }
+
+    /* FINAL REPORT SUMMARY STRIP */
+    .final-dossier-strip {
+      margin-top: 12px;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 10px 16px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      width: 1120px;
-      color: #64748b;
-      font-size: 12px;
-      border-top: 1px solid #cbd5e1;
-      padding-top: 16px;
+      justify-content: space-between;
     }
 
-    .legend-chips {
+    .dossier-pill-list {
       display: flex;
-      gap: 16px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
-    .legend-chip {
+    .dossier-pill {
+      font-size: 10px;
+      font-weight: 700;
+      color: #15803d;
+      background: #dcfce7;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* BOTTOM ROW: Supporting Infrastructure */
+    .bottom-infra-card {
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+
+    .bottom-infra-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #0f172a;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .bottom-infra-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .infra-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .infra-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .infra-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .infra-name {
       font-size: 11.5px;
-      font-weight: 600;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .infra-desc {
+      font-size: 10px;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* LEGEND FOOTER */
+    .legend-row {
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .legend-tag {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
     }
 
     .legend-dot {
@@ -531,281 +566,326 @@
       border-radius: 3px;
     }
 
-    .actions-bar {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 12px;
-    }
-
-    .btn {
-      background: #0f172a;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 12.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: all 0.15s ease;
-    }
-
-    .btn:hover {
-      background: #1e293b;
-      transform: translateY(-1px);
-    }
+    .dot-m2 { background: #f59e0b; }
+    .dot-m3 { background: #8b5cf6; }
+    .dot-m4 { background: #10b981; }
+    .dot-core { background: #3b82f6; }
   </style>
 </head>
 
 <body>
-
-  <div class="actions-bar">
-    <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-  </div>
-
   <div class="canvas-container">
-    <h1 class="main-title">Team Forge — <span>Startup Idea Validator</span> System Architecture</h1>
-
-    <!-- 1. CLIENT PRESENTATION LAYER -->
-    <div class="tier-card client-tier">
-      <div class="tier-side-label">
-        <div class="name">Client<br>Presentation Layer</div>
-        <div class="cloud">
-          <svg width="12" height="12" viewBox="0 0 76 65" fill="#000">
-            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" />
-          </svg>
-          on Vercel Cloud
-        </div>
-      </div>
-
-      <div class="tier-header">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M9 3v18" />
-          <path d="M15 3v18" />
+    
+    <!-- Top Header -->
+    <div class="header-section">
+      <div class="brand-logo-row">
+        <svg class="bulb-icon" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+          <path d="M9 18h6" />
+          <path d="M10 22h4" />
         </svg>
-        React 18 + Vite SPA (Client Browser Application)
+        <h1 class="brand-title">TEAM FORGE <span>AI</span></h1>
       </div>
-
-      <div class="client-inner">
-        <div class="client-component">
-          <div class="title">Idea Submission Form</div>
-          <div class="desc">Unlimited pitch text + optional overrides</div>
-        </div>
-        <div class="client-component">
-          <div class="title">AI Dossier Metadata Card</div>
-          <div class="desc">Stamped case-file parameters</div>
-        </div>
-        <div class="client-component" style="border-color: #f59e0b; background: #fffbeb;">
-          <div class="title" style="color: #b45309;">Market White-Space Opportunities</div>
-          <div class="desc">Triangulated opportunity gaps & niches</div>
-        </div>
-        <div class="client-component">
-          <div class="title">Market Sizing & Scorecard</div>
-          <div class="desc">TAM/SAM, CAGR, honest empty states</div>
-        </div>
-        <div class="client-component">
-          <div class="title">Competitor Comparison</div>
-          <div class="desc">Direct vs substitute matrix</div>
-        </div>
-      </div>
+      <div class="brand-tagline">Autonomous Multi-Agent Startup Idea Validation & Intelligence System</div>
+      <h2 class="arch-title">Full End-to-End System Architecture (Milestones 1–4)</h2>
     </div>
 
-    <!-- CONNECTOR ROW 1: Client <-> Backend -->
-    <div class="connector-row-1">
-      <div class="arrow-badge" style="left: 170px; top: 12px;">
-        ↓ HTTPS POST /api/validate (JSON Payload)
+    <!-- Tier 1: Client Layer -->
+    <div class="top-tier-row">
+      <!-- Founder -->
+      <div class="user-block">
+        <div class="user-avatar-circle">👤</div>
+        <div class="user-title">Founder / User</div>
+        <div class="user-desc">Submits startup pitch & reviews evidence-backed dossiers</div>
       </div>
-      <div class="arrow-badge"
-        style="left: 490px; top: 12px; background: #dcfce7; border-color: #86efac; color: #166534;">
-        ↑ ValidationResponse (JSON: 5-Agent Intelligence & Sources)
-      </div>
-    </div>
 
-    <!-- 2. BACKEND API & GATEWAY LAYER -->
-    <div class="tier-card backend-tier">
-      <div class="tier-side-label">
-        <div class="name">Backend API &<br>Gateway Layer</div>
-        <div class="cloud">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#ea580c">
-            <circle cx="12" cy="12" r="10" />
-          </svg>
-          on Render Cloud
+      <div class="flow-arrow-right">&rarr;</div>
+
+      <!-- Frontend SPA -->
+      <div class="section-card frontend-block">
+        <div class="section-header frontend-header">
+          <span>Frontend Layer — React + Vite (SPA)</span>
+          <span style="font-size: 11px; opacity: 0.9;">Deployed on Vercel (HTTPS)</span>
         </div>
-      </div>
-
-      <div class="tier-header">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="4 17 10 11 4 5" />
-          <line x1="12" y1="19" x2="20" y2="19" />
-        </svg>
-        FastAPI REST API (Python 3.11 High-Performance Service)
-      </div>
-
-      <div class="backend-inner">
-        <div class="backend-component">
-          <div class="title">Input Validator & Gibberish Defense</div>
-          <div class="desc">wordfreq ratio &gt;= 0.45</div>
-        </div>
-        <div class="backend-component">
-          <div class="title">ValidationCrewOrchestrator</div>
-          <div class="desc">Sequential Pipeline &amp; Milestones</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONNECTOR ROW 2: Backend <-> Multi-Agent Pipeline -->
-    <div class="connector-row-2">
-      <div class="arrow-badge" style="position: static; background: #f1f5f9; border-color: #cbd5e1; color: #334155;">
-        ↓ In-Process Python Execution (CrewAI Kickoff)
-      </div>
-    </div>
-
-    <!-- 3. AUTONOMOUS MULTI-AGENT PIPELINE -->
-    <div class="agent-tier">
-      <!-- Left Cloud Badge: Groq -->
-      <div class="cloud-badge left">
-        <img src="groq_logo.png" alt="Groq Logo" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover;" />
-        <div class="cloud-name">Groq Cloud LLM</div>
-        <div class="cloud-sub">Llama 3.3 70B Versatile</div>
-      </div>
-
-      <!-- Right Cloud Badge: Tavily -->
-      <div class="cloud-badge right">
-        <img src="tavily_logo.png" alt="Tavily Logo" style="width: 42px; height: 42px; object-fit: contain;" />
-        <div class="cloud-name">Tavily Search API</div>
-        <div class="cloud-sub">+ DuckDuckGo Lite Fallback</div>
-      </div>
-
-      <div class="agent-tier-title">Autonomous Multi-Agent Pipeline &amp; Synthesis Engine (Milestone 2)</div>
-
-      <!-- Pipeline Row 1: Agent 1 -> Agent 2 -> Search Vector Tools -->
-      <div class="agent-pipeline-top">
-        <!-- Agent 1 -->
-        <div class="agent-box agent1">
-          <div>
-            <div class="agent-tag">Agent 1</div>
-            <div class="agent-name">IdeaExtractionAgent</div>
-            <div class="agent-desc">Extracts normalized product name, industry vertical, target audience, core problem,
-              and high-signal domain keywords.</div>
+        <div class="frontend-grid">
+          <div class="fe-item">
+            <span class="fe-icon">🔐</span>
+            <span class="fe-title">Google OAuth 2.0</span>
+            <span class="fe-desc">JWT Auth & Saved Reports Drawer</span>
           </div>
-          <div class="agent-meta-badge">→ Structured Metadata JSON</div>
+
+          <div class="fe-item">
+            <span class="fe-icon">📝</span>
+            <span class="fe-title">Pitch Submission</span>
+            <span class="fe-desc">Idea, Metadata & Async Email Toggle</span>
+          </div>
+
+          <div class="fe-item">
+            <span class="fe-icon">⚡</span>
+            <span class="fe-title">Real-time Progress</span>
+            <span class="fe-desc">9-Stage Stepper & Job Status Polling</span>
+          </div>
+
+          <div class="fe-item">
+            <span class="fe-icon">📊</span>
+            <span class="fe-title">Executive Dossier</span>
+            <span class="fe-desc">TAM/SAM, Personas, Competitors, SWOT</span>
+          </div>
+
+          <div class="fe-item">
+            <span class="fe-icon">💬</span>
+            <span class="fe-title">Startup Advisor</span>
+            <span class="fe-desc">Multi-Turn Contextual Chat Drawer</span>
+          </div>
+
+          <div class="fe-item">
+            <span class="fe-icon">📄</span>
+            <span class="fe-title">PDF & Email Export</span>
+            <span class="fe-desc">A4 Print Styles & Email Previewer</span>
+          </div>
+
+          <div class="fe-item device-item">
+            <span class="fe-icon">💻</span>
+            <span class="fe-title">Responsive UI</span>
+            <span class="fe-desc">Editorial Light Design</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Communication Bus -->
+    <div class="bus-divider">
+      <div class="bus-pill"><span class="arrow">&darr;</span> POST /api/validate (Sync)</div>
+      <div class="bus-pill"><span class="arrow">&darr;</span> POST /api/validate/async (Background)</div>
+      <div class="bus-pill"><span class="arrow">&darr;</span> POST /api/auth/google (OAuth)</div>
+      <div class="bus-pill"><span class="arrow">&uarr;</span> GET /api/jobs/{id} (Polling)</div>
+      <div class="bus-pill"><span class="arrow">&updownarrow;</span> POST /api/advisor/chat (SSE / JSON)</div>
+      <div class="bus-pill"><span class="arrow">&uarr;</span> GET /api/user/jobs (Dossier Library)</div>
+    </div>
+
+    <!-- Tier 2: Core Processing & Side Infrastructure -->
+    <div class="middle-tier-row">
+      
+      <!-- Left Column: External Data Layer -->
+      <div class="side-column">
+        <div class="side-card">
+          <div class="side-card-title">🌐 External Services & Data</div>
+
+          <div class="side-item">
+            <div class="side-item-head">🔍 Tavily AI Search</div>
+            <div class="side-item-desc">Primary live search engine with relevance scoring and multi-query clustering.</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">🦆 Fallback Search</div>
+            <div class="side-item-desc">DuckDuckGo / heuristic scraping fast-fails on Tavily rate limits (401/402/403).</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">✉️ Gmail TLS SMTP</div>
+            <div class="side-item-desc">Dispatches executive reports to founder inbox via smtp.gmail.com:587.</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">🔑 Google Identity (OAuth)</div>
+            <div class="side-item-desc">Google OAuth 2.0 credential verification via google-auth library.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Column: Multi-Agent Orchestrator -->
+      <div class="section-card backend-card">
+        <div class="section-header backend-header">
+          <span>FastAPI Backend Orchestrator & Multi-Agent Intelligence Engine</span>
+          <span style="font-size: 11px; opacity: 0.85;">Deployed on Render (Python 3.11 / Uvicorn)</span>
         </div>
 
-        <!-- Agent 2 -->
-        <div class="agent-box agent2">
-          <div>
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <div class="agent-tag">Agent 2 (CrewAI)</div>
-              <img src="crewai_logo.png" alt="CrewAI Logo" style="width: 26px; height: 26px; border-radius: 6px; background: #ffffff; padding: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);" />
+        <div class="backend-body">
+          <div class="backend-sub-lead">
+            Executes autonomous 9-stage research pipeline, synthesizes grounded strategic assets, and manages interactive advisory sessions.
+          </div>
+
+          <!-- Agents Row 1 (Agents 1 - 5) -->
+          <div class="pipeline-grid">
+            <div class="agent-card card-purple">
+              <span class="agent-num">01. Extract</span>
+              <span class="agent-title">Idea Extraction</span>
+              <span class="agent-bullets">• Domain keywords<br>• Core problem & audience<br>• Gibberish validation</span>
+              <span class="agent-badge">LLM Agent</span>
             </div>
-            <div class="agent-name">MarketResearchAgent</div>
-            <div class="agent-desc">Autonomous tool-calling agent. Plans queries, filters near-duplicates, and abides by
-              a strict 3–5 search query budget.</div>
-          </div>
-          <div class="agent-meta-badge">MarketResearchToolKit</div>
-        </div>
 
-        <!-- 4 Search Vector Tools -->
-        <div class="tools-column">
-          <div class="tool-pill comp">
-            <span>🔹 search_competitors</span>
-            <span class="cat">Competitors &amp; Alternatives</span>
+            <div class="agent-card card-blue">
+              <span class="agent-num">02. Research</span>
+              <span class="agent-title">Autonomous Search</span>
+              <span class="agent-bullets">• Multi-vector research<br>• Competitor / News / Size<br>• CrewAI agentic tools</span>
+              <span class="agent-badge">CrewAI + Tavily</span>
+            </div>
+
+            <div class="agent-card card-teal">
+              <span class="agent-num">03. Ingest</span>
+              <span class="agent-title">Data Sanitization</span>
+              <span class="agent-bullets">• Deduplicate sources<br>• 1,500 char snippet cap<br>• Domain filtering</span>
+              <span class="agent-badge">Deterministic Python</span>
+            </div>
+
+            <div class="agent-card card-amber">
+              <span class="agent-num">04. Sizing</span>
+              <span class="agent-title">Market Analysis</span>
+              <span class="agent-bullets">• TAM / SAM / SOM<br>• CAGR & Growth Drivers<br>• Granular user personas</span>
+              <span class="agent-badge">Milestone 2 Agent</span>
+            </div>
+
+            <div class="agent-card card-indigo">
+              <span class="agent-num">05. Rivals</span>
+              <span class="agent-title">Competitor Analysis</span>
+              <span class="agent-bullets">• Direct & indirect rivals<br>• Pricing & feature matrix<br>• Weakness triangulation</span>
+              <span class="agent-badge">Milestone 2 Agent</span>
+            </div>
           </div>
-          <div class="tool-pill news">
-            <span>🔸 search_industry_news</span>
-            <span class="cat">Trends, Funding, Regulation</span>
+
+          <!-- Agents Row 2 (Agents 6 - 10) -->
+          <div class="pipeline-grid-row2">
+            <div class="agent-card card-emerald">
+              <span class="agent-num">06. White-Space</span>
+              <span class="agent-title">Defensible Void</span>
+              <span class="agent-bullets">• Demand vs rival void<br>• High-conviction fits<br>• Unaddressed moats</span>
+              <span class="agent-badge">Logic Engine + LLM</span>
+            </div>
+
+            <div class="agent-card card-orange">
+              <span class="agent-num">07. SWOT & Risk</span>
+              <span class="agent-title">Strategic Matrix</span>
+              <span class="agent-bullets">• Strengths & Weaknesses<br>• External Threats & Ops<br>• 12-month risk mitigation</span>
+              <span class="agent-badge">Milestone 3 Agent</span>
+            </div>
+
+            <div class="agent-card card-rose">
+              <span class="agent-num">08. MVP Scope</span>
+              <span class="agent-title">MVP Recommendation</span>
+              <span class="agent-bullets">• Core feature priorities<br>• Tech architecture advice<br>• 60-day roadmap</span>
+              <span class="agent-badge">Milestone 3 Agent</span>
+            </div>
+
+            <div class="agent-card card-cyan">
+              <span class="agent-num">09. GTM Plan</span>
+              <span class="agent-title">Go-To-Market</span>
+              <span class="agent-bullets">• Ideal Customer Profile<br>• Primary viral channels<br>• Monetization structure</span>
+              <span class="agent-badge">Milestone 3 Agent</span>
+            </div>
+
+            <div class="agent-card card-slate">
+              <span class="agent-num">10. Advisor</span>
+              <span class="agent-title">Startup Advisor</span>
+              <span class="agent-bullets">• Multi-turn conversational<br>• Grounded in live dossier<br>• Bounded cache (LRU)</span>
+              <span class="agent-badge">Interactive Endpoint</span>
+            </div>
           </div>
-          <div class="tool-pill demand">
-            <span>🟣 search_customer_demand</span>
-            <span class="cat">User Reviews &amp; Pain Points</span>
+
+          <!-- Final Dossier Strip -->
+          <div class="final-dossier-strip">
+            <span style="font-size: 11.5px; font-weight: 800; color: #0f172a;">Validated Output Dossier:</span>
+            <div class="dossier-pill-list">
+              <span class="dossier-pill">✓ TAM / SAM / SOM</span>
+              <span class="dossier-pill">✓ Customer Personas</span>
+              <span class="dossier-pill">✓ Competitor Matrix</span>
+              <span class="dossier-pill">✓ White-Space Gaps</span>
+              <span class="dossier-pill">✓ SWOT Strategy</span>
+              <span class="dossier-pill">✓ MVP Blueprint</span>
+              <span class="dossier-pill">✓ GTM Strategy</span>
+              <span class="dossier-pill">✓ HTML Email Dispatch</span>
+            </div>
           </div>
-          <div class="tool-pill size">
-            <span>🟢 search_market_size</span>
-            <span class="cat">TAM / SAM / CAGR Reports</span>
+
+        </div>
+      </div>
+
+      <!-- Right Column: LLM & Prompt Layer -->
+      <div class="side-column">
+        <div class="side-card">
+          <div class="side-card-title">🤖 LLM & Intelligence Stack</div>
+
+          <div class="side-item">
+            <div class="side-item-head">⚡ Groq Cloud LPU</div>
+            <div class="side-item-desc">Primary ultra-low latency inference (Llama-3.3-70b, Qwen-2.5-32b).</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">📂 Externalized Prompts</div>
+            <div class="side-item-desc">14 modular markdown prompt templates under backend/prompts/*.md.</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">🧠 Bounded Session Cache</div>
+            <div class="side-item-desc">LRU memory cache (capped at 100 entries) preventing memory leaks on Render.</div>
+          </div>
+
+          <div class="side-item">
+            <div class="side-item-head">🛡️ Fallback Resilience</div>
+            <div class="side-item-desc">Automatic fast-fail on rate limits & degraded provider status flags.</div>
           </div>
         </div>
       </div>
 
-      <!-- Pipeline Row 2: Agent 3 Data Retrieval Sanitization -->
-      <div class="retrieval-container">
-        <div class="retrieval-lead">
-          AGENT 3: DataRetrievalAgent
-          <div class="sub">Deterministic Verification</div>
-        </div>
-        <div class="retrieval-steps">
-          <div class="pipe-step">1. Blocked Domain Filter<br><small style="color:#64748b;">(Dictionaries/Wikis)</small>
-          </div>
-          <div class="pipe-arrow">➔</div>
-          <div class="pipe-step">2. langdetect Verifier<br><small style="color:#64748b;">(Enforce English)</small></div>
-          <div class="pipe-arrow">➔</div>
-          <div class="pipe-step">3. Canonical Deduplication<br><small style="color:#64748b;">(Zero Duplicate
-              URLs)</small></div>
-          <div class="pipe-arrow">➔</div>
-          <div class="pipe-step">4. Score-Ranked Sorting<br><small style="color:#64748b;">(Tavily Semantic Rank)</small>
+    </div>
+
+    <!-- Tier 3: Supporting Infrastructure & Persistence -->
+    <div class="bottom-infra-card">
+      <div class="bottom-infra-title">⚙️ Supporting Infrastructure, Persistence & Security Layer</div>
+      <div class="bottom-infra-grid">
+        <div class="infra-item">
+          <div class="infra-icon">☁️</div>
+          <div class="infra-text">
+            <span class="infra-name">Hybrid Cloud Deployment</span>
+            <span class="infra-desc">Frontend on Vercel Edge with smart API auto-routing; Backend on Render web service with CORS.</span>
           </div>
         </div>
-      </div>
 
-      <!-- Pipeline Row 3: Agents 4, 5, and White-Space Engine -->
-      <div class="agent-pipeline-bottom">
-        <!-- Agent 4 -->
-        <div class="agent-box agent4">
-          <div class="agent-tag">Agent 4</div>
-          <div class="agent-name">MarketOpportunityAgent</div>
-          <div class="agent-desc">Synthesizes TAM/SAM metrics and CAGR. Distinguishes <strong>Daily End Users</strong>
-            vs <strong>Economic Decision Makers</strong>. Clamps confidence if 0 market sources exist.</div>
+        <div class="infra-item">
+          <div class="infra-icon">🗄️</div>
+          <div class="infra-text">
+            <span class="infra-name">SQLite Relational Storage</span>
+            <span class="infra-desc">backend/data/team_forge.db persists user accounts and validated reports with dual ID/email lookup.</span>
+          </div>
         </div>
 
-        <!-- Agent 5 -->
-        <div class="agent-box agent5">
-          <div class="agent-tag">Agent 5</div>
-          <div class="agent-name">CompetitorAnalysisAgent</div>
-          <div class="agent-desc">Maps direct rivals and indirect substitutes. Extracts pricing, strengths, and customer
-            complaints into a side-by-side comparison matrix.</div>
+        <div class="infra-item">
+          <div class="infra-icon">⚡</div>
+          <div class="infra-text">
+            <span class="infra-name">Async BackgroundTasks</span>
+            <span class="infra-desc">Native FastAPI background worker queue runs 60s pipelines asynchronously at $0 infrastructure cost.</span>
+          </div>
         </div>
 
-        <!-- Core Novelty: WhiteSpaceEngine -->
-        <div class="agent-box core-novelty">
-          <span class="badge-novelty">Core Novelty</span>
-          <div class="agent-name">Evidence-Backed WhiteSpaceEngine</div>
-          <div class="agent-desc">Triangulates: <strong>Customer Pain ∩ Competitor Void ∩ Startup Fit</strong>.
-            Generates 2–4 high-conviction opportunity gaps with confidence scores and traceable citations.</div>
+        <div class="infra-item">
+          <div class="infra-icon">🔒</div>
+          <div class="infra-text">
+            <span class="infra-name">Security, JWT & Secrets</span>
+            <span class="infra-desc">7-day HMAC-SHA256 session JWTs, zero secrets in git (.gitignore), Gmail TLS encrypted transport.</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Legend & Metadata Footer -->
-    <div class="footer-bar">
-      <div class="legend-chips">
-        <div class="legend-chip">
-          <div class="legend-dot" style="background: #2563eb;"></div>
-          <span>Client (Vercel)</span>
-        </div>
-        <div class="legend-chip">
-          <div class="legend-dot" style="background: #ea580c;"></div>
-          <span>API Gateway (Render)</span>
-        </div>
-        <div class="legend-chip">
-          <div class="legend-dot" style="background: #6d28d9;"></div>
-          <span>CrewAI Autonomous Agent</span>
-        </div>
-        <div class="legend-chip">
-          <div class="legend-dot" style="background: #0d9488;"></div>
-          <span>Deterministic Sanitizer</span>
-        </div>
-        <div class="legend-chip">
-          <div class="legend-dot" style="background: #d97706;"></div>
-          <span>White-Space Engine</span>
-        </div>
+    <!-- Bottom Legend -->
+    <div class="legend-row">
+      <div class="legend-tag">
+        <div class="legend-dot dot-core"></div>
+        <span>Core Pipeline (Milestone 1)</span>
       </div>
-      <div>Team Forge — Milestone 2 Deliverable</div>
+      <div class="legend-tag">
+        <div class="legend-dot dot-m2"></div>
+        <span>Market & Rivals (Milestone 2)</span>
+      </div>
+      <div class="legend-tag">
+        <div class="legend-dot dot-m3"></div>
+        <span>SWOT, MVP, GTM & Advisor (Milestone 3)</span>
+      </div>
+      <div class="legend-tag">
+        <div class="legend-dot dot-m4"></div>
+        <span>Google OAuth, SQLite, Async & Email (Milestone 4)</span>
+      </div>
     </div>
+
   </div>
-
 </body>
-
 </html>
