@@ -51,6 +51,7 @@ from services.auth_service import (
 )
 from services.email_service import send_validation_email
 from db.database import (
+    get_user_by_email,
     create_or_get_user,
     get_user_by_id,
     create_validation_job,
@@ -102,7 +103,7 @@ def health_check():
 
 
 @app.post("/api/validate", response_model=ValidationResponse)
-def validate_idea(submission: IdeaSubmission):
+def validate_idea(submission: IdeaSubmission, authorization: Optional[str] = Header(None)):
     """
     Synchronous multi-agent validation pipeline endpoint:
       1. Validates English coherence / gibberish check.
@@ -115,7 +116,22 @@ def validate_idea(submission: IdeaSubmission):
         response = orchestrator.validate_idea(submission)
         if not response.idea_id:
             response.idea_id = f"idea-{uuid.uuid4().hex[:8]}"
-        store_validation_result(response.idea_id, response.model_dump())
+        res_dict = response.model_dump()
+        store_validation_result(response.idea_id, res_dict)
+
+        # If user is authenticated, save record to validation history
+        user_id = None
+        user_email = ""
+        if authorization and authorization.startswith("Bearer "):
+            payload = verify_access_token(authorization.split(" ")[1])
+            if payload:
+                user_id = payload.get("user_id")
+                user_email = payload.get("email", "")
+
+        if user_id:
+            create_validation_job(response.idea_id, submission.idea, user_email, user_id)
+            update_job_status(response.idea_id, "completed", result_dict=res_dict)
+
         return response
     except Exception as exc:
         print(f"[main.py] Validation error: {exc}", flush=True)
@@ -189,14 +205,24 @@ def auth_me(authorization: Optional[str] = Header(None)):
 
 
 @app.post("/api/validate/async", response_model=AsyncValidationResponse, status_code=202)
-def validate_idea_async(request: AsyncValidationRequest, background_tasks: BackgroundTasks):
+def validate_idea_async(request: AsyncValidationRequest, background_tasks: BackgroundTasks, authorization: Optional[str] = Header(None)):
     """
     Asynchronous validation endpoint:
     Queues validation pipeline in background and emails results directly to founder's Gmail.
     """
+    user_id = request.user_id
+    if not user_id and authorization and authorization.startswith("Bearer "):
+        payload = verify_access_token(authorization.split(" ")[1])
+        if payload:
+            user_id = payload.get("user_id")
+    if not user_id and request.email:
+        u = get_user_by_email(request.email)
+        if u:
+            user_id = u["id"]
+
     job_id = f"val_{uuid.uuid4().hex[:10]}"
-    create_validation_job(job_id, request.idea, request.email, request.user_id)
-    background_tasks.add_task(run_async_validation_pipeline, job_id, request.idea, request.email, request.user_id)
+    create_validation_job(job_id, request.idea, request.email, user_id)
+    background_tasks.add_task(run_async_validation_pipeline, job_id, request.idea, request.email, user_id)
     return AsyncValidationResponse(
         job_id=job_id,
         status="processing",
@@ -223,7 +249,7 @@ def get_user_validation_history(authorization: Optional[str] = Header(None)):
     payload = verify_access_token(token)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid session token")
-    jobs = get_jobs_by_user(payload["user_id"])
+    jobs = get_jobs_by_user(payload["user_id"], payload.get("email"))
     return {"jobs": jobs}
 
 @app.get("/api/email/status")

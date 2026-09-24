@@ -86,6 +86,16 @@ def create_or_get_user(email: str, name: Optional[str] = None, avatar_url: Optio
     return dict(row)
 
 
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """Retrieves a user by their email address."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
 def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     """Retrieves a user by their unique ID."""
     conn = get_connection()
@@ -149,11 +159,20 @@ def get_job_by_id(job_id: str) -> Optional[Dict[str, Any]]:
     return data
 
 
-def get_jobs_by_user(user_id: str) -> List[Dict[str, Any]]:
-    """Retrieves all past validation jobs for a user, ordered newest first."""
+def get_jobs_by_user(user_id: str, email: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieves all past validation jobs for a user by user_id OR email, ordered newest first."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM validation_jobs WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
+    if email:
+        cursor.execute(
+            "SELECT * FROM validation_jobs WHERE user_id = ? OR email = ? ORDER BY created_at DESC",
+            (user_id, email)
+        )
+    else:
+        cursor.execute(
+            "SELECT * FROM validation_jobs WHERE user_id = ? ORDER BY created_at DESC",
+            (user_id,)
+        )
     rows = cursor.fetchall()
     conn.close()
 

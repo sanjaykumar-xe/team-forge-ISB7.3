@@ -15,7 +15,13 @@ import MVPRecommendation from "./components/MVPRecommendation";
 import GTMStrategy from "./components/GTMStrategy";
 import StartupAdvisorChat from "./components/StartupAdvisorChat";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+// Auto-detect backend: use local server on localhost, otherwise fallback to deployed Render backend
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://127.0.0.1:8000"
+    : "https://team-forge-backend.onrender.com");
 
 const CATEGORIES = [
   { key: "Competitors", title: "COMPETITORS" },
@@ -246,7 +252,8 @@ export default function App() {
         body: JSON.stringify({ credential }),
       });
       if (!res.ok) {
-        throw new Error("Authentication failed");
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail || body.message || `Authentication failed (${res.status})`);
       }
       const data = await res.json();
       setUser(data.user);
@@ -256,8 +263,10 @@ export default function App() {
       if (data.user?.email) {
         setDeliveryEmail(data.user.email);
       }
+      return data.user;
     } catch (err) {
-      alert("Sign-in error: " + err.message);
+      console.error("Sign-in error:", err);
+      throw err;
     }
   };
 
@@ -317,6 +326,7 @@ export default function App() {
             industry: cleanIndustry || undefined,
             target_audience: cleanTargetAudience || undefined,
             email: deliveryEmail.trim(),
+            user_id: user?.id || undefined,
           }),
         });
 
@@ -342,9 +352,12 @@ export default function App() {
     // Synchronous execution (traditional flow)
     setStatus("loading");
     try {
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch(`${API_URL}/api/validate`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           idea: cleanIdea,
           product_name: cleanProductName || undefined,
